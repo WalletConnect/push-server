@@ -1,39 +1,20 @@
 mod env;
 mod error;
+mod handlers;
+mod state;
+mod middleware;
 
 use std::convert::Infallible;
 use std::net::SocketAddr;
 use build_info::BuildInfo;
 use dotenv::dotenv;
-use hyper::{Body, Request, Response, Server, Method, StatusCode};
-use hyper::body::HttpBody;
-use hyper::server::conn::AddrStream;
-use hyper::service::{make_service_fn, service_fn};
+use hyper::{Body, Response, Server, StatusCode};
 use crate::env::Config;
 
-use routerify::prelude::*;
 use routerify::{Middleware, Router, RouterService, RequestInfo};
+use crate::state::State;
 
 build_info::build_info!(fn build_info);
-
-struct State {
-    config: Config,
-    build_info: BuildInfo,
-}
-
-async fn health_handler(req: Request<Body>) -> Result<Response<Body>, Infallible> {
-    let mut response = Response::new(Body::empty());
-    let state = req.data::<State>().unwrap();
-
-    *response.body_mut() = Body::from(format!("OK, echo-server v{}", state.build_info.crate_info.version));
-
-    Ok(response)
-}
-
-async fn logger(req: Request<Body>) -> Result<Request<Body>, Infallible> {
-    println!("{} {} {}", req.remote_addr(), req.method(), req.uri().path());
-    Ok(req)
-}
 
 // Define an error handler function which will accept the `routerify::Error`
 // and the request information and generates an appropriate response.
@@ -53,8 +34,8 @@ fn router(state: State) -> Router<Body, Infallible> {
         // Specify the state data which will be available to every route handlers,
         // error handler and middlewares.
         .data(state)
-        .middleware(Middleware::pre(logger))
-        .get("/health", health_handler)
+        .middleware(Middleware::pre(middleware::logger::middleware))
+        .get("/health", handlers::health::handler)
         .err_handler_with_info(error_handler)
         .build()
         .unwrap()
