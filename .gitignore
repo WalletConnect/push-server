@@ -1,0 +1,6 @@
+/target
+.env
+
+# Editors
+.idea
+.vscode

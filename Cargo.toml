@@ -1,0 +1,25 @@
+[package]
+name = "echo-server"
+version = "0.1.0"
+edition = "2021"
+authors = [
+    "Harry Bairstow <harry@walletconnect.com>"
+]
+build = "build.rs"
+
+[dependencies]
+routerify = "3"
+hyper = { version = "0.14", features = ["full"] }
+tokio = { version = "1", features = ["full"] }
+futures = "0.3"
+
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+dotenv = "0.15.0"
+envy = "0.4"
+
+build-info = "0.0.27"
+
+[build-dependencies]
+build-info-build = "0.0.27"
