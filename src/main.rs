@@ -23,10 +23,7 @@ use std::time::Duration;
 
 use tracing::{error, info};
 
-// Define an error handler function which will accept the `routerify::Error`
-// and the request information and generates an appropriate response.
 async fn error_handler(err: routerify::RouteError, _: RequestInfo) -> Response<Body> {
-    eprintln!("{}", err);
     Response::builder()
         .status(StatusCode::INTERNAL_SERVER_ERROR)
         .body(Body::from(format!("Something went wrong: {}", err)))
@@ -112,13 +109,10 @@ async fn main() -> error::Result<()> {
 
     let router = router(state);
 
-    // Create a Service from the router above to handle incoming requests.
     let service = RouterService::new(router).unwrap();
 
-    // The address on which the server will be listening.
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
 
-    // Create a server by passing the created service to `.serve` method.
     let server = Server::bind(&addr).serve(service);
 
     info!("echo-server v{} is running at: {}", build_version, addr);
