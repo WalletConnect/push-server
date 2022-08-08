@@ -116,6 +116,7 @@ async fn main() -> error::Result<()> {
 
     println!("echo-server v{} is running at: {}", build_version, addr);
     if let Err(err) = server.await {
+        opentelemetry::global::shutdown_tracer_provider();
         eprintln!("Server error: {}", err);
     }
 
