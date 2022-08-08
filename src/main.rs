@@ -27,12 +27,7 @@ async fn error_handler(err: routerify::RouteError, _: RequestInfo) -> Response<B
 }
 
 fn router(state: State) -> Router<Body, Infallible> {
-    // Create a router and specify the logger middleware and the handlers.
-    // Here, "Middleware::pre" means we're adding a pre middleware which will be executed
-    // before any route handlers.
     Router::builder()
-        // Specify the state data which will be available to every route handlers,
-        // error handler and middlewares.
         .data(state)
         .middleware(Middleware::pre(middleware::logger::middleware))
         .get("/health", handlers::health::handler)
