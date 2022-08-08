@@ -12,9 +12,14 @@ use hyper::{Body, Response, Server, StatusCode};
 use crate::env::Config;
 
 use routerify::{Middleware, Router, RouterService, RequestInfo};
-use crate::state::State;
+use crate::state::{Metrics, State};
 
-build_info::build_info!(fn build_info);
+use opentelemetry::{KeyValue};
+use opentelemetry::sdk::{trace::{self, IdGenerator, Sampler}, Resource};
+use opentelemetry::sdk::metrics::{selectors};
+use opentelemetry::util::tokio_interval_stream;
+use opentelemetry_otlp::{Protocol, WithExportConfig};
+use std::time::Duration;
 
 // Define an error handler function which will accept the `routerify::Error`
 // and the request information and generates an appropriate response.
@@ -37,30 +42,82 @@ fn router(state: State) -> Router<Body, Infallible> {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> error::Result<()> {
     dotenv().ok();
     let config = env::get_config().expect("Failed to load config, please ensure all env vars are defined.");
-    let build_info: &BuildInfo = build_info();
 
-    let redis_client = redis::Client::open(config.redis_url)?;
+    let redis_client = redis::Client::open(config.redis_url.as_str())?;
 
-    let router = router(State {
-        config: config.clone(),
-        build_info: build_info.clone(),
-        redis: redis_client
-    });
+    let mut state = state::new_state(config, redis_client);
+
+    if state.config.telemetry_enabled.unwrap_or(false) {
+        let grpc_url = state.config.telemetry_grpc_url.clone().unwrap_or("http://localhost:4317".to_string());
+
+        let tracing_exporter = opentelemetry_otlp::new_exporter()
+            .tonic()
+            .with_endpoint(grpc_url.clone())
+            .with_timeout(Duration::from_secs(5))
+            .with_protocol(Protocol::Grpc);
+
+        let tracer = opentelemetry_otlp::new_pipeline()
+            .tracing()
+            .with_exporter(tracing_exporter)
+            .with_trace_config(
+                trace::config()
+                    .with_sampler(Sampler::AlwaysOn)
+                    .with_id_generator(IdGenerator::default())
+                    .with_max_events_per_span(64)
+                    .with_max_attributes_per_span(16)
+                    .with_max_events_per_span(16)
+                    .with_resource(Resource::new(vec![KeyValue::new("service.name", "echo-server")])),
+            )
+            .install_batch(opentelemetry::runtime::Tokio)?;
+
+        let metrics_exporter = opentelemetry_otlp::new_exporter()
+            .tonic()
+            .with_endpoint(grpc_url)
+            .with_timeout(Duration::from_secs(5))
+            .with_protocol(Protocol::Grpc);
+
+        let meter_provider = opentelemetry_otlp::new_pipeline()
+            .metrics(tokio::spawn, tokio_interval_stream)
+            .with_exporter(metrics_exporter)
+            .with_period(Duration::from_secs(3))
+            .with_timeout(Duration::from_secs(10))
+            .with_aggregator_selector(selectors::simple::Selector::Exact)
+            .build()?;
+
+        opentelemetry::global::set_meter_provider(meter_provider.provider());
+
+        let meter = opentelemetry::global::meter("echo-server");
+        let hooks_counter = meter
+            .u64_counter("registered_webhooks")
+            .with_description("The number of currently registered webhooks")
+            .init();
+
+        state.set_telemetry(tracer, Metrics {
+            registered_webhooks: hooks_counter
+        })
+    }
+
+    let port = state.config.port;
+    let build_version = state.build_info.crate_info.version.clone();
+
+    let router = router(state);
 
     // Create a Service from the router above to handle incoming requests.
     let service = RouterService::new(router).unwrap();
 
     // The address on which the server will be listening.
-    let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
 
     // Create a server by passing the created service to `.serve` method.
     let server = Server::bind(&addr).serve(service);
 
-    println!("echo-server v{} is running at: {}", build_info.crate_info.version, addr);
+    println!("echo-server v{} is running at: {}", build_version, addr);
     if let Err(err) = server.await {
         eprintln!("Server error: {}", err);
     }
+
+    Ok(())
 }
