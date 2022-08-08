@@ -49,7 +49,7 @@ POST <ECHO_SERVER_URL>/register
 - `TYPE`: The push service to use e.g. APNS, FCM. This will be validated against the supported types on the Echo Server's side.
 - `DEVICE_TOKEN`: The device's token for the push service e.g. FCM, APNS.
 
-## Unregister Client
+### Unregister Client
 
 ```
 POST <ECHO_SERVER_URL>/unregister
@@ -60,7 +60,7 @@ POST <ECHO_SERVER_URL>/unregister
 
 - `CLIENT_ID`: The Client's ID from the Relay pairing.
 
-## Webhook Endpoint
+### Webhook Endpoint
 
 > **Note**
 > This will have E2E encryption in the future but for now is designed without encryption.
