@@ -4,7 +4,8 @@ use crate::error;
 #[derive(Deserialize, Debug, Copy, Clone)]
 pub struct Config {
     #[serde(default = "default_port")]
-    pub port: u16
+    pub port: u16,
+    pub redis_url: String,
 }
 
 fn default_port() -> u16 {

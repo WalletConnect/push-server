@@ -47,9 +47,12 @@ async fn main() {
     let config = env::get_config().expect("Failed to load config, please ensure all env vars are defined.");
     let build_info: &BuildInfo = build_info();
 
+    let redis_client = redis::Client::open(config.redis_url)?;
+
     let router = router(State {
         config: config.clone(),
         build_info: build_info.clone(),
+        redis: redis_client
     });
 
     // Create a Service from the router above to handle incoming requests.
