@@ -21,6 +21,8 @@ use opentelemetry::util::tokio_interval_stream;
 use opentelemetry_otlp::{Protocol, WithExportConfig};
 use std::time::Duration;
 
+use tracing::{error, info};
+
 // Define an error handler function which will accept the `routerify::Error`
 // and the request information and generates an appropriate response.
 async fn error_handler(err: routerify::RouteError, _: RequestInfo) -> Response<Body> {
@@ -46,11 +48,16 @@ async fn main() -> error::Result<()> {
     dotenv().ok();
     let config = env::get_config().expect("Failed to load config, please ensure all env vars are defined.");
 
+    tracing_subscriber::fmt()
+        .with_max_level(config.log_level())
+        .init();
+
     let redis_client = redis::Client::open(config.redis_url.as_str())?;
 
     let mut state = state::new_state(config, redis_client);
 
     if state.config.telemetry_enabled.unwrap_or(false) {
+        info!("Enabling Telemetry");
         let grpc_url = state.config.telemetry_grpc_url.clone().unwrap_or("http://localhost:4317".to_string());
 
         let tracing_exporter = opentelemetry_otlp::new_exporter()
@@ -114,10 +121,10 @@ async fn main() -> error::Result<()> {
     // Create a server by passing the created service to `.serve` method.
     let server = Server::bind(&addr).serve(service);
 
-    println!("echo-server v{} is running at: {}", build_version, addr);
+    info!("echo-server v{} is running at: {}", build_version, addr);
     if let Err(err) = server.await {
         opentelemetry::global::shutdown_tracer_provider();
-        eprintln!("Server error: {}", err);
+        error!("Server error: {}", err);
     }
 
     Ok(())
