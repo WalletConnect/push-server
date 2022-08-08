@@ -1,7 +1,8 @@
 use crate::{BuildInfo, Config, error};
 
 pub struct Metrics {
-    pub registered_webhooks: opentelemetry::metrics::Counter<u64>
+    pub registered_webhooks: opentelemetry::metrics::Counter<u64>,
+    pub received_notifications: opentelemetry::metrics::Counter<u64>
 }
 
 pub struct State {

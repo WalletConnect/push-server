@@ -99,8 +99,14 @@ async fn main() -> error::Result<()> {
             .with_description("The number of currently registered webhooks")
             .init();
 
+        let notification_counter = meter
+            .u64_counter("received_notifications")
+            .with_description("The number of notification received")
+            .init();
+
         state.set_telemetry(tracer, Metrics {
-            registered_webhooks: hooks_counter
+            registered_webhooks: hooks_counter,
+            received_notifications: notification_counter
         })
     }
 
