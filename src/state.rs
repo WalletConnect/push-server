@@ -27,7 +27,8 @@ pub fn new_state(config: Config, redis_client: redis::Client) -> State {
 
 impl State {
     pub fn get_redis_connection(&self) -> error::Result<redis::Connection> {
-        Ok(self.redis.get_connection()?)
+        let conn = self.redis.get_connection()?;
+        Ok(conn)
     }
 
     pub fn update_metrics(&mut self, metrics: Metrics) {
