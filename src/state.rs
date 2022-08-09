@@ -9,7 +9,6 @@ pub struct State {
     pub config: Config,
     pub build_info: BuildInfo,
     redis: redis::Client,
-    pub tracer: Option<opentelemetry::sdk::trace::Tracer>,
     pub metrics: Option<Metrics>
 }
 
@@ -22,7 +21,6 @@ pub fn new_state(config: Config, redis_client: redis::Client) -> State {
         config,
         build_info: build_info.clone(),
         redis: redis_client,
-        tracer: None,
         metrics: None
     }
 }
@@ -32,8 +30,7 @@ impl State {
         Ok(self.redis.get_connection()?)
     }
 
-    pub fn set_telemetry(&mut self, tracer: opentelemetry::sdk::trace::Tracer, metrics: Metrics) {
-        self.tracer = Some(tracer);
+    pub fn update_metrics(&mut self, metrics: Metrics) {
         self.metrics = Some(metrics);
     }
 }

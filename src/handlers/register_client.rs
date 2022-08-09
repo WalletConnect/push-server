@@ -86,8 +86,8 @@ pub async fn handler(state: Arc<State>, body: RegisterBody) -> Result<impl warp:
 
     if let Some(metrics) = &state.metrics {
         metrics.registered_webhooks.add(1, &[
-            opentelemetry::KeyValue::new("client.id", &body.client_id),
-            opentelemetry::KeyValue::new("client.type", &body.push_type)
+            opentelemetry::KeyValue::new("client.id", body.client_id),
+            opentelemetry::KeyValue::new("client.type", body.push_type)
         ]);
     }
 

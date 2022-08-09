@@ -19,6 +19,7 @@ use std::time::Duration;
 
 use tracing::{info};
 use tracing_subscriber::fmt::format::FmtSpan;
+use tracing_subscriber::Registry;
 
 use warp::Filter;
 
@@ -60,6 +61,10 @@ async fn main() -> error::Result<()> {
             )
             .install_batch(opentelemetry::runtime::Tokio)?;
 
+        let otel_tracing_layer = tracing_opentelemetry::layer().with_tracer(tracer);
+
+        let _ = Registry::default().with(otel_tracing_layer);
+
         let metrics_exporter = opentelemetry_otlp::new_exporter()
             .tonic()
             .with_endpoint(grpc_url)
@@ -87,7 +92,7 @@ async fn main() -> error::Result<()> {
             .with_description("The number of notification received")
             .init();
 
-        state.set_telemetry(tracer, Metrics {
+        state.update_metrics(Metrics {
             registered_webhooks: hooks_counter,
             received_notifications: notification_counter
         })
