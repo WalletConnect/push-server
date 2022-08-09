@@ -4,7 +4,8 @@ services:
     image: redis:latest
     ports:
       - 6379:6379
-  telemetry-collector:
-    image: otel/opentelemetry-collector-dev:latest
+  jaeger:
+    image: jaegertracing/opentelemetry-all-in-one:latest
     ports:
       - 4317:4317
+      - 16686:16686

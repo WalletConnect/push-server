@@ -19,7 +19,6 @@ use std::time::Duration;
 
 use tracing::{info};
 use tracing_subscriber::fmt::format::FmtSpan;
-use tracing_subscriber::Registry;
 
 use warp::Filter;
 
@@ -28,17 +27,11 @@ async fn main() -> error::Result<()> {
     dotenv().ok();
     let config = env::get_config().expect("Failed to load config, please ensure all env vars are defined.");
 
-    tracing_subscriber::fmt()
-        .with_max_level(config.log_level())
-        .with_span_events(FmtSpan::CLOSE)
-        .init();
-
     let redis_client = redis::Client::open(config.redis_url.as_str())?;
 
     let mut state = state::new_state(config, redis_client);
 
     if state.config.telemetry_enabled.unwrap_or(false) {
-        info!("Enabling Telemetry");
         let grpc_url = state.config.telemetry_grpc_url.clone().unwrap_or("http://localhost:4317".to_string());
 
         let tracing_exporter = opentelemetry_otlp::new_exporter()
@@ -57,13 +50,9 @@ async fn main() -> error::Result<()> {
                     .with_max_events_per_span(64)
                     .with_max_attributes_per_span(16)
                     .with_max_events_per_span(16)
-                    .with_resource(Resource::new(vec![KeyValue::new("service.name", "echo-server")])),
+                    .with_resource(Resource::new(vec![KeyValue::new("service.name", "echo-server"), KeyValue::new("service.version", state.build_info.crate_info.version.clone().to_string())])),
             )
             .install_batch(opentelemetry::runtime::Tokio)?;
-
-        let otel_tracing_layer = tracing_opentelemetry::layer().with_tracer(tracer);
-
-        let _ = Registry::default().with(otel_tracing_layer);
 
         let metrics_exporter = opentelemetry_otlp::new_exporter()
             .tonic()
@@ -92,10 +81,16 @@ async fn main() -> error::Result<()> {
             .with_description("The number of notification received")
             .init();
 
-        state.update_metrics(Metrics {
+        state.set_telemetry(tracer, Metrics {
             registered_webhooks: hooks_counter,
             received_notifications: notification_counter
         })
+    } else {
+        // Only log to console if telemetry disabled
+        tracing_subscriber::fmt()
+            .with_max_level(state.config.log_level())
+            .with_span_events(FmtSpan::CLOSE)
+            .init();
     }
 
     let port = state.config.port;

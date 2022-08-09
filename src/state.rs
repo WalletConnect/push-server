@@ -1,3 +1,6 @@
+use tracing::instrument::WithSubscriber;
+use tracing_subscriber::fmt::format::FmtSpan;
+use tracing_subscriber::prelude::*;
 use crate::{BuildInfo, Config, error};
 
 pub struct Metrics {
@@ -31,7 +34,13 @@ impl State {
         Ok(conn)
     }
 
-    pub fn update_metrics(&mut self, metrics: Metrics) {
+    pub fn set_telemetry(&mut self, tracer: opentelemetry::sdk::trace::Tracer, metrics: Metrics) {
+        let otel_tracing_layer = tracing_opentelemetry::layer().with_tracer(tracer);
+
+        tracing_subscriber::registry()
+            .with(otel_tracing_layer)
+            .init();
+
         self.metrics = Some(metrics);
     }
 }
