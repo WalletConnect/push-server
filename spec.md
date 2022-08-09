@@ -52,10 +52,7 @@ POST <ECHO_SERVER_URL>/clients
 ### Unregister Client
 
 ```
-DELETE <ECHO_SERVER_URL>/clients
-{
-    "client_id": <CLIENT_ID>
-}
+DELETE <ECHO_SERVER_URL>/clients/<CLIENT_ID>
 ```
 
 - `CLIENT_ID`: The Client's ID from the Relay pairing.
