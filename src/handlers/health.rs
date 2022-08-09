@@ -1,14 +1,12 @@
-use routerify::prelude::*;
-
-use std::convert::Infallible;
-use hyper::{Body, Request, Response};
+use std::sync::Arc;
+use warp::http;
 use crate::State;
 
-pub async fn handler(req: Request<Body>) -> Result<Response<Body>, Infallible> {
-    let mut response = Response::new(Body::empty());
-    let state = req.data::<State>().unwrap();
-
-    *response.body_mut() = Body::from(format!("OK, echo-server v{}", state.build_info.crate_info.version));
+pub async fn handler(state: Arc<State>) -> Result<impl warp::Reply, warp::Rejection> {
+    let response = warp::reply::with_status(
+        format!("OK, echo-server v{}", state.build_info.crate_info.version),
+        http::StatusCode::OK
+    );
 
     Ok(response)
 }

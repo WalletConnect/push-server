@@ -2,16 +2,12 @@ mod env;
 mod error;
 mod handlers;
 mod state;
-mod middleware;
 
-use std::convert::Infallible;
-use std::net::SocketAddr;
+use std::sync::Arc;
 use build_info::BuildInfo;
 use dotenv::dotenv;
-use hyper::{Body, Response, Server, StatusCode};
 use crate::env::Config;
 
-use routerify::{Middleware, Router, RouterService, RequestInfo};
 use crate::state::{Metrics, State};
 
 use opentelemetry::{KeyValue};
@@ -21,24 +17,10 @@ use opentelemetry::util::tokio_interval_stream;
 use opentelemetry_otlp::{Protocol, WithExportConfig};
 use std::time::Duration;
 
-use tracing::{error, info};
+use tracing::{info};
+use tracing_subscriber::fmt::format::FmtSpan;
 
-async fn error_handler(err: routerify::RouteError, _: RequestInfo) -> Response<Body> {
-    Response::builder()
-        .status(StatusCode::INTERNAL_SERVER_ERROR)
-        .body(Body::from(format!("Something went wrong: {}", err)))
-        .unwrap()
-}
-
-fn router(state: State) -> Router<Body, Infallible> {
-    Router::builder()
-        .data(state)
-        .middleware(Middleware::pre(middleware::logger::middleware))
-        .get("/health", handlers::health::handler)
-        .err_handler_with_info(error_handler)
-        .build()
-        .unwrap()
-}
+use warp::Filter;
 
 #[tokio::main]
 async fn main() -> error::Result<()> {
@@ -47,6 +29,7 @@ async fn main() -> error::Result<()> {
 
     tracing_subscriber::fmt()
         .with_max_level(config.log_level())
+        .with_span_events(FmtSpan::CLOSE)
         .init();
 
     let redis_client = redis::Client::open(config.redis_url.as_str())?;
@@ -113,19 +96,39 @@ async fn main() -> error::Result<()> {
     let port = state.config.port;
     let build_version = state.build_info.crate_info.version.clone();
 
-    let router = router(state);
+    let state_arc = Arc::new(state);
+    let state_filter = warp::any().map(move || state_arc.clone());
 
-    let service = RouterService::new(router).unwrap();
+    let health = warp::get()
+        .and(warp::path!("health"))
+        .and(state_filter.clone())
+        .and_then(handlers::health::handler);
+    let register_client = warp::post()
+        .and(warp::path!("clients"))
+        .and(state_filter.clone())
+        .and(warp::body::json())
+        .and_then(handlers::register_client::handler);
+    let delete_client = warp::delete()
+        .and(warp::path!("clients" / String))
+        .and(state_filter.clone())
+        .and_then(handlers::delete_client::handler);
+    let push_to_client = warp::post()
+        .and(warp::path!("clients" / String))
+        .and(state_filter)
+        .and(warp::body::json())
+        .and_then(handlers::push_message::handler);
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
+    let routes = warp::any()
+        .and(health
+            .or(register_client)
+            .or(delete_client)
+            .or(push_to_client))
+        .with(warp::trace::request());
 
-    let server = Server::bind(&addr).serve(service);
-
-    info!("echo-server v{} is running at: {}", build_version, addr);
-    if let Err(err) = server.await {
-        opentelemetry::global::shutdown_tracer_provider();
-        error!("Server error: {}", err);
-    }
+    info!("v{}", build_version);
+    warp::serve(routes)
+        .run(([127, 0, 0, 1], port))
+        .await;
 
     Ok(())
 }
