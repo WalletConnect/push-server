@@ -16,7 +16,7 @@ These are the default responses and are only different if otherwise specified.
 ```
 {
     "status": "FAILED",
-    "reasons" [
+    "reasons": [
         { "field": "type", "description": "" }
     ]
 }
