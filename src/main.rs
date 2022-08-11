@@ -1,38 +1,49 @@
 mod env;
 mod error;
 mod handlers;
+mod providers;
 mod state;
+mod store;
 
-use std::sync::Arc;
+use crate::env::Config;
 use build_info::BuildInfo;
 use dotenv::dotenv;
-use crate::env::Config;
+use std::collections::HashMap;
+use std::sync::Arc;
 
 use crate::state::{Metrics, State};
 
-use opentelemetry::{KeyValue};
-use opentelemetry::sdk::{trace::{self, IdGenerator, Sampler}, Resource};
-use opentelemetry::sdk::metrics::{selectors};
+use opentelemetry::sdk::metrics::selectors;
+use opentelemetry::sdk::{
+    trace::{self, IdGenerator, Sampler},
+    Resource,
+};
 use opentelemetry::util::tokio_interval_stream;
+use opentelemetry::KeyValue;
 use opentelemetry_otlp::{Protocol, WithExportConfig};
 use std::time::Duration;
 
-use tracing::{info};
+use tracing::info;
 use tracing_subscriber::fmt::format::FmtSpan;
 
+use crate::store::Client;
 use warp::Filter;
 
 #[tokio::main]
 async fn main() -> error::Result<()> {
     dotenv().ok();
-    let config = env::get_config().expect("Failed to load config, please ensure all env vars are defined.");
+    let config =
+        env::get_config().expect("Failed to load config, please ensure all env vars are defined.");
 
-    let redis_client = redis::Client::open(config.redis_url.as_str())?;
-
-    let mut state = state::new_state(config, redis_client);
+    let store: HashMap<String, Client> = HashMap::new();
+    let mut state = state::new_state(config, store);
 
     if state.config.telemetry_enabled.unwrap_or(false) {
-        let grpc_url = state.config.telemetry_grpc_url.clone().unwrap_or("http://localhost:4317".to_string());
+        let grpc_url = state
+            .config
+            .telemetry_grpc_url
+            .clone()
+            .unwrap_or("http://localhost:4317".to_string());
 
         let tracing_exporter = opentelemetry_otlp::new_exporter()
             .tonic()
@@ -50,7 +61,13 @@ async fn main() -> error::Result<()> {
                     .with_max_events_per_span(64)
                     .with_max_attributes_per_span(16)
                     .with_max_events_per_span(16)
-                    .with_resource(Resource::new(vec![KeyValue::new("service.name", "echo-server"), KeyValue::new("service.version", state.build_info.crate_info.version.clone().to_string())])),
+                    .with_resource(Resource::new(vec![
+                        KeyValue::new("service.name", "echo-server"),
+                        KeyValue::new(
+                            "service.version",
+                            state.build_info.crate_info.version.clone().to_string(),
+                        ),
+                    ])),
             )
             .install_batch(opentelemetry::runtime::Tokio)?;
 
@@ -72,7 +89,7 @@ async fn main() -> error::Result<()> {
 
         let meter = opentelemetry::global::meter("echo-server");
         let hooks_counter = meter
-            .u64_counter("registered_webhooks")
+            .i64_up_down_counter("registered_webhooks")
             .with_description("The number of currently registered webhooks")
             .init();
 
@@ -81,10 +98,13 @@ async fn main() -> error::Result<()> {
             .with_description("The number of notification received")
             .init();
 
-        state.set_telemetry(tracer, Metrics {
-            registered_webhooks: hooks_counter,
-            received_notifications: notification_counter
-        })
+        state.set_telemetry(
+            tracer,
+            Metrics {
+                registered_webhooks: hooks_counter,
+                received_notifications: notification_counter,
+            },
+        )
     } else {
         // Only log to console if telemetry disabled
         tracing_subscriber::fmt()
@@ -119,16 +139,16 @@ async fn main() -> error::Result<()> {
         .and_then(handlers::push_message::handler);
 
     let routes = warp::any()
-        .and(health
-            .or(register_client)
-            .or(delete_client)
-            .or(push_to_client))
+        .and(
+            health
+                .or(register_client)
+                .or(delete_client)
+                .or(push_to_client),
+        )
         .with(warp::trace::request());
 
     info!("v{}", build_version);
-    warp::serve(routes)
-        .run(([127, 0, 0, 1], port))
-        .await;
+    warp::serve(routes).run(([127, 0, 0, 1], port)).await;
 
     Ok(())
 }

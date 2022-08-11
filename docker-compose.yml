@@ -1,9 +1,5 @@
 version: '3.9'
 services:
-  redis:
-    image: redis:latest
-    ports:
-      - 6379:6379
   jaeger:
     image: jaegertracing/opentelemetry-all-in-one:latest
     ports:

@@ -1,12 +1,11 @@
-use std::str::FromStr;
-use serde::{Deserialize};
 use crate::error;
+use serde::Deserialize;
+use std::str::FromStr;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Config {
     #[serde(default = "default_port")]
     pub port: u16,
-    pub redis_url: String,
     #[serde(default = "default_log_level")]
     pub log_level: String,
     pub telemetry_enabled: Option<bool>,
