@@ -40,7 +40,7 @@ pub async fn handler(
     }
 
     let mut store = state.store.lock().unwrap();
-    let exists = store.get_client(body.client_id.clone());
+    let exists = store.get_client(&body.client_id);
     if let Err(_) = exists {
         return Ok(warp::reply::with_status(
             warp::reply::json(&internal_server_error),
