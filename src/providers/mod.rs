@@ -9,6 +9,6 @@ where
     P: PushProvider,
 {
     match name {
-        _ => Err(ProviderNotFound),
+        _ => Err(ProviderNotFound(name)),
     }
 }

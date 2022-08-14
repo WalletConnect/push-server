@@ -7,7 +7,7 @@ pub enum Error {
     EnvyError(envy::Error),
     TraceError(opentelemetry::trace::TraceError),
     MetricsError(opentelemetry::metrics::MetricsError),
-    ProviderNotFound,
+    ProviderNotFound(String),
 }
 
 impl Display for Error {
@@ -16,7 +16,7 @@ impl Display for Error {
             Error::EnvyError(err) => write!(f, "{}", err),
             Error::TraceError(err) => Debug::fmt(&err, f),
             Error::MetricsError(err) => Debug::fmt(&err, f),
-            Error::ProviderNotFound => write!(f, "push provider not found"),
+            Error::ProviderNotFound(name) => write!(f, "{} is an invalid push provider as it cannot be not found", name),
         }
     }
 }
