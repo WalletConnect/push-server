@@ -7,7 +7,7 @@ pub fn new() -> NoopProvider {
 }
 
 impl PushProvider for NoopProvider {
-    fn send_notification(&mut self, _message: String) -> crate::error::Result<()> {
+    fn send_notification(&mut self, _token: String, _message: String) -> crate::error::Result<()> {
         todo!()
     }
 }

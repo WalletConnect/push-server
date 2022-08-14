@@ -7,7 +7,7 @@ pub fn new() -> ApnsProvider {
 }
 
 impl PushProvider for ApnsProvider {
-    fn send_notification(&mut self, _message: String) -> crate::error::Result<()> {
+    fn send_notification(&mut self, _token: String, _message: String) -> crate::error::Result<()> {
         todo!()
     }
 }

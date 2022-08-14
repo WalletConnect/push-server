@@ -8,7 +8,7 @@ use crate::providers::fcm::FcmProvider;
 use crate::providers::noop::NoopProvider;
 
 pub trait PushProvider {
-    fn send_notification(&mut self, message: String) -> crate::error::Result<()>;
+    fn send_notification(&mut self, token: String, message: String) -> crate::error::Result<()>;
 }
 
 pub enum Provider {
@@ -18,11 +18,11 @@ pub enum Provider {
 }
 
 impl PushProvider for Provider {
-    fn send_notification(&mut self, message: String) -> crate::error::Result<()> {
+    fn send_notification(&mut self, token: String, message: String) -> crate::error::Result<()> {
         match self {
-            Provider::Fcm(p) => p.send_notification(message),
-            Provider::Apns(p) => p.send_notification(message),
-            Provider::Noop(p) => p.send_notification(message),
+            Provider::Fcm(p) => p.send_notification(token, message),
+            Provider::Apns(p) => p.send_notification(token, message),
+            Provider::Noop(p) => p.send_notification(token, message),
         }
     }
 }
