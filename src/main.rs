@@ -1,9 +1,12 @@
+extern crate core;
+
 mod env;
 mod error;
 mod handlers;
 mod providers;
 mod state;
 mod store;
+mod store_test;
 
 use crate::env::Config;
 use build_info::BuildInfo;

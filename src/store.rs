@@ -2,7 +2,7 @@ use crate::error;
 use std::collections::HashMap;
 use std::hash::Hash;
 
-#[derive(Debug, Clone)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Client {
     pub push_type: String,
     pub token: String,
