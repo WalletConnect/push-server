@@ -27,7 +27,6 @@ use opentelemetry::KeyValue;
 use opentelemetry_otlp::{Protocol, WithExportConfig};
 use std::time::Duration;
 
-use tracing::info;
 use tracing_subscriber::fmt::format::FmtSpan;
 
 use crate::store::Client;
@@ -119,6 +118,8 @@ async fn main() -> error::Result<()> {
 
     let port = state.config.port;
     let build_version = state.build_info.crate_info.version.clone();
+    let build_commit = state.build_info.version_control.clone().unwrap().git().clone().unwrap().commit_short_id.clone();
+    let build_rustc_version = state.build_info.compiler.version.clone();
 
     let state_arc = Arc::new(state);
     let state_filter = warp::any().map(move || state_arc.clone());
@@ -151,7 +152,18 @@ async fn main() -> error::Result<()> {
         )
         .with(warp::trace::request());
 
-    info!("v{}", build_version);
+    let header = format!("
+ ______       _               _____
+|  ____|     | |             / ____|
+| |__    ___ | |__    ___   | (___    ___  _ __ __   __ ___  _ __
+|  __|  / __|| '_ \\  / _ \\   \\___ \\  / _ \\| '__|\\ \\ / // _ \\| '__|
+| |____| (__ | | | || (_) |  ____) ||  __/| |    \\ V /|  __/| |
+|______|\\___||_| |_| \\___/  |_____/  \\___||_|     \\_/  \\___||_|   \
+\nversion: {}, commit: {}, rustc: {},
+web-host: {}, web-port: {}
+", build_version, build_commit, build_rustc_version, "127.0.0.1", port.clone());
+    println!("{}", header);
+
     warp::serve(routes).run(([127, 0, 0, 1], port)).await;
 
     Ok(())
