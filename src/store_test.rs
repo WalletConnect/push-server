@@ -69,7 +69,9 @@ mod store_test {
     fn delete_client() {
         let mut store = setup_filled_test_store();
 
-        let res = store.delete_client(&ID.to_string()).expect("Failed to delete client from store");
+        let res = store
+            .delete_client(&ID.to_string())
+            .expect("Failed to delete client from store");
 
         assert_eq!(res, ())
     }
