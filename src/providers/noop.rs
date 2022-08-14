@@ -35,6 +35,7 @@ impl NoopProvider {
 }
 
 // Debug methods for testing
+#[cfg(test)]
 impl NoopProvider {
     /// Get notifications for a specific token
     pub fn get_notifications(&mut self, token: String) -> &Vec<String> {
