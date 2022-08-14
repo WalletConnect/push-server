@@ -2,7 +2,7 @@ use crate::error;
 use serde::Deserialize;
 use std::str::FromStr;
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone, PartialEq)]
 pub struct Config {
     #[serde(default = "default_port")]
     pub port: u16,
