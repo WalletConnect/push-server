@@ -1,6 +1,9 @@
 mod apns;
+mod apns_test;
 mod fcm;
+mod fcm_test;
 mod noop;
+mod noop_test;
 
 use crate::error::Error::{ProviderNotAvailable, ProviderNotFound};
 use crate::providers::apns::ApnsProvider;

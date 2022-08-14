@@ -1,14 +1,15 @@
-use std::collections::HashMap;
 use crate::providers::PushProvider;
+use std::collections::HashMap;
 
+#[derive(Debug, PartialEq)]
 pub struct NoopProvider {
     // token -> [message, message, message]
-    notifications: HashMap<String, Vec<String>>
+    notifications: HashMap<String, Vec<String>>,
 }
 
 pub fn new() -> NoopProvider {
     NoopProvider {
-        notifications: HashMap::new()
+        notifications: HashMap::new(),
     }
 }
 
@@ -36,7 +37,7 @@ impl NoopProvider {
 // Debug methods for testing
 impl NoopProvider {
     /// Get notifications for a specific token
-    fn get_notifications(&mut self, token: String) -> &Vec<String> {
+    pub fn get_notifications(&mut self, token: String) -> &Vec<String> {
         self.bootstrap(token.clone());
 
         self.notifications.get(&token).unwrap()

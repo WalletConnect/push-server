@@ -1,5 +1,6 @@
 use crate::providers::PushProvider;
 
+#[derive(Debug, PartialEq)]
 pub struct FcmProvider {}
 
 pub fn new() -> FcmProvider {
