@@ -5,12 +5,9 @@ mod fcm_test {
 
     #[test]
     fn fetch_provider() {
-        let provider = get_provider("fcm".to_string());
-        if provider.is_err() {
-            panic!("Failed to fetch fcm provider")
-        }
+        let provider = get_provider("fcm".to_string()).expect("Failed to fetch fcm provider");
 
-        match provider.unwrap() {
+        match provider {
             Provider::Fcm(p) => {
                 assert_eq!(p, fcm::new())
             }

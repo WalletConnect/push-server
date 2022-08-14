@@ -5,12 +5,9 @@ mod apns_test {
 
     #[test]
     fn fetch_provider() {
-        let provider = get_provider("apns".to_string());
-        if provider.is_err() {
-            panic!("Failed to fetch apns provider")
-        }
+        let provider = get_provider("apns".to_string()).expect("Failed to fetch apns provider");
 
-        match provider.unwrap() {
+        match provider {
             Provider::Apns(p) => {
                 assert_eq!(p, apns::new())
             }

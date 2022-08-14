@@ -8,12 +8,9 @@ mod noop_test {
 
     #[test]
     fn fetch_provider() {
-        let provider = get_provider("noop".to_string());
-        if provider.is_err() {
-            panic!("Failed to fetch noop provider")
-        }
+        let provider = get_provider("noop".to_string()).expect("Failed to fetch noop provider");
 
-        match provider.unwrap() {
+        match provider {
             Provider::Noop(p) => {
                 assert_eq!(p, noop::new())
             }
