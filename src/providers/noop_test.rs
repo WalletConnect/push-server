@@ -1,12 +1,12 @@
 #[cfg(test)]
 mod noop_test {
-    use std::collections::HashMap;
-    use std::sync::Arc;
-    use crate::Client;
     use crate::env::get_config;
     use crate::providers::noop::NoopProvider;
     use crate::providers::{get_provider, Provider, PushProvider};
     use crate::state::new_state;
+    use crate::Client;
+    use std::collections::HashMap;
+    use std::sync::Arc;
 
     const PUSH_TOKEN: &str = "0000-0000-0000-0000";
     const EXAMPLE_MESSAGE: &str = "You have a signing request.";
@@ -18,7 +18,8 @@ mod noop_test {
         let state = new_state(config, store).expect("Failed to create state");
         let state_arc = Arc::new(state);
 
-        let provider = get_provider("noop".to_string(), &state_arc).expect("Failed to fetch noop provider");
+        let provider =
+            get_provider("noop".to_string(), &state_arc).expect("Failed to fetch noop provider");
 
         match provider {
             Provider::Noop(p) => {

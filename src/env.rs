@@ -27,6 +27,7 @@ pub struct Config {
     pub telemetry_grpc_url: Option<String>,
     pub apns_certificate: Option<ApnsCertificateConfig>,
     pub apns_token: Option<ApnsTokenConfig>,
+    pub fcm_api_key: Option<String>,
 }
 
 impl Config {
@@ -45,7 +46,9 @@ impl Config {
             supported.push("apns".to_string())
         }
 
-        // TODO FCM
+        if self.fcm_api_key.is_some() {
+            supported.push("fcm".to_string())
+        }
 
         // Only available in debug/testing
         if cfg!(any(test, debug_assertions)) {

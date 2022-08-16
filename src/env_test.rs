@@ -27,7 +27,8 @@ mod env_test {
                 telemetry_enabled: None,
                 telemetry_grpc_url: None,
                 apns_certificate: None,
-                apns_token: None
+                apns_token: None,
+                fcm_api_key: None
             }
         )
     }
@@ -49,7 +50,8 @@ mod env_test {
                 telemetry_enabled: Some(false),
                 telemetry_grpc_url: None,
                 apns_certificate: None,
-                apns_token: None
+                apns_token: None,
+                fcm_api_key: None
             }
         )
     }
@@ -72,7 +74,8 @@ mod env_test {
                 telemetry_enabled: None,
                 telemetry_grpc_url: None,
                 apns_certificate: None,
-                apns_token: None
+                apns_token: None,
+                fcm_api_key: None
             }
         )
     }
@@ -95,7 +98,8 @@ mod env_test {
                 telemetry_enabled: None,
                 telemetry_grpc_url: None,
                 apns_certificate: None,
-                apns_token: None
+                apns_token: None,
+                fcm_api_key: None
             }
         )
     }
@@ -109,6 +113,7 @@ mod env_test {
         env::set_var("LOG_LEVEL", "TRACE");
         env::set_var("TELEMETRY_ENABLED", "true");
         env::set_var("TELEMETRY_GRPC_URL", "http://localhost:4317");
+        env::set_var("FCM_API_KEY", "API-KEY");
 
         let config = get_config().expect("Failed to fetch config");
 
@@ -120,7 +125,8 @@ mod env_test {
                 telemetry_enabled: Some(true),
                 telemetry_grpc_url: Some("http://localhost:4317".to_string()),
                 apns_certificate: None,
-                apns_token: None
+                apns_token: None,
+                fcm_api_key: Some("API-KEY".to_string())
             }
         )
     }

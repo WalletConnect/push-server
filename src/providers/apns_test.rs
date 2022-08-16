@@ -3,7 +3,7 @@ mod apns_test {
     use crate::env::get_config;
     use crate::providers::{get_provider, Provider};
     use crate::state::new_state;
-    use crate::{Client};
+    use crate::Client;
     use std::collections::HashMap;
     use std::sync::Arc;
 
