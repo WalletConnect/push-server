@@ -7,6 +7,8 @@ pub enum Error {
     EnvyError(envy::Error),
     TraceError(opentelemetry::trace::TraceError),
     MetricsError(opentelemetry::metrics::MetricsError),
+    ApnsError(a2::Error),
+    IoError(std::io::Error),
     ProviderNotFound(String),
     ProviderNotAvailable(String),
 }
@@ -17,6 +19,8 @@ impl Display for Error {
             Error::EnvyError(err) => write!(f, "{}", err),
             Error::TraceError(err) => Debug::fmt(&err, f),
             Error::MetricsError(err) => Debug::fmt(&err, f),
+            Error::ApnsError(err) => Debug::fmt(&err, f),
+            Error::IoError(err) => write!(f, "{}", err),
             Error::ProviderNotFound(name) => write!(
                 f,
                 "{} is an invalid push provider as it cannot be not found",
@@ -46,6 +50,18 @@ impl From<opentelemetry::trace::TraceError> for Error {
 impl From<opentelemetry::metrics::MetricsError> for Error {
     fn from(err: opentelemetry::metrics::MetricsError) -> Self {
         Error::MetricsError(err)
+    }
+}
+
+impl From<a2::Error> for Error {
+    fn from(err: a2::Error) -> Self {
+        Error::ApnsError(err)
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(err: std::io::Error) -> Self {
+        Error::IoError(err)
     }
 }
 

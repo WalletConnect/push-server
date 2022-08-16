@@ -1,10 +1,12 @@
 use crate::providers::PushProvider;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct FcmProvider {}
 
-pub fn new() -> FcmProvider {
-    FcmProvider {}
+impl FcmProvider {
+    pub fn new() -> Self {
+        FcmProvider {}
+    }
 }
 
 impl PushProvider for FcmProvider {

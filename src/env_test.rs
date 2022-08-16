@@ -25,7 +25,9 @@ mod env_test {
                 port: 3000,
                 log_level: "WARN".to_string(),
                 telemetry_enabled: None,
-                telemetry_grpc_url: None
+                telemetry_grpc_url: None,
+                apns_certificate: None,
+                apns_token: None
             }
         )
     }
@@ -45,7 +47,9 @@ mod env_test {
                 port: 3000,
                 log_level: "WARN".to_string(),
                 telemetry_enabled: Some(false),
-                telemetry_grpc_url: None
+                telemetry_grpc_url: None,
+                apns_certificate: None,
+                apns_token: None
             }
         )
     }
@@ -66,7 +70,9 @@ mod env_test {
                 port: 3001,
                 log_level: "TRACE".to_string(),
                 telemetry_enabled: None,
-                telemetry_grpc_url: None
+                telemetry_grpc_url: None,
+                apns_certificate: None,
+                apns_token: None
             }
         )
     }
@@ -87,7 +93,9 @@ mod env_test {
                 port: 8080,
                 log_level: "ERROR".to_string(),
                 telemetry_enabled: None,
-                telemetry_grpc_url: None
+                telemetry_grpc_url: None,
+                apns_certificate: None,
+                apns_token: None
             }
         )
     }
@@ -110,7 +118,9 @@ mod env_test {
                 port: 3001,
                 log_level: "TRACE".to_string(),
                 telemetry_enabled: Some(true),
-                telemetry_grpc_url: Some("http://localhost:4317".to_string())
+                telemetry_grpc_url: Some("http://localhost:4317".to_string()),
+                apns_certificate: None,
+                apns_token: None
             }
         )
     }

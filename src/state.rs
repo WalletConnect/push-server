@@ -1,3 +1,4 @@
+use crate::providers::Providers;
 use crate::store::ClientStore;
 use crate::{BuildInfo, Config};
 use opentelemetry::metrics::{Counter, UpDownCounter};
@@ -18,22 +19,25 @@ where
     pub build_info: BuildInfo,
     pub metrics: Option<Metrics>,
     pub store: Mutex<S>,
+    pub providers: Providers,
 }
 
 build_info::build_info!(fn build_info);
 
-pub fn new_state<S>(config: Config, store: S) -> State<S>
+pub fn new_state<S>(config: Config, store: S) -> crate::error::Result<State<S>>
 where
     S: ClientStore,
 {
     let build_info: &BuildInfo = build_info();
+    let providers = Providers::new(&config)?;
 
-    State {
+    Ok(State {
         config,
         build_info: build_info.clone(),
         metrics: None,
         store: Mutex::new(store),
-    }
+        providers,
+    })
 }
 
 impl<S> State<S>

@@ -51,7 +51,7 @@ pub async fn handler(
     }
 
     let provider_name = &client.unwrap().push_type;
-    let provider_result = get_provider(provider_name.clone());
+    let provider_result = get_provider(provider_name.clone(), &state);
     if let Err(err) = &provider_result {
         match err {
             Error::ProviderNotFound(_) => {

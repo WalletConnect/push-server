@@ -39,14 +39,14 @@ async fn main() -> error::Result<()> {
         env::get_config().expect("Failed to load config, please ensure all env vars are defined.");
 
     let store: HashMap<String, Client> = HashMap::new();
-    let mut state = state::new_state(config, store);
+    let mut state = state::new_state(config, store)?;
 
     if state.config.telemetry_enabled.unwrap_or(false) {
         let grpc_url = state
             .config
             .telemetry_grpc_url
             .clone()
-            .unwrap_or("http://localhost:4317".to_string());
+            .unwrap_or_else(|| "http://localhost:4317".to_string());
 
         let tracing_exporter = opentelemetry_otlp::new_exporter()
             .tonic()
@@ -118,7 +118,15 @@ async fn main() -> error::Result<()> {
 
     let port = state.config.port;
     let build_version = state.build_info.crate_info.version.clone();
-    let build_commit = state.build_info.version_control.clone().unwrap().git().clone().unwrap().commit_short_id.clone();
+    let build_commit = state
+        .build_info
+        .version_control
+        .clone()
+        .unwrap()
+        .git()
+        .unwrap()
+        .commit_short_id
+        .clone();
     let build_rustc_version = state.build_info.compiler.version.clone();
 
     let state_arc = Arc::new(state);
@@ -152,16 +160,23 @@ async fn main() -> error::Result<()> {
         )
         .with(warp::trace::request());
 
-    let header = format!("
+    let header = format!(
+        "
  ______       _               _____
 |  ____|     | |             / ____|
 | |__    ___ | |__    ___   | (___    ___  _ __ __   __ ___  _ __
 |  __|  / __|| '_ \\  / _ \\   \\___ \\  / _ \\| '__|\\ \\ / // _ \\| '__|
 | |____| (__ | | | || (_) |  ____) ||  __/| |    \\ V /|  __/| |
-|______|\\___||_| |_| \\___/  |_____/  \\___||_|     \\_/  \\___||_|   \
+|______|\\___||_| |_| \\___/  |_____/  \\___||_|     \\_/  \\___||_|
 \nversion: {}, commit: {}, rustc: {},
 web-host: {}, web-port: {}
-", build_version, build_commit, build_rustc_version, "127.0.0.1", port.clone());
+",
+        build_version,
+        build_commit,
+        build_rustc_version,
+        "127.0.0.1",
+        port.clone()
+    );
     println!("{}", header);
 
     warp::serve(routes).run(([127, 0, 0, 1], port)).await;
