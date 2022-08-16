@@ -10,9 +10,14 @@ mod fcm_test {
     use std::sync::Arc;
 
     const FCM_API_KEY: &str = "API0-KEY0-0000-000";
+    use serial_test::serial;
 
     #[test]
+    #[serial]
     fn fetch_provider() {
+        // Reset the env vars
+        crate::env_test::env_test::reset_env();
+
         env::set_var("FCM_API_KEY", FCM_API_KEY);
 
         let config = get_config().expect("Failed to get config");

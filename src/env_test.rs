@@ -1,15 +1,16 @@
 #[cfg(test)]
-mod env_test {
+pub mod env_test {
     use crate::env::get_config;
     use crate::Config;
     use serial_test::serial;
     use std::env;
 
-    fn reset_env() {
+    pub fn reset_env() {
         env::remove_var("PORT");
         env::remove_var("LOG_LEVEL");
         env::remove_var("TELEMETRY_ENABLED");
         env::remove_var("TELEMETRY_GRPC_URL");
+        env::remove_var("FCM_API_KEY");
     }
 
     #[test]

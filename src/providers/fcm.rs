@@ -1,4 +1,5 @@
 use crate::providers::PushProvider;
+use fcm::{MessageBuilder, NotificationBuilder};
 use std::fmt::{Debug, Formatter};
 
 pub struct FcmProvider {
@@ -17,13 +18,15 @@ impl FcmProvider {
 
 impl PushProvider for FcmProvider {
     fn send_notification(&mut self, token: String, message: String) -> crate::error::Result<()> {
-        let mut notification_builder = fcm::NotificationBuilder::new().body(&message);
-        let notification = notification_builder.finalize();
+        let mut builder = NotificationBuilder::new();
+        builder.body(message.as_str());
+        let notification = builder.finalize();
 
-        let mut message_builder = fcm::MessageBuilder::new(&self.api_key, &token).notification(notification);
-        let message = message_builder.finalize();
+        let mut builder = MessageBuilder::new(self.api_key.as_str(), token.as_str());
+        builder.notification(notification);
+        let fcm_message = builder.finalize();
 
-        let _res = self.client.send(message);
+        let _res = &self.client.send(fcm_message);
 
         Ok(())
     }

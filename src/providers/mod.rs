@@ -86,9 +86,16 @@ impl Providers {
             }
         }
 
+        let mut fcm = None;
+        if supported.contains(&"fcm".to_string()) {
+            if let Some(api_key) = &config.fcm_api_key {
+                fcm = Some(FcmProvider::new(api_key.clone()))
+            }
+        }
+
         Ok(Providers {
             apns,
-            fcm: None,
+            fcm,
             noop: NoopProvider::new(),
         })
     }
@@ -100,7 +107,7 @@ pub fn get_provider(
 ) -> crate::error::Result<Provider> {
     let supported = state.config.supported_providers();
 
-    if !supported.contains(&name) {
+    if !supported.contains(&name.to_lowercase()) {
         return Err(ProviderNotAvailable(name));
     }
 
