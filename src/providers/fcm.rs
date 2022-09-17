@@ -1,4 +1,5 @@
 use crate::providers::PushProvider;
+use async_trait::async_trait;
 use fcm::{MessageBuilder, NotificationBuilder};
 use std::fmt::{Debug, Formatter};
 
@@ -16,8 +17,13 @@ impl FcmProvider {
     }
 }
 
+#[async_trait]
 impl PushProvider for FcmProvider {
-    fn send_notification(&mut self, token: String, message: String) -> crate::error::Result<()> {
+    async fn send_notification(
+        &mut self,
+        token: String,
+        message: String,
+    ) -> crate::error::Result<()> {
         let mut builder = NotificationBuilder::new();
         builder.body(message.as_str());
         let notification = builder.finalize();
@@ -26,7 +32,7 @@ impl PushProvider for FcmProvider {
         builder.notification(notification);
         let fcm_message = builder.finalize();
 
-        let _res = &self.client.send(fcm_message);
+        &self.client.send(fcm_message).await?;
 
         Ok(())
     }

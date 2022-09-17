@@ -1,49 +1,46 @@
 use crate::handlers::{new_error_response, new_success_response, ErrorReason};
-use crate::State;
+use crate::AppState;
+use axum::extract::{Path, State};
+use axum::http::StatusCode;
+use axum::response::IntoResponse;
+use axum::Json;
+use serde_json::json;
 use std::sync::Arc;
-use warp::http;
 
 pub async fn handler(
-    id: String,
-    state: Arc<State<impl crate::store::ClientStore>>,
-) -> Result<impl warp::Reply, warp::Rejection> {
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState<impl crate::store::ClientStore>>>,
+) -> impl IntoResponse {
     let mut store = state.store.lock().unwrap();
 
     let exists = store.get_client(&id);
     if let Err(_) = exists {
-        return Ok(warp::reply::with_status(
-            warp::reply::json(&new_error_response(vec![])),
-            http::StatusCode::INTERNAL_SERVER_ERROR,
-        ));
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!(new_error_response(vec![]))),
+        );
     }
 
     if exists.unwrap().is_none() {
-        return Ok(warp::reply::with_status(
-            warp::reply::json(&new_error_response(vec![ErrorReason {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(json!(new_error_response(vec![ErrorReason {
                 field: "client_id".to_string(),
                 description: "No client is registered with the supplied id".to_string(),
-            }])),
-            http::StatusCode::BAD_REQUEST,
-        ));
+            }]))),
+        );
     }
 
     if let Err(_) = store.delete_client(&id) {
-        return Ok(warp::reply::with_status(
-            warp::reply::json(&new_error_response(vec![])),
-            http::StatusCode::INTERNAL_SERVER_ERROR,
-        ));
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!(new_error_response(vec![]))),
+        );
     }
 
     if let Some(metrics) = &state.metrics {
-        metrics
-            .registered_webhooks
-            .add(-1, &[opentelemetry::KeyValue::new("client.id", id)]);
+        metrics.registered_webhooks.add(-1, &[]);
     }
 
-    let response = warp::reply::with_status(
-        warp::reply::json(&new_success_response()),
-        http::StatusCode::OK,
-    );
-
-    Ok(response)
+    return (StatusCode::OK, Json(json!(new_success_response())));
 }

@@ -13,9 +13,10 @@ use crate::env::Config;
 use build_info::BuildInfo;
 use dotenv::dotenv;
 use std::collections::HashMap;
+use std::net::SocketAddr;
 use std::sync::Arc;
 
-use crate::state::{Metrics, State};
+use crate::state::{AppState, Metrics};
 
 use opentelemetry::sdk::metrics::selectors;
 use opentelemetry::sdk::{
@@ -29,14 +30,23 @@ use std::time::Duration;
 
 use tracing_subscriber::fmt::format::FmtSpan;
 
+use axum::{
+    routing::{delete, get, post},
+    Router,
+};
+
 use crate::store::Client;
-use warp::Filter;
 
 #[tokio::main]
 async fn main() -> error::Result<()> {
     dotenv().ok();
     let config =
         env::get_config().expect("Failed to load config, please ensure all env vars are defined.");
+
+    let supported_providers = config.supported_providers();
+    if supported_providers.is_empty() {
+        panic!("You must enable at least one provider.");
+    }
 
     let store: HashMap<String, Client> = HashMap::new();
     let mut state = state::new_state(config, store)?;
@@ -130,35 +140,14 @@ async fn main() -> error::Result<()> {
     let build_rustc_version = state.build_info.compiler.version.clone();
 
     let state_arc = Arc::new(state);
-    let state_filter = warp::any().map(move || state_arc.clone());
 
-    let health = warp::get()
-        .and(warp::path!("health"))
-        .and(state_filter.clone())
-        .and_then(handlers::health::handler);
-    let register_client = warp::post()
-        .and(warp::path!("clients"))
-        .and(state_filter.clone())
-        .and(warp::body::json())
-        .and_then(handlers::register_client::handler);
-    let delete_client = warp::delete()
-        .and(warp::path!("clients" / String))
-        .and(state_filter.clone())
-        .and_then(handlers::delete_client::handler);
-    let push_to_client = warp::post()
-        .and(warp::path!("clients" / String))
-        .and(state_filter)
-        .and(warp::body::json())
-        .and_then(handlers::push_message::handler);
-
-    let routes = warp::any()
-        .and(
-            health
-                .or(register_client)
-                .or(delete_client)
-                .or(push_to_client),
-        )
-        .with(warp::trace::request());
+    let app = Router::with_state(state_arc)
+        .route("/health", get(handlers::health::handler))
+        .route("/clients", post(handlers::register_client::handler))
+        .route(
+            "/clients/:id",
+            delete(handlers::delete_client::handler).post(handlers::push_message::handler),
+        );
 
     let header = format!(
         "
@@ -169,17 +158,23 @@ async fn main() -> error::Result<()> {
 | |____| (__ | | | || (_) |  ____) ||  __/| |    \\ V /|  __/| |
 |______|\\___||_| |_| \\___/  |_____/  \\___||_|     \\_/  \\___||_|
 \nversion: {}, commit: {}, rustc: {},
-web-host: {}, web-port: {}
+web-host: {}, web-port: {},
+providers: [{}]
 ",
         build_version,
         build_commit,
         build_rustc_version,
         "127.0.0.1",
-        port.clone()
+        port.clone(),
+        supported_providers.join(", ")
     );
     println!("{}", header);
 
-    warp::serve(routes).run(([127, 0, 0, 1], port)).await;
+    let addr = SocketAddr::from(([127, 0, 0, 1], port));
+    axum::Server::bind(&addr)
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
 
     Ok(())
 }

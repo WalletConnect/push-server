@@ -33,9 +33,7 @@ mod noop_test {
     fn send_notification() {
         let mut provider = NoopProvider::new();
 
-        provider
-            .send_notification(PUSH_TOKEN.to_string(), EXAMPLE_MESSAGE.to_string())
-            .expect("Failed to send notification");
+        provider.send_notification(PUSH_TOKEN.to_string(), EXAMPLE_MESSAGE.to_string());
 
         let notifications = provider.get_notifications(PUSH_TOKEN.to_string());
 

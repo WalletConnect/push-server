@@ -10,13 +10,19 @@ use crate::providers::apns::ApnsProvider;
 use crate::providers::fcm::FcmProvider;
 use crate::providers::noop::NoopProvider;
 use crate::store::ClientStore;
-use crate::{Config, State};
+use crate::{AppState, Config};
+use async_trait::async_trait;
 use std::fs::File;
 use std::io::BufReader;
 use std::sync::Arc;
 
+#[async_trait]
 pub trait PushProvider {
-    fn send_notification(&mut self, token: String, message: String) -> crate::error::Result<()>;
+    async fn send_notification(
+        &mut self,
+        token: String,
+        message: String,
+    ) -> crate::error::Result<()>;
 }
 
 pub enum Provider {
@@ -25,12 +31,17 @@ pub enum Provider {
     Noop(NoopProvider),
 }
 
+#[async_trait]
 impl PushProvider for Provider {
-    fn send_notification(&mut self, token: String, message: String) -> crate::error::Result<()> {
+    async fn send_notification(
+        &mut self,
+        token: String,
+        message: String,
+    ) -> crate::error::Result<()> {
         match self {
-            Provider::Fcm(p) => p.send_notification(token, message),
-            Provider::Apns(p) => p.send_notification(token, message),
-            Provider::Noop(p) => p.send_notification(token, message),
+            Provider::Fcm(p) => p.send_notification(token, message).await,
+            Provider::Apns(p) => p.send_notification(token, message).await,
+            Provider::Noop(p) => p.send_notification(token, message).await,
         }
     }
 }
@@ -103,7 +114,7 @@ impl Providers {
 
 pub fn get_provider(
     name: String,
-    state: &Arc<State<impl ClientStore>>,
+    state: &Arc<AppState<impl ClientStore>>,
 ) -> crate::error::Result<Provider> {
     let supported = state.config.supported_providers();
 
