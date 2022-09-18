@@ -6,10 +6,13 @@ We use Ed25519 to verify that requests from the Relay network are valid and inte
 
 ### Implementation
 
-Echo Server generates an Ed25519 key-pair and stores that in-memory - or in files specified using environment variables. The generated
+Echo Server generates<sup>[[1]](#generating-keys)</sup> an Ed25519 key-pair and stores that in-memory - or in files specified using environment variables. The generated
 public key is then sent to the Relay network along with a cloud app project id and the public url (both from environment variables) so that
 future requests to the relay can be signed and validated. The Echo Server instance also fetches the Relay network's public key and caches it
 so that requests received can be validated.
+
+On start-up Echo Server sends [the register request](#post-pushservers) to the relay network<sup>[[2]](#registering-with-relay)</sup>. This request is formatted using the
+public key from the above key-pair as well as the provided `project_id` and `public_url` (both provided via Environment Variables).
 
 ### Relay Endpoints
 
@@ -45,3 +48,12 @@ so that requests received can be validated.
 {
 }
 ```
+
+### Notes
+#### Generating Keys
+If an environment variable is provided to a path that exists Echo Server will treat that as the private key that it should use and
+as such will not generate a key. It will instead read the provided file and attempt to parse that as an Ed25519 private key.
+
+#### Registering with Relay
+In this implementation the public key, is sent everytime a node starts up. This ensures that the relay always has up-to date
+information for the Echo Server instance. If you have multiple Echo Server instances ensure that all the private keys are the same.
