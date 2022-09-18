@@ -24,11 +24,12 @@ so that requests received can be validated.
 #### POST `/push/servers`
 ##### Request
 > **Note**
-> This is an example request. The `project_id` & `public_key` values are not valid.
+> This is an example request. The `project_id`, `public_key` & `public_url` values are not valid.
 ```json
 {
     "project_id": "83f11e753439fab08222b45e2d029eab",
     "public_key": "d5aa4b55ecf4553c3ef8f8a945d9449394f0b3b7787af049d1d4828037465a4f",
+    "public_url": "https://push.walletconnect.com",
     "echo_server": {
       "version": "0.1.0",
       "git": "d0be36e9007ef73e0dafb8d2d9f3172c4d9f8333"
