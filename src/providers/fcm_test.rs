@@ -24,9 +24,7 @@ mod fcm_test {
         let store: HashMap<String, Client> = HashMap::new();
         let state = new_state(config, store).expect("Failed to create state");
         let state_arc = Arc::new(state);
-
-        let provider =
-            get_provider("fcm".to_string(), &state_arc).expect("Failed to fetch fcm provider");
+        let provider = get_provider("fcm", &state_arc).expect("Failed to fetch fcm provider");
 
         match provider {
             Provider::Fcm(p) => {

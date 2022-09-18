@@ -1,5 +1,6 @@
 use crate::providers::PushProvider;
 use a2::NotificationBuilder;
+use async_trait::async_trait;
 use std::io::Read;
 
 #[derive(Debug, Clone)]
@@ -36,14 +37,19 @@ impl ApnsProvider {
     }
 }
 
+#[async_trait]
 impl PushProvider for ApnsProvider {
-    fn send_notification(&mut self, token: String, message: String) -> crate::error::Result<()> {
+    async fn send_notification(
+        &mut self,
+        token: String,
+        message: String,
+    ) -> crate::error::Result<()> {
         let opt = a2::NotificationOptions::default();
 
         let notification =
             a2::PlainNotificationBuilder::new(message.as_str()).build(token.as_str(), opt);
 
-        let _res = self.client.send(notification);
+        &self.client.send(notification).await?;
 
         Ok(())
     }

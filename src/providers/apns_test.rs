@@ -14,9 +14,7 @@ mod apns_test {
         let store: HashMap<String, Client> = HashMap::new();
         let state = new_state(config, store).expect("Failed to create state");
         let state_arc = Arc::new(state);
-
-        let provider =
-            get_provider("apns".to_string(), &state_arc).expect("Failed to fetch apns provider");
+        let provider = get_provider("apns", &state_arc).expect("Failed to fetch apns provider");
 
         match provider {
             Provider::Apns(_) => {}

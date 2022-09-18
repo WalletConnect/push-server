@@ -1,4 +1,5 @@
 use crate::providers::PushProvider;
+use async_trait::async_trait;
 use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -15,8 +16,13 @@ impl NoopProvider {
     }
 }
 
+#[async_trait]
 impl PushProvider for NoopProvider {
-    fn send_notification(&mut self, token: String, message: String) -> crate::error::Result<()> {
+    async fn send_notification(
+        &mut self,
+        token: String,
+        message: String,
+    ) -> crate::error::Result<()> {
         self.bootstrap(token.clone());
 
         let notifications = self.notifications.get_mut(&token).unwrap();
