@@ -8,6 +8,7 @@ pub enum Error {
     TraceError(opentelemetry::trace::TraceError),
     MetricsError(opentelemetry::metrics::MetricsError),
     ApnsError(a2::Error),
+    FcmError(fcm::FcmError),
     IoError(std::io::Error),
     ProviderNotFound(String),
     ProviderNotAvailable(String),
@@ -20,6 +21,7 @@ impl Display for Error {
             Error::TraceError(err) => Debug::fmt(&err, f),
             Error::MetricsError(err) => Debug::fmt(&err, f),
             Error::ApnsError(err) => Debug::fmt(&err, f),
+            Error::FcmError(err) => write!(f, "{}", err),
             Error::IoError(err) => write!(f, "{}", err),
             Error::ProviderNotFound(name) => write!(
                 f,
@@ -56,6 +58,12 @@ impl From<opentelemetry::metrics::MetricsError> for Error {
 impl From<a2::Error> for Error {
     fn from(err: a2::Error) -> Self {
         Error::ApnsError(err)
+    }
+}
+
+impl From<fcm::FcmError> for Error {
+    fn from(err: fcm::FcmError) -> Self {
+        Error::FcmError(err)
     }
 }
 

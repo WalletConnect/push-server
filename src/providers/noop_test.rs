@@ -18,8 +18,7 @@ mod noop_test {
         let state = new_state(config, store).expect("Failed to create state");
         let state_arc = Arc::new(state);
 
-        let provider =
-            get_provider("noop".to_string(), &state_arc).expect("Failed to fetch noop provider");
+        let provider = get_provider("noop", &state_arc).expect("Failed to fetch noop provider");
 
         match provider {
             Provider::Noop(p) => {
@@ -33,9 +32,7 @@ mod noop_test {
     fn send_notification() {
         let mut provider = NoopProvider::new();
 
-        provider
-            .send_notification(PUSH_TOKEN.to_string(), EXAMPLE_MESSAGE.to_string())
-            .expect("Failed to send notification");
+        provider.send_notification(PUSH_TOKEN.to_string(), EXAMPLE_MESSAGE.to_string());
 
         let notifications = provider.get_notifications(PUSH_TOKEN.to_string());
 

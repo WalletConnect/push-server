@@ -11,7 +11,7 @@ pub struct Metrics {
     pub received_notifications: Counter<u64>,
 }
 
-pub struct State<S>
+pub struct AppState<S>
 where
     S: ClientStore,
 {
@@ -24,14 +24,14 @@ where
 
 build_info::build_info!(fn build_info);
 
-pub fn new_state<S>(config: Config, store: S) -> crate::error::Result<State<S>>
+pub fn new_state<S>(config: Config, store: S) -> crate::error::Result<AppState<S>>
 where
     S: ClientStore,
 {
     let build_info: &BuildInfo = build_info();
     let providers = Providers::new(&config)?;
 
-    Ok(State {
+    Ok(AppState {
         config,
         build_info: build_info.clone(),
         metrics: None,
@@ -40,7 +40,7 @@ where
     })
 }
 
-impl<S> State<S>
+impl<S> AppState<S>
 where
     S: ClientStore,
 {
