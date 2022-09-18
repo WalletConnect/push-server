@@ -113,23 +113,23 @@ impl Providers {
 }
 
 pub fn get_provider(
-    name: String,
+    name: &str,
     state: &Arc<AppState<impl ClientStore>>,
 ) -> crate::error::Result<Provider> {
     let supported = state.config.supported_providers();
 
     if !supported.contains(&name.to_lowercase()) {
-        return Err(ProviderNotAvailable(name));
+        return Err(ProviderNotAvailable(name.into()));
     }
 
-    match name.as_str() {
+    match name {
         "apns" => match state.providers.apns.clone() {
             Some(p) => Ok(Provider::Apns(p)),
-            None => Err(ProviderNotAvailable(name)),
+            None => Err(ProviderNotAvailable(name.into())),
         },
         "fcm" => match state.providers.fcm.clone() {
             Some(p) => Ok(Provider::Fcm(p)),
-            None => Err(ProviderNotAvailable(name)),
+            None => Err(ProviderNotAvailable(name.into())),
         },
         "noop" => {
             // Only available in debug/testing
@@ -137,8 +137,8 @@ pub fn get_provider(
                 return Ok(Provider::Noop(state.providers.noop.clone()));
             }
 
-            Err(ProviderNotAvailable(name))
+            Err(ProviderNotAvailable(name.into()))
         }
-        _ => Err(ProviderNotFound(name)),
+        _ => Err(ProviderNotFound(name.into())),
     }
 }

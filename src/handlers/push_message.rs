@@ -25,64 +25,66 @@ pub async fn handler(
     State(state): State<Arc<AppState<impl crate::store::ClientStore>>>,
     Json(body): Json<PushMessageBody>,
 ) -> impl IntoResponse {
-    let store = state.store.lock().unwrap();
-
     // TODO de-dup, and return accepted to already acknowledged notifications
     if body.id.as_str() == "0000-0000-0000-0000" {
         return (StatusCode::ACCEPTED, Json(json!(new_success_response())));
     }
 
-    let client_result = store.get_client(&id);
-    if let Err(_) = client_result {
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!(new_error_response(vec![]))),
-        );
-    }
-    let client = client_result.unwrap();
-    if client.is_none() {
-        return (
-            StatusCode::NOT_FOUND,
-            Json(json!(new_error_response(vec![ErrorReason {
-                field: "id".to_string(),
-                description: "No client found with the provided id".to_string(),
-            }]))),
-        );
-    }
+    let (client_token, provider) = {
+        let store = state.store.lock().unwrap();
 
-    let provider_name = &client.unwrap().push_type;
-    let provider_result = get_provider(provider_name.clone(), &state);
-    if let Err(err) = &provider_result {
-        match err {
-            Error::ProviderNotFound(_) => {
-                // NOT POSSIBLE IN THEORY!
+        if let Ok(client) = store.get_client(&id) {
+            if let Some(client) = client {
+                (
+                    client.token.clone(),
+                    get_provider(&client.push_type, &state),
+                )
+            } else {
                 return (
                     StatusCode::NOT_FOUND,
                     Json(json!(new_error_response(vec![ErrorReason {
-                        field: "client.provider".to_string(),
-                        description: "The client's registered provider cannot be found."
-                            .to_string(),
+                        field: "id".to_string(),
+                        description: "No client found with the provided id".to_string(),
                     }]))),
                 );
             }
-            Error::ProviderNotAvailable(_) => {
-                return (
-                    StatusCode::NOT_FOUND,
-                    Json(json!(new_error_response(vec![ErrorReason {
-                        field: "client.provider".to_string(),
-                        description: "The client's registered provider is not available."
-                            .to_string(),
-                    }]))),
-                );
-            }
-            // Cannot be any other error
-            _ => {}
+        } else {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!(new_error_response(vec![]))),
+            );
         }
-    }
-    let mut provider = provider_result.unwrap();
+    };
+
+    let mut provider = match provider {
+        Ok(provider) => provider,
+
+        Err(Error::ProviderNotFound(..)) => {
+            // NOT POSSIBLE IN THEORY!
+            return (
+                StatusCode::NOT_FOUND,
+                Json(json!(new_error_response(vec![ErrorReason {
+                    field: "client.provider".to_string(),
+                    description: "The client's registered provider cannot be found.".to_string(),
+                }]))),
+            );
+        }
+
+        Err(Error::ProviderNotAvailable(..)) => {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(json!(new_error_response(vec![ErrorReason {
+                    field: "client.provider".to_string(),
+                    description: "The client's registered provider is not available.".to_string(),
+                }]))),
+            );
+        }
+
+        _ => panic!("cannot be any other error"),
+    };
 
     let res = provider
-        .send_notification(client.unwrap().token.clone(), body.payload.message)
+        .send_notification(client_token, body.payload.message)
         .await;
     if res.is_err() {
         return (
@@ -91,5 +93,5 @@ pub async fn handler(
         );
     }
 
-    return (StatusCode::ACCEPTED, Json(json!(new_success_response())));
+    (StatusCode::ACCEPTED, Json(json!(new_success_response())))
 }

@@ -18,8 +18,7 @@ mod noop_test {
         let state = new_state(config, store).expect("Failed to create state");
         let state_arc = Arc::new(state);
 
-        let provider =
-            get_provider("noop".to_string(), &state_arc).expect("Failed to fetch noop provider");
+        let provider = get_provider("noop", &state_arc).expect("Failed to fetch noop provider");
 
         match provider {
             Provider::Noop(p) => {
