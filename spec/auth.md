@@ -12,7 +12,7 @@ future requests to the relay can be signed and validated. The Echo Server instan
 so that requests received can be validated.
 
 On start-up Echo Server sends [the register request](#post-pushservers) to the relay network<sup>[[2]](#registering-with-relay)</sup>. This request is formatted using the
-public key from the above key-pair as well as the provided `project_id` and `public_url` (both provided via Environment Variables).
+public key from the above key-pair as well as the provided `projectId` and `publicUrl` (both provided via Environment Variables).
 
 ### Relay Endpoints
 
@@ -27,13 +27,13 @@ public key from the above key-pair as well as the provided `project_id` and `pub
 #### POST `/push/servers`
 ##### Request
 > **Note**
-> This is an example request. The `project_id`, `public_key` & `public_url` values are not valid.
+> This is an example request. The `projectId`, `publicKey` & `publicUrl` values are not valid.
 ```json
 {
-    "project_id": "83f11e753439fab08222b45e2d029eab",
-    "public_key": "d5aa4b55ecf4553c3ef8f8a945d9449394f0b3b7787af049d1d4828037465a4f",
-    "public_url": "https://push.walletconnect.com",
-    "echo_server": {
+    "projectId": "83f11e753439fab08222b45e2d029eab",
+    "publicKey": "d5aa4b55ecf4553c3ef8f8a945d9449394f0b3b7787af049d1d4828037465a4f",
+    "publicUrl": "https://push.walletconnect.com",
+    "echoServer": {
       "version": "0.1.0",
       "git": "d0be36e9007ef73e0dafb8d2d9f3172c4d9f8333"
     }
