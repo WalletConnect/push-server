@@ -1,0 +1,1 @@
+public_url = "echo.walletconnect.com"
