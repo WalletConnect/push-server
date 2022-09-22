@@ -19,7 +19,7 @@ mod store_test {
 
         store
             .create_client(
-                ID.to_string(),
+                ID,
                 Client {
                     push_type: "noop".to_string(),
                     token: PUSH_TOKEN.to_string(),
@@ -36,7 +36,7 @@ mod store_test {
 
         let res = store
             .create_client(
-                ID.to_string(),
+                ID,
                 Client {
                     push_type: "noop".to_string(),
                     token: PUSH_TOKEN.to_string(),

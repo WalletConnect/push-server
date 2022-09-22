@@ -14,7 +14,7 @@ pub async fn handler(
     let mut store = state.store.lock().unwrap();
 
     let exists = store.get_client(&id);
-    if let Err(_) = exists {
+    if  exists.is_err() {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!(new_error_response(vec![]))),
@@ -31,7 +31,7 @@ pub async fn handler(
         );
     }
 
-    if let Err(_) = store.delete_client(&id) {
+    if store.delete_client(&id).is_err() {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!(new_error_response(vec![]))),
@@ -42,5 +42,5 @@ pub async fn handler(
         metrics.registered_webhooks.add(-1, &[]);
     }
 
-    return (StatusCode::OK, Json(json!(new_success_response())));
+    (StatusCode::OK, Json(json!(new_success_response())))
 }

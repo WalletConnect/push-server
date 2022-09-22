@@ -2,14 +2,14 @@ use crate::error;
 use serde::Deserialize;
 use std::str::FromStr;
 
-#[derive(Deserialize, Debug, Clone, PartialEq)]
+#[derive(Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct ApnsCertificateConfig {
     pub cert_path: String,
     pub password: String,
     pub sandbox: Option<bool>,
 }
 
-#[derive(Deserialize, Debug, Clone, PartialEq)]
+#[derive(Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct ApnsTokenConfig {
     pub token_path: String,
     pub team_id: String,
@@ -17,7 +17,7 @@ pub struct ApnsTokenConfig {
     pub sandbox: Option<bool>,
 }
 
-#[derive(Deserialize, Debug, Clone, PartialEq)]
+#[derive(Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct Config {
     #[serde(default = "default_port")]
     pub port: u16,

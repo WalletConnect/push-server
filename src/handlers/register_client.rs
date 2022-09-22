@@ -44,7 +44,7 @@ pub async fn handler(
 
     let mut store = state.store.lock().unwrap();
     let exists = store.get_client(&body.client_id);
-    if let Err(_) = exists {
+    if exists.is_err() {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!(&internal_server_error)),
@@ -61,13 +61,13 @@ pub async fn handler(
         );
     }
 
-    if let Err(_) = store.create_client(
-        body.client_id.clone(),
+    if store.create_client(
+        &body.client_id,
         Client {
             push_type: body.push_type,
             token: body.token,
         },
-    ) {
+    ).is_err() {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!(&internal_server_error)),

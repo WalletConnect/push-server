@@ -32,7 +32,7 @@ impl PushProvider for FcmProvider {
         builder.notification(notification);
         let fcm_message = builder.finalize();
 
-        &self.client.send(fcm_message).await?;
+        self.client.send(fcm_message).await?;
 
         Ok(())
     }
@@ -57,10 +57,6 @@ impl Clone for FcmProvider {
 impl PartialEq for FcmProvider {
     fn eq(&self, other: &Self) -> bool {
         self.api_key == other.api_key
-    }
-
-    fn ne(&self, other: &Self) -> bool {
-        self.api_key != other.api_key
     }
 }
 

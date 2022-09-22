@@ -27,15 +27,4 @@ mod noop_test {
             _ => panic!("`get_provider` didn't return a noop provider"),
         }
     }
-
-    #[test]
-    fn send_notification() {
-        let mut provider = NoopProvider::new();
-
-        provider.send_notification(PUSH_TOKEN.to_string(), EXAMPLE_MESSAGE.to_string());
-
-        let notifications = provider.get_notifications(PUSH_TOKEN.to_string());
-
-        assert_eq!(notifications.len(), 1)
-    }
 }

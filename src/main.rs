@@ -1,3 +1,4 @@
+#![feature(map_try_insert)]
 extern crate core;
 
 mod env;

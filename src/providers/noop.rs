@@ -2,7 +2,7 @@ use crate::providers::PushProvider;
 use async_trait::async_trait;
 use std::collections::HashMap;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct NoopProvider {
     // token -> [message, message, message]
     notifications: HashMap<String, Vec<String>>,
@@ -36,9 +36,7 @@ impl PushProvider for NoopProvider {
 impl NoopProvider {
     /// Insert empty notifications for a new token
     fn bootstrap(&mut self, token: String) {
-        if !self.notifications.contains_key(&token) {
-            self.notifications.insert(token, vec![]);
-        }
+        self.notifications.try_insert(token, vec![]).unwrap_or(&mut vec![]);
     }
 }
 
