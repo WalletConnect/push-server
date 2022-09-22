@@ -14,7 +14,7 @@ pub async fn handler(
     let mut store = state.store.lock().unwrap();
 
     let exists = store.get_client(&id);
-    if  exists.is_err() {
+    if exists.is_err() {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!(new_error_response(vec![]))),

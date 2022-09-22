@@ -61,13 +61,16 @@ pub async fn handler(
         );
     }
 
-    if store.create_client(
-        &body.client_id,
-        Client {
-            push_type: body.push_type,
-            token: body.token,
-        },
-    ).is_err() {
+    if store
+        .create_client(
+            &body.client_id,
+            Client {
+                push_type: body.push_type,
+                token: body.token,
+            },
+        )
+        .is_err()
+    {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!(&internal_server_error)),

@@ -36,7 +36,9 @@ impl PushProvider for NoopProvider {
 impl NoopProvider {
     /// Insert empty notifications for a new token
     fn bootstrap(&mut self, token: String) {
-        self.notifications.try_insert(token, vec![]).unwrap_or(&mut vec![]);
+        self.notifications
+            .try_insert(token, vec![])
+            .unwrap_or(&mut vec![]);
     }
 }
 
