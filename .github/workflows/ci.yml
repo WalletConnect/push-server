@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   tasks:
-    name: "[${{ matrix.os }}] ${{ matrix.cargo.name }}"
+    name: "[${{ matrix.os }}/rust-${{matrix.rust}}] ${{ matrix.cargo.name }}"
     runs-on: "${{ matrix.os }}"
     strategy:
       fail-fast: false
@@ -31,6 +31,7 @@ jobs:
           - ubuntu-latest
         rust:
           - stable
+          - nightly
         cargo:
           - name: "Clippy"
             cmd: clippy
@@ -76,6 +77,7 @@ jobs:
           toolchain: ${{ matrix.rust }}
           profile: minimal
           override: true
+          components: rustfmt, clippy
 
       # Rebuild cache
       - name: Cache cargo registry
