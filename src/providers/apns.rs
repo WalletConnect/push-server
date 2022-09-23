@@ -49,7 +49,7 @@ impl PushProvider for ApnsProvider {
         let notification =
             a2::PlainNotificationBuilder::new(message.as_str()).build(token.as_str(), opt);
 
-        &self.client.send(notification).await?;
+        let _ = self.client.send(notification).await?;
 
         Ok(())
     }

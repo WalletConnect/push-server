@@ -25,6 +25,7 @@ pub trait PushProvider {
     ) -> crate::error::Result<()>;
 }
 
+#[allow(clippy::large_enum_variant)]
 pub enum Provider {
     Fcm(FcmProvider),
     Apns(ApnsProvider),
@@ -63,7 +64,7 @@ impl Providers {
                 let mut reader = BufReader::new(f);
 
                 let mut endpoint = a2::Endpoint::Production;
-                if let Some(sandbox) = cert_config.sandbox.clone() {
+                if let Some(sandbox) = cert_config.sandbox {
                     if sandbox {
                         endpoint = a2::Endpoint::Sandbox;
                     }
@@ -82,7 +83,7 @@ impl Providers {
                 let mut reader = BufReader::new(f);
 
                 let mut endpoint = a2::Endpoint::Production;
-                if let Some(sandbox) = token_config.sandbox.clone() {
+                if let Some(sandbox) = token_config.sandbox {
                     if sandbox {
                         endpoint = a2::Endpoint::Sandbox;
                     }
