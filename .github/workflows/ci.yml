@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   tasks:
-    name: "[${{ matrix.os }}] ${{ matrix.cargo.name }}"
+    name: "[${{ matrix.os }}/rust-${{matrix.rust}}] ${{ matrix.cargo.name }}"
     runs-on: "${{ matrix.os }}"
     strategy:
       fail-fast: false
