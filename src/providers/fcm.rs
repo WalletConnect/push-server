@@ -32,7 +32,7 @@ impl PushProvider for FcmProvider {
         builder.notification(notification);
         let fcm_message = builder.finalize();
 
-        self.client.send(fcm_message).await?;
+        let _ = self.client.send(fcm_message).await?;
 
         Ok(())
     }
