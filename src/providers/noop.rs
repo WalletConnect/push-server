@@ -34,11 +34,12 @@ impl PushProvider for NoopProvider {
 
 // Utils
 impl NoopProvider {
+    #[allow(clippy::map_entry)]
     /// Insert empty notifications for a new token
     fn bootstrap(&mut self, token: String) {
-        self.notifications
-            .try_insert(token, vec![])
-            .unwrap_or(&mut vec![]);
+        if !self.notifications.contains_key(&token) {
+            self.notifications.insert(token, vec![]);
+        }
     }
 }
 

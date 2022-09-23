@@ -1,6 +1,3 @@
-#![feature(map_try_insert)]
-extern crate core;
-
 mod env;
 mod env_test;
 mod error;
