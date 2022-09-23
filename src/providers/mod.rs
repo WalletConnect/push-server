@@ -25,6 +25,7 @@ pub trait PushProvider {
     ) -> crate::error::Result<()>;
 }
 
+#[allow(clippy::large_enum_variant)]
 pub enum Provider {
     Fcm(FcmProvider),
     Apns(ApnsProvider),
