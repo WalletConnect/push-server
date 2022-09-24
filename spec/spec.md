@@ -2,6 +2,9 @@
 
 This is an overview spec document which details the endpoint and what they expect to receive and in turn what responses you can expect.
 
+## Security
+The details of Echo Server's Security are in [auth.md](./auth.md)
+
 ## Responses
 These are the default responses and are only different if otherwise specified.
 
