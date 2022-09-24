@@ -10,7 +10,6 @@ mod store_test;
 use crate::env::Config;
 use build_info::BuildInfo;
 use dotenv::dotenv;
-use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
@@ -32,8 +31,7 @@ use axum::{
     routing::{delete, get, post},
     Router,
 };
-
-use crate::store::Client;
+use sqlx::postgres::PgPoolOptions;
 
 #[tokio::main]
 async fn main() -> error::Result<()> {
@@ -46,8 +44,12 @@ async fn main() -> error::Result<()> {
         panic!("You must enable at least one provider.");
     }
 
-    let store: HashMap<String, Client> = HashMap::new();
+    let store = PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&config.database_url)
+        .await?;
     let mut state = state::new_state(config, store)?;
+    state.init().await?;
 
     if state.config.telemetry_enabled.unwrap_or(false) {
         let grpc_url = state

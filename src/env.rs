@@ -23,6 +23,7 @@ pub struct Config {
     pub port: u16,
     #[serde(default = "default_log_level")]
     pub log_level: String,
+    pub database_url: String,
     pub telemetry_enabled: Option<bool>,
     pub telemetry_grpc_url: Option<String>,
     pub apns_certificate: Option<ApnsCertificateConfig>,

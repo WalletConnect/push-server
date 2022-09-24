@@ -10,6 +10,7 @@ pub enum Error {
     Apns(a2::Error),
     Fcm(fcm::FcmError),
     Io(std::io::Error),
+    Database(sqlx::Error),
     ProviderNotFound(String),
     ProviderNotAvailable(String),
 }
@@ -23,6 +24,7 @@ impl Display for Error {
             Error::Apns(err) => Debug::fmt(&err, f),
             Error::Fcm(err) => write!(f, "{}", err),
             Error::Io(err) => write!(f, "{}", err),
+            Error::Database(err) => Debug::fmt(&err, f),
             Error::ProviderNotFound(name) => write!(
                 f,
                 "{} is an invalid push provider as it cannot be not found",
@@ -70,6 +72,12 @@ impl From<fcm::FcmError> for Error {
 impl From<std::io::Error> for Error {
     fn from(err: std::io::Error) -> Self {
         Error::Io(err)
+    }
+}
+
+impl From<sqlx::Error> for Error {
+    fn from(err: sqlx::Error) -> Self {
+        Error::Database(err)
     }
 }
 

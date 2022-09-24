@@ -13,7 +13,7 @@ pub async fn handler(
 ) -> impl IntoResponse {
     let mut store = state.store.lock().unwrap();
 
-    let exists = store.get_client(&id);
+    let exists = store.get_client(&id).await;
     if exists.is_err() {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -31,7 +31,8 @@ pub async fn handler(
         );
     }
 
-    if store.delete_client(&id).is_err() {
+    let delete_result = store.delete_client(&id).await;
+    if delete_result.is_err() {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!(new_error_response(vec![]))),

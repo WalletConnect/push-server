@@ -33,7 +33,8 @@ pub async fn handler(
     let (client_token, provider) = {
         let store = state.store.lock().unwrap();
 
-        if let Ok(client) = store.get_client(&id) {
+        let client_result = store.get_client(&id).await;
+        if let Ok(client) = client_result {
             if let Some(client) = client {
                 (
                     client.token.clone(),
