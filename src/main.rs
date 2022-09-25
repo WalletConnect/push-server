@@ -46,9 +46,9 @@ async fn main() -> error::Result<()> {
         .connect(database_url)
         .await?;
 
-    // Run database migrations. `./sql` is the path to migrations, relative to the root dir (the directory
+    // Run database migrations. `./migrations` is the path to migrations, relative to the root dir (the directory
     // containing `Cargo.toml`).
-    sqlx::migrate!("./sql").run(&store).await?;
+    sqlx::migrate!("./migrations").run(&store).await?;
 
     let mut state = state::new_state(config, store)?;
 
