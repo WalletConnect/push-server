@@ -1,9 +1,9 @@
+use crate::env::Config;
 use crate::providers::Providers;
 use crate::store::ClientStore;
-use crate::{error, BuildInfo, Config};
+use build_info::BuildInfo;
 use opentelemetry::metrics::{Counter, UpDownCounter};
 use opentelemetry::sdk::trace::Tracer;
-use std::sync::Mutex;
 use tracing_subscriber::prelude::*;
 
 pub struct Metrics {
@@ -18,7 +18,7 @@ where
     pub config: Config,
     pub build_info: BuildInfo,
     pub metrics: Option<Metrics>,
-    pub store: Mutex<S>,
+    pub store: S,
     pub providers: Providers,
 }
 
@@ -35,7 +35,7 @@ where
         config,
         build_info: build_info.clone(),
         metrics: None,
-        store: Mutex::new(store),
+        store,
         providers,
     })
 }
@@ -44,11 +44,6 @@ impl<S> AppState<S>
 where
     S: ClientStore,
 {
-    pub async fn init(&mut self) -> error::Result<()> {
-        let mut store = self.store.lock().unwrap();
-        store.init().await
-    }
-
     pub fn set_telemetry(&mut self, tracer: Tracer, metrics: Metrics) {
         let otel_tracing_layer = tracing_opentelemetry::layer().with_tracer(tracer);
 

@@ -1,7 +1,9 @@
-use crate::error::Error;
-use crate::handlers::{new_error_response, new_success_response, ErrorReason};
-use crate::providers::{get_provider, PushProvider};
-use crate::AppState;
+use crate::providers::get_provider;
+use crate::{error::Error, state::AppState};
+use crate::{
+    handlers::{new_error_response, new_success_response, ErrorReason},
+    providers::PushProvider,
+};
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -31,9 +33,7 @@ pub async fn handler(
     }
 
     let (client_token, provider) = {
-        let store = state.store.lock().unwrap();
-
-        let client_result = store.get_client(&id).await;
+        let client_result = state.store.get_client(&id).await;
         if let Ok(client) = client_result {
             if let Some(client) = client {
                 (

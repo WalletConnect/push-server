@@ -1,84 +1,34 @@
-use std::fmt::{Debug, Display, Formatter};
-
 pub type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
-    Envy(envy::Error),
-    Trace(opentelemetry::trace::TraceError),
-    Metrics(opentelemetry::metrics::MetricsError),
-    Apns(a2::Error),
-    Fcm(fcm::FcmError),
-    Io(std::io::Error),
-    Database(sqlx::Error),
+    #[error(transparent)]
+    Envy(#[from] envy::Error),
+
+    #[error(transparent)]
+    Trace(#[from] opentelemetry::trace::TraceError),
+
+    #[error(transparent)]
+    Metrics(#[from] opentelemetry::metrics::MetricsError),
+
+    #[error(transparent)]
+    Apns(#[from] a2::Error),
+
+    #[error(transparent)]
+    Fcm(#[from] fcm::FcmError),
+
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+
+    #[error(transparent)]
+    Database(#[from] sqlx::Error),
+
+    #[error("database migration failed: {0}")]
+    DatabaseMigration(#[from] sqlx::migrate::MigrateError),
+
+    #[error("{0} is an invalid push provider as it cannot be not found")]
     ProviderNotFound(String),
+
+    #[error("{0} is an invalid push provider as it has not been enabled")]
     ProviderNotAvailable(String),
 }
-
-impl Display for Error {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Error::Envy(err) => write!(f, "{}", err),
-            Error::Trace(err) => Debug::fmt(&err, f),
-            Error::Metrics(err) => Debug::fmt(&err, f),
-            Error::Apns(err) => Debug::fmt(&err, f),
-            Error::Fcm(err) => write!(f, "{}", err),
-            Error::Io(err) => write!(f, "{}", err),
-            Error::Database(err) => Debug::fmt(&err, f),
-            Error::ProviderNotFound(name) => write!(
-                f,
-                "{} is an invalid push provider as it cannot be not found",
-                name
-            ),
-            Error::ProviderNotAvailable(name) => write!(
-                f,
-                "{} is an invalid push provider as it has not been enabled",
-                name
-            ),
-        }
-    }
-}
-
-impl From<envy::Error> for Error {
-    fn from(err: envy::Error) -> Self {
-        Error::Envy(err)
-    }
-}
-
-impl From<opentelemetry::trace::TraceError> for Error {
-    fn from(err: opentelemetry::trace::TraceError) -> Self {
-        Error::Trace(err)
-    }
-}
-
-impl From<opentelemetry::metrics::MetricsError> for Error {
-    fn from(err: opentelemetry::metrics::MetricsError) -> Self {
-        Error::Metrics(err)
-    }
-}
-
-impl From<a2::Error> for Error {
-    fn from(err: a2::Error) -> Self {
-        Error::Apns(err)
-    }
-}
-
-impl From<fcm::FcmError> for Error {
-    fn from(err: fcm::FcmError) -> Self {
-        Error::Fcm(err)
-    }
-}
-
-impl From<std::io::Error> for Error {
-    fn from(err: std::io::Error) -> Self {
-        Error::Io(err)
-    }
-}
-
-impl From<sqlx::Error> for Error {
-    fn from(err: sqlx::Error) -> Self {
-        Error::Database(err)
-    }
-}
-
-impl std::error::Error for Error {}

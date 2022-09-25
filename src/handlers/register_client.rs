@@ -1,6 +1,11 @@
-use crate::handlers::{new_error_response, new_success_response, ErrorReason};
-use crate::store::Client;
-use crate::AppState;
+use crate::{
+    handlers::{new_error_response, new_success_response, ErrorReason},
+    state::AppState,
+};
+use crate::{
+    providers::{PROVIDER_APNS, PROVIDER_FCM},
+    store::Client,
+};
 use axum::extract::{Json, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -20,9 +25,11 @@ pub async fn handler(
     State(state): State<Arc<AppState<impl crate::store::ClientStore>>>,
     Json(body): Json<RegisterBody>,
 ) -> impl IntoResponse {
+    const SUPPORTED_PROVIDERS: [&str; 2] = [PROVIDER_FCM, PROVIDER_APNS];
+
     let internal_server_error = new_error_response(vec![]);
 
-    if !vec!["fcm", "apns"].contains(&&*body.push_type.to_lowercase()) {
+    if !SUPPORTED_PROVIDERS.contains(&body.push_type.to_lowercase().as_str()) {
         return (
             StatusCode::BAD_REQUEST,
             Json(json!(new_error_response(vec![ErrorReason {
@@ -42,8 +49,7 @@ pub async fn handler(
         );
     }
 
-    let mut store = state.store.lock().unwrap();
-    let exists = store.get_client(&body.client_id).await;
+    let exists = state.store.get_client(&body.client_id).await;
     if exists.is_err() {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -61,7 +67,8 @@ pub async fn handler(
         );
     }
 
-    let create_client_res = store
+    let create_client_res = state
+        .store
         .create_client(
             &body.client_id,
             Client {
