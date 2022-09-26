@@ -3,5 +3,20 @@ services:
   jaeger:
     image: jaegertracing/opentelemetry-all-in-one:latest
     ports:
-      - 4317:4317
-      - 16686:16686
+      - "3001:16686"
+
+  postgres:
+      image: postgres
+      environment:
+        - POSTGRES_PASSWORD=root
+
+  echo-server:
+      build: .
+      ports:
+        - "3000:3000"
+      environment:
+        - PORT=3000
+        - LOG_LEVEL=INFO
+        - DATABASE_URL=postgres://postgres:root@postgres:5432/echoserver
+        - TELEMETRY_ENABLED=true
+        - TELEMETRY_GRPC_URL=http://jaeger:4317
