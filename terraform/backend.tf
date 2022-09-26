@@ -14,7 +14,7 @@ terraform {
       version = "~> 1.28"
     }
     onepassword = {
-      source = "1Password/onepassword"
+      source = "1password/onepassword"
       version = "~> 1.1"
     }
   }

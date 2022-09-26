@@ -46,6 +46,13 @@ module "dns" {
   fqdn             = local.fqdn
 }
 
+module "database" {
+  source = "./database"
+
+  name = local.app_name
+  onepassword_vault_id = var.onepassword_vault_id
+}
+
 data "aws_ecr_repository" "repository" {
   name = local.app_name
 }

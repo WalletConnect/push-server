@@ -19,3 +19,7 @@ variable "grafana_endpoint" {
 variable "onepassword_endpoint" {
   type = string
 }
+
+variable "onepassword_vault_id" {
+  type = string
+}
