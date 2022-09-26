@@ -12,6 +12,7 @@ use axum::response::IntoResponse;
 use serde::Deserialize;
 use serde_json::json;
 use std::sync::Arc;
+use crate::providers::ProviderKind;
 
 #[derive(Deserialize)]
 pub struct RegisterBody {
@@ -35,6 +36,17 @@ pub async fn handler(
             Json(json!(new_error_response(vec![ErrorReason {
                 field: "type".to_string(),
                 description: "Invalid Push Service, must be one of: fcm, apns".to_string(),
+            }]))),
+        );
+    }
+
+    let provider = ProviderKind::try_from(&*body.push_type);
+    if provider.is_err() {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!(new_error_response(vec![ErrorReason {
+                field: "type".to_string(),
+                description: "Invalid Push Service, failed to parse".to_string(),
             }]))),
         );
     }
@@ -72,7 +84,7 @@ pub async fn handler(
         .create_client(
             &body.client_id,
             Client {
-                push_type: body.push_type,
+                push_type: provider.unwrap(),
                 token: body.token,
             },
         )

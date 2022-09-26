@@ -150,10 +150,10 @@ impl Providers {
 }
 
 pub fn get_provider(
-    name: &str,
+    provider: &ProviderKind,
     state: &Arc<AppState<impl ClientStore>>,
 ) -> crate::error::Result<Provider> {
-    let provider = name.try_into()?;
+    let name = provider.as_str();
     let supported = state.config.supported_providers();
 
     if !supported.contains(&provider) {

@@ -1,11 +1,23 @@
 use crate::error;
+use crate::providers::ProviderKind;
 use async_trait::async_trait;
+//use sqlx::types::chrono::{DateTime, Utc};
+//use sqlx::types::Uuid;
 use sqlx::Executor;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Client {
-    pub push_type: String,
+    pub push_type: ProviderKind,
     pub token: String,
+}
+
+#[derive(sqlx::FromRow)]
+/// All fields are defined but commented out until used in code to prevent clippy warnings
+struct ClientRow {
+    //pub id: Uuid,
+    pub push_type: String,
+    pub device_token: String,
+    //pub created_at: DateTime<Utc>,
 }
 
 #[async_trait]
@@ -24,7 +36,7 @@ impl ClientStore for sqlx::PgPool {
             vec![(id, client.push_type, client.token)],
             |mut b, client| {
                 b.push_bind(client.0)
-                    .push_bind(client.1)
+                    .push_bind(client.1.as_str())
                     .push_bind(client.2);
             },
         );
@@ -35,9 +47,27 @@ impl ClientStore for sqlx::PgPool {
         Ok(())
     }
 
-    async fn get_client(&self, _id: &str) -> error::Result<Option<Client>> {
-        // TODO Get Clients
-        Ok(None)
+    async fn get_client(&self, id: &str) -> error::Result<Option<Client>> {
+        let res = sqlx::query_as::<sqlx::postgres::Postgres, ClientRow>(
+            "SELECT push_type, device_token FROM public.clients WHERE id = $1",
+        )
+        .bind(id)
+        .fetch_one(self)
+        .await;
+
+        if let Err(e) = res {
+            return match e {
+                sqlx::Error::RowNotFound => Ok(None),
+                _ => Err(error::Error::Database(e))
+            }
+        }
+
+        let row = res.unwrap();
+
+        Ok(Some(Client {
+            push_type: ProviderKind::try_from(&*row.push_type)?,
+            token: row.device_token,
+        }))
     }
 
     async fn delete_client(&self, id: &str) -> error::Result<()> {
