@@ -2,7 +2,7 @@ use crate::providers::PushProvider;
 use async_trait::async_trait;
 use std::collections::HashMap;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Default, PartialEq, Eq, Clone)]
 pub struct NoopProvider {
     // token -> [message, message, message]
     notifications: HashMap<String, Vec<String>>,
@@ -10,9 +10,7 @@ pub struct NoopProvider {
 
 impl NoopProvider {
     pub fn new() -> Self {
-        NoopProvider {
-            notifications: HashMap::new(),
-        }
+        Default::default()
     }
 }
 
@@ -36,19 +34,17 @@ impl PushProvider for NoopProvider {
 impl NoopProvider {
     /// Insert empty notifications for a new token
     fn bootstrap(&mut self, token: String) {
-        if !self.notifications.contains_key(&token) {
-            self.notifications.insert(token, vec![]);
-        }
+        self.notifications.entry(token).or_insert_with(Vec::new);
     }
 }
 
 // Debug methods for testing
-#[cfg(test)]
-impl NoopProvider {
-    /// Get notifications for a specific token
-    pub fn get_notifications(&mut self, token: String) -> &Vec<String> {
-        self.bootstrap(token.clone());
+// #[cfg(test)]
+// impl NoopProvider {
+//     /// Get notifications for a specific token
+//     pub fn get_notifications(&mut self, token: String) -> &Vec<String> {
+//         self.bootstrap(token.clone());
 
-        self.notifications.get(&token).unwrap()
-    }
-}
+//         self.notifications.get(&token).unwrap()
+//     }
+// }

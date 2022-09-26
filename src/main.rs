@@ -1,23 +1,16 @@
-extern crate core;
-
 mod env;
-mod env_test;
 mod error;
 mod handlers;
 mod providers;
 mod state;
 mod store;
-mod store_test;
 
-use crate::env::Config;
-use build_info::BuildInfo;
+use crate::state::Metrics;
+use axum::{
+    routing::{delete, get, post},
+    Router,
+};
 use dotenv::dotenv;
-use std::collections::HashMap;
-use std::net::SocketAddr;
-use std::sync::Arc;
-
-use crate::state::{AppState, Metrics};
-
 use opentelemetry::sdk::metrics::selectors;
 use opentelemetry::sdk::{
     trace::{self, IdGenerator, Sampler},
@@ -26,16 +19,11 @@ use opentelemetry::sdk::{
 use opentelemetry::util::tokio_interval_stream;
 use opentelemetry::KeyValue;
 use opentelemetry_otlp::{Protocol, WithExportConfig};
+use sqlx::postgres::PgPoolOptions;
+use std::net::SocketAddr;
+use std::sync::Arc;
 use std::time::Duration;
-
 use tracing_subscriber::fmt::format::FmtSpan;
-
-use axum::{
-    routing::{delete, get, post},
-    Router,
-};
-
-use crate::store::Client;
 
 #[tokio::main]
 async fn main() -> error::Result<()> {
@@ -48,7 +36,20 @@ async fn main() -> error::Result<()> {
         panic!("You must enable at least one provider.");
     }
 
-    let store: HashMap<String, Client> = HashMap::new();
+    let database_url = config
+        .database_url
+        .as_deref()
+        .expect("database url is missing");
+
+    let store = PgPoolOptions::new()
+        .max_connections(5)
+        .connect(database_url)
+        .await?;
+
+    // Run database migrations. `./migrations` is the path to migrations, relative to the root dir (the directory
+    // containing `Cargo.toml`).
+    sqlx::migrate!("./migrations").run(&store).await?;
+
     let mut state = state::new_state(config, store)?;
 
     if state.config.telemetry_enabled.unwrap_or(false) {
@@ -166,7 +167,11 @@ providers: [{}]
         build_rustc_version,
         "127.0.0.1",
         port.clone(),
-        supported_providers.join(", ")
+        supported_providers
+            .into_iter()
+            .map(Into::into)
+            .collect::<Vec<&str>>()
+            .join(", ")
     );
     println!("{}", header);
 

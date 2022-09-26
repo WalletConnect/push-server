@@ -1,20 +1,15 @@
-mod apns;
-mod apns_test;
-mod fcm;
-mod fcm_test;
-mod noop;
-mod noop_test;
+pub mod apns;
+pub mod fcm;
+pub mod noop;
 
-use crate::error::Error::{ProviderNotAvailable, ProviderNotFound};
-use crate::providers::apns::ApnsProvider;
-use crate::providers::fcm::FcmProvider;
 use crate::providers::noop::NoopProvider;
 use crate::store::ClientStore;
-use crate::{AppState, Config};
+use crate::{env::Config, error::Error::ProviderNotAvailable};
+use crate::{error, providers::fcm::FcmProvider};
+use crate::{providers::apns::ApnsProvider, state::AppState};
 use async_trait::async_trait;
 use std::fs::File;
 use std::io::BufReader;
-use std::sync::Arc;
 
 #[async_trait]
 pub trait PushProvider {
@@ -25,6 +20,49 @@ pub trait PushProvider {
     ) -> crate::error::Result<()>;
 }
 
+const PROVIDER_APNS: &str = "apns";
+const PROVIDER_FCM: &str = "fcm";
+const PROVIDER_NOOP: &str = "noop";
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, sqlx::Type)]
+#[sqlx(type_name = "provider")]
+#[sqlx(rename_all = "lowercase")]
+pub enum ProviderKind {
+    Apns,
+    Fcm,
+    Noop,
+}
+
+impl ProviderKind {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Apns => PROVIDER_APNS,
+            Self::Fcm => PROVIDER_FCM,
+            Self::Noop => PROVIDER_NOOP,
+        }
+    }
+}
+
+impl From<ProviderKind> for &str {
+    fn from(val: ProviderKind) -> Self {
+        val.as_str()
+    }
+}
+
+impl TryFrom<&str> for ProviderKind {
+    type Error = error::Error;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            PROVIDER_APNS => Ok(Self::Apns),
+            PROVIDER_FCM => Ok(Self::Fcm),
+            PROVIDER_NOOP => Ok(Self::Noop),
+            _ => Err(error::Error::ProviderNotFound(value.to_owned())),
+        }
+    }
+}
+
+#[allow(clippy::large_enum_variant)]
 pub enum Provider {
     Fcm(FcmProvider),
     Apns(ApnsProvider),
@@ -56,14 +94,14 @@ impl Providers {
     pub fn new(config: &Config) -> crate::error::Result<Providers> {
         let supported = config.supported_providers();
         let mut apns = None;
-        if supported.contains(&"apns".to_string()) {
+        if supported.contains(&ProviderKind::Apns) {
             // Certificate Based
             if let Some(cert_config) = &config.apns_certificate {
                 let f = File::open(cert_config.cert_path.clone())?;
                 let mut reader = BufReader::new(f);
 
                 let mut endpoint = a2::Endpoint::Production;
-                if let Some(sandbox) = cert_config.sandbox.clone() {
+                if let Some(sandbox) = cert_config.sandbox {
                     if sandbox {
                         endpoint = a2::Endpoint::Sandbox;
                     }
@@ -82,7 +120,7 @@ impl Providers {
                 let mut reader = BufReader::new(f);
 
                 let mut endpoint = a2::Endpoint::Production;
-                if let Some(sandbox) = token_config.sandbox.clone() {
+                if let Some(sandbox) = token_config.sandbox {
                     if sandbox {
                         endpoint = a2::Endpoint::Sandbox;
                     }
@@ -98,7 +136,7 @@ impl Providers {
         }
 
         let mut fcm = None;
-        if supported.contains(&"fcm".to_string()) {
+        if supported.contains(&ProviderKind::Fcm) {
             if let Some(api_key) = &config.fcm_api_key {
                 fcm = Some(FcmProvider::new(api_key.clone()))
             }
@@ -113,25 +151,26 @@ impl Providers {
 }
 
 pub fn get_provider(
-    name: &str,
-    state: &Arc<AppState<impl ClientStore>>,
+    provider: ProviderKind,
+    state: &AppState<impl ClientStore>,
 ) -> crate::error::Result<Provider> {
+    let name = provider.as_str();
     let supported = state.config.supported_providers();
 
-    if !supported.contains(&name.to_lowercase()) {
+    if !supported.contains(&provider) {
         return Err(ProviderNotAvailable(name.into()));
     }
 
-    match name {
-        "apns" => match state.providers.apns.clone() {
+    match provider {
+        ProviderKind::Apns => match state.providers.apns.clone() {
             Some(p) => Ok(Provider::Apns(p)),
             None => Err(ProviderNotAvailable(name.into())),
         },
-        "fcm" => match state.providers.fcm.clone() {
+        ProviderKind::Fcm => match state.providers.fcm.clone() {
             Some(p) => Ok(Provider::Fcm(p)),
             None => Err(ProviderNotAvailable(name.into())),
         },
-        "noop" => {
+        ProviderKind::Noop => {
             // Only available in debug/testing
             if cfg!(any(test, debug_assertions)) {
                 return Ok(Provider::Noop(state.providers.noop.clone()));
@@ -139,6 +178,5 @@ pub fn get_provider(
 
             Err(ProviderNotAvailable(name.into()))
         }
-        _ => Err(ProviderNotFound(name.into())),
     }
 }
