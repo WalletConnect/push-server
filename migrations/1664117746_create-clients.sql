@@ -1,9 +1,11 @@
+CREATE TYPE public.provider AS ENUM ('fcm', 'apns', 'noop');
+
 CREATE TABLE IF NOT EXISTS public.clients
 (
-    id           uuid primary key     default gen_random_uuid(),
+    id           varchar(255) primary key default gen_random_uuid(),
 
-    push_type    varchar(4)  not null, -- fcm or apns
-    device_token text        not null,
+    push_type    public.provider not null,
+    device_token text            not null,
 
-    created_at   timestamptz not null default now()
+    created_at   timestamptz     not null default now()
 );

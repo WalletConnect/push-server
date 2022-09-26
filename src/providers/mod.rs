@@ -25,7 +25,9 @@ pub const PROVIDER_APNS: &str = "apns";
 pub const PROVIDER_FCM: &str = "fcm";
 pub const PROVIDER_NOOP: &str = "noop";
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, sqlx::Type)]
+#[sqlx(type_name = "provider")]
+#[sqlx(rename_all = "lowercase")]
 pub enum ProviderKind {
     Apns,
     Fcm,
