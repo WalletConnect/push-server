@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use echo_server::{
     error,
-    providers::PROVIDER_NOOP,
+    providers::ProviderKind,
     store::{Client, ClientStore},
 };
 use std::{collections::HashMap, sync::Mutex};
@@ -50,7 +50,7 @@ async fn setup_filled_test_store() -> Box<impl ClientStore> {
         .create_client(
             ID,
             Client {
-                push_type: PROVIDER_NOOP.to_owned(),
+                push_type: ProviderKind::Noop,
                 token: PUSH_TOKEN.to_owned(),
             },
         )
@@ -68,7 +68,7 @@ async fn insert_client() {
         .create_client(
             ID,
             Client {
-                push_type: PROVIDER_NOOP.to_owned(),
+                push_type: ProviderKind::Noop,
                 token: PUSH_TOKEN.to_owned(),
             },
         )
@@ -91,7 +91,7 @@ async fn fetch_client() {
     assert_eq!(
         client.unwrap(),
         Client {
-            push_type: PROVIDER_NOOP.to_owned(),
+            push_type: ProviderKind::Noop,
             token: PUSH_TOKEN.to_owned(),
         }
     )

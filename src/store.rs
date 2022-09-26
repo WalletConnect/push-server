@@ -45,16 +45,11 @@ impl ClientStore for sqlx::PgPool {
         .fetch_one(self)
         .await;
 
-        if let Err(e) = res {
-            return match e {
-                sqlx::Error::RowNotFound => Ok(None),
-                _ => Err(error::Error::Database(e)),
-            };
+        match res {
+            Err(sqlx::Error::RowNotFound) => Ok(None),
+            Err(e) => Err(e.into()),
+            Ok(row) => Ok(Some(row)),
         }
-
-        let row = res.unwrap();
-
-        Ok(Some(row))
     }
 
     async fn delete_client(&self, id: &str) -> error::Result<()> {

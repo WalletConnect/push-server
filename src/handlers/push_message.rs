@@ -36,10 +36,7 @@ pub async fn handler(
         let client_result = state.store.get_client(&id).await;
         if let Ok(client) = client_result {
             if let Some(client) = client {
-                (
-                    client.token.clone(),
-                    get_provider(&client.push_type, &state),
-                )
+                (client.token.clone(), get_provider(client.push_type, &state))
             } else {
                 return (
                     StatusCode::NOT_FOUND,

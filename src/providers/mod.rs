@@ -10,7 +10,6 @@ use crate::{providers::apns::ApnsProvider, state::AppState};
 use async_trait::async_trait;
 use std::fs::File;
 use std::io::BufReader;
-use std::sync::Arc;
 
 #[async_trait]
 pub trait PushProvider {
@@ -21,9 +20,9 @@ pub trait PushProvider {
     ) -> crate::error::Result<()>;
 }
 
-pub const PROVIDER_APNS: &str = "apns";
-pub const PROVIDER_FCM: &str = "fcm";
-pub const PROVIDER_NOOP: &str = "noop";
+const PROVIDER_APNS: &str = "apns";
+const PROVIDER_FCM: &str = "fcm";
+const PROVIDER_NOOP: &str = "noop";
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, sqlx::Type)]
 #[sqlx(type_name = "provider")]
@@ -152,8 +151,8 @@ impl Providers {
 }
 
 pub fn get_provider(
-    provider: &ProviderKind,
-    state: &Arc<AppState<impl ClientStore>>,
+    provider: ProviderKind,
+    state: &AppState<impl ClientStore>,
 ) -> crate::error::Result<Provider> {
     let name = provider.as_str();
     let supported = state.config.supported_providers();

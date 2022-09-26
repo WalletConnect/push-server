@@ -1,11 +1,8 @@
 use crate::providers::ProviderKind;
+use crate::store::Client;
 use crate::{
     handlers::{new_error_response, new_success_response, ErrorReason},
     state::AppState,
-};
-use crate::{
-    providers::{PROVIDER_APNS, PROVIDER_FCM},
-    store::Client,
 };
 use axum::extract::{Json, State};
 use axum::http::StatusCode;
@@ -26,30 +23,20 @@ pub async fn handler(
     State(state): State<Arc<AppState<impl crate::store::ClientStore>>>,
     Json(body): Json<RegisterBody>,
 ) -> impl IntoResponse {
-    const SUPPORTED_PROVIDERS: [&str; 2] = [PROVIDER_FCM, PROVIDER_APNS];
+    let push_type = body.push_type.as_str().try_into();
+    let push_type = match push_type {
+        Ok(provider) if state.supported_providers().contains(&provider) => provider,
 
-    let internal_server_error = new_error_response(vec![]);
-
-    if !SUPPORTED_PROVIDERS.contains(&body.push_type.to_lowercase().as_str()) {
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(json!(new_error_response(vec![ErrorReason {
-                field: "type".to_string(),
-                description: "Invalid Push Service, must be one of: fcm, apns".to_string(),
-            }]))),
-        );
-    }
-
-    let provider = ProviderKind::try_from(&*body.push_type);
-    if provider.is_err() {
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!(new_error_response(vec![ErrorReason {
-                field: "type".to_string(),
-                description: "Invalid Push Service, failed to parse".to_string(),
-            }]))),
-        );
-    }
+        _ => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(json!(new_error_response(vec![ErrorReason {
+                    field: "type".to_string(),
+                    description: "Invalid Push Service, must be one of: fcm, apns".to_string(),
+                }]))),
+            )
+        }
+    };
 
     if body.token.is_empty() {
         return (
@@ -60,6 +47,8 @@ pub async fn handler(
             }]))),
         );
     }
+
+    let internal_server_error = new_error_response(vec![]);
 
     let exists = state.store.get_client(&body.client_id).await;
     if exists.is_err() {
@@ -84,7 +73,7 @@ pub async fn handler(
         .create_client(
             &body.client_id,
             Client {
-                push_type: provider.unwrap(),
+                push_type,
                 token: body.token,
             },
         )

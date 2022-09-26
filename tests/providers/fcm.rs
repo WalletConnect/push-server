@@ -1,8 +1,8 @@
 use crate::store::MockStore;
-use echo_server::providers::fcm::FcmProvider;
+use echo_server::env::get_config;
+use echo_server::providers::{fcm::FcmProvider, ProviderKind};
 use echo_server::providers::{get_provider, Provider};
 use echo_server::state::new_state;
-use echo_server::{env::get_config, providers::PROVIDER_FCM};
 use serial_test::serial;
 use std::env;
 use std::sync::Arc;
@@ -21,7 +21,8 @@ fn fetch_provider() {
     let store = MockStore::new();
     let state = new_state(config, store).expect("Failed to create state");
     let state_arc = Arc::new(state);
-    let provider = get_provider(PROVIDER_FCM, &state_arc).expect("Failed to fetch fcm provider");
+    let provider =
+        get_provider(ProviderKind::Fcm, &state_arc).expect("Failed to fetch fcm provider");
 
     match provider {
         Provider::Fcm(p) => {
