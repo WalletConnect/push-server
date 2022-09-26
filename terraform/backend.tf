@@ -13,6 +13,10 @@ terraform {
       source  = "grafana/grafana"
       version = "~> 1.28"
     }
+    onepassword = {
+      source = "1Password/onepassword"
+      version = "~> 1.1"
+    }
   }
 
   backend "s3" {

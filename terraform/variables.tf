@@ -15,3 +15,7 @@ variable "public_url" {
 variable "grafana_endpoint" {
   type = string
 }
+
+variable "onepassword_endpoint" {
+  type = string
+}

@@ -17,3 +17,8 @@ provider "aws" {
 provider "grafana" {
   url = "https://${var.grafana_endpoint}"
 }
+
+# Expects OP_CONNECT_TOKEN env variable to be set
+provider "onepassword" {
+  url = "https://${var.onepassword_endpoint}"
+}
