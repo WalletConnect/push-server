@@ -6,10 +6,10 @@ use crate::{
 use axum::extract::{Json, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
+use itertools::Itertools;
 use serde::Deserialize;
 use serde_json::json;
 use std::sync::Arc;
-use itertools::Itertools;
 
 #[derive(Deserialize)]
 pub struct RegisterBody {
@@ -33,7 +33,13 @@ pub async fn handler(
                 StatusCode::BAD_REQUEST,
                 Json(json!(new_error_response(vec![ErrorReason {
                     field: "type".to_string(),
-                    description: format!("Invalid Push Service, must be one of: {}", supported_providers.into_iter().map(|provider| provider.as_str()).join(", ")),
+                    description: format!(
+                        "Invalid Push Service, must be one of: {}",
+                        supported_providers
+                            .iter()
+                            .map(|provider| provider.as_str())
+                            .join(", ")
+                    ),
                 }]))),
             )
         }
