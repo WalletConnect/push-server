@@ -1,4 +1,3 @@
-use crate::providers::ProviderKind;
 use crate::store::Client;
 use crate::{
     handlers::{new_error_response, new_success_response, ErrorReason},
@@ -10,6 +9,7 @@ use axum::response::IntoResponse;
 use serde::Deserialize;
 use serde_json::json;
 use std::sync::Arc;
+use itertools::Itertools;
 
 #[derive(Deserialize)]
 pub struct RegisterBody {
@@ -24,15 +24,16 @@ pub async fn handler(
     Json(body): Json<RegisterBody>,
 ) -> impl IntoResponse {
     let push_type = body.push_type.as_str().try_into();
+    let supported_providers = state.supported_providers();
     let push_type = match push_type {
-        Ok(provider) if state.supported_providers().contains(&provider) => provider,
+        Ok(provider) if supported_providers.contains(&provider) => provider,
 
         _ => {
             return (
                 StatusCode::BAD_REQUEST,
                 Json(json!(new_error_response(vec![ErrorReason {
                     field: "type".to_string(),
-                    description: "Invalid Push Service, must be one of: fcm, apns".to_string(),
+                    description: format!("Invalid Push Service, must be one of: {}", supported_providers.into_iter().map(|provider| provider.as_str()).join(", ")),
                 }]))),
             )
         }

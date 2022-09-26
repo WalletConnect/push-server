@@ -518,6 +518,7 @@ dependencies = [
  "dotenv",
  "envy",
  "fcm",
+ "itertools",
  "opentelemetry",
  "opentelemetry-otlp",
  "serde",
