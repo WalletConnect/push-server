@@ -6,7 +6,6 @@ use crate::{
 use axum::extract::{Json, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use itertools::Itertools;
 use serde::Deserialize;
 use serde_json::json;
 use std::sync::Arc;
@@ -38,6 +37,7 @@ pub async fn handler(
                         supported_providers
                             .iter()
                             .map(|provider| provider.as_str())
+                            .collect::<Vec<_>>()
                             .join(", ")
                     ),
                 }]))),
