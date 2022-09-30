@@ -11,7 +11,7 @@ use serde::Deserialize;
 use serde_json::json;
 use std::sync::Arc;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct MessagePayload {
     pub title: String,
     pub description: String,
@@ -83,7 +83,7 @@ pub async fn handler(
     };
 
     let res = provider
-        .send_notification(client_token, body.payload.message)
+        .send_notification(client_token, body.payload)
         .await;
     if res.is_err() {
         return (
