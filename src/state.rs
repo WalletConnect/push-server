@@ -1,4 +1,5 @@
 use crate::providers::Providers;
+use crate::relay::RelayClient;
 use crate::store::ClientStore;
 use crate::{env::Config, providers::ProviderKind};
 use build_info::BuildInfo;
@@ -6,11 +7,13 @@ use opentelemetry::metrics::{Counter, UpDownCounter};
 use opentelemetry::sdk::trace::Tracer;
 use tracing_subscriber::prelude::*;
 
+#[derive(Clone)]
 pub struct Metrics {
     pub registered_webhooks: UpDownCounter<i64>,
     pub received_notifications: Counter<u64>,
 }
 
+#[derive(Clone)]
 pub struct AppState<S>
 where
     S: ClientStore,
@@ -21,6 +24,7 @@ where
     pub store: S,
     pub providers: Providers,
     pub supported_providers: Vec<ProviderKind>,
+    pub relay_client: RelayClient,
 }
 
 build_info::build_info!(fn build_info);
@@ -40,6 +44,7 @@ where
         store,
         providers,
         supported_providers,
+        relay_client: RelayClient::new("https://relay.walletconnect.com".to_string()),
     })
 }
 

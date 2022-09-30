@@ -1,15 +1,15 @@
-use std::ops::Add;
 use chrono::{DateTime, Duration, Utc};
 use ed25519_dalek::PublicKey;
-use reqwest::header::HeaderMap;
+use std::ops::Add;
 
 const PUBLIC_KEY_TTL_HOURS: i64 = 6;
 
+#[derive(Clone)]
 pub struct RelayClient {
-    pub http_client: reqwest::Client,
-    pub base_url: String,
-    pub public_key: Option<PublicKey>,
-    pub public_key_last_fetched: DateTime<Utc>
+    http_client: reqwest::Client,
+    base_url: String,
+    public_key: Option<PublicKey>,
+    public_key_last_fetched: DateTime<Utc>,
 }
 
 impl RelayClient {
@@ -18,7 +18,7 @@ impl RelayClient {
             http_client: reqwest::Client::new(),
             base_url,
             public_key: None,
-            public_key_last_fetched: DateTime::<Utc>::MIN_UTC
+            public_key_last_fetched: DateTime::<Utc>::MIN_UTC,
         }
     }
 
@@ -26,19 +26,27 @@ impl RelayClient {
     pub async fn public_key(&mut self) -> crate::error::Result<PublicKey> {
         if let Some(public_key) = self.public_key {
             // TTL Not exceeded
-            if self.public_key_last_fetched.add(Duration::hours(PUBLIC_KEY_TTL_HOURS)) < Utc::now() {
-                return Ok(public_key)
+            if self
+                .public_key_last_fetched
+                .add(Duration::hours(PUBLIC_KEY_TTL_HOURS))
+                < Utc::now()
+            {
+                return Ok(public_key);
             }
         }
 
-        let public_key = self.fetch_public_key()?;
-        self.public_key = public_key;
+        let public_key = self.fetch_public_key().await?;
+        self.public_key = Some(public_key);
         self.public_key_last_fetched = Utc::now();
         Ok(public_key)
     }
 
     async fn fetch_public_key(&self) -> crate::error::Result<PublicKey> {
-        let response = self.http_client.get(self.get_url("public-key")).send().await?;
+        let response = self
+            .http_client
+            .get(self.get_url("public-key"))
+            .send()
+            .await?;
         let body = response.text().await?;
         let key_bytes = hex::decode(body)?;
         let public_key = PublicKey::from_bytes(&key_bytes)?;
@@ -47,11 +55,5 @@ impl RelayClient {
 
     fn get_url(&self, path: &str) -> String {
         format!("{}/{}", self.base_url, path)
-    }
-}
-
-impl Default for RelayClient {
-    fn default() -> Self {
-        RelayClient::new("https://relay.walletconnect.com".to_string())
     }
 }

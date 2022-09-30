@@ -1,12 +1,15 @@
 mod env;
 mod error;
 mod handlers;
+mod middleware;
 mod providers;
+mod relay;
 mod state;
 mod store;
 
 use crate::state::Metrics;
 use axum::{
+    body,
     routing::{delete, get, post},
     Router,
 };
@@ -19,10 +22,14 @@ use opentelemetry::sdk::{
 use opentelemetry::util::tokio_interval_stream;
 use opentelemetry::KeyValue;
 use opentelemetry_otlp::{Protocol, WithExportConfig};
+use reqwest::Request;
 use sqlx::postgres::PgPoolOptions;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
+use tower::ServiceBuilder;
+use tower_http::ServiceBuilderExt;
+use tracing::warn;
 use tracing_subscriber::fmt::format::FmtSpan;
 
 #[tokio::main]
@@ -51,6 +58,12 @@ async fn main() -> error::Result<()> {
     sqlx::migrate!("./migrations").run(&store).await?;
 
     let mut state = state::new_state(config, store)?;
+
+    // Fetch public key so it's cached for the first 6hrs
+    let public_key = state.relay_client.public_key().await;
+    if public_key.is_err() {
+        warn!("Failed initial fetch of Relay's Public Key, this may prevent webhook validation.")
+    }
 
     if state.config.telemetry_enabled.unwrap_or(false) {
         let grpc_url = state
@@ -140,15 +153,24 @@ async fn main() -> error::Result<()> {
         .clone();
     let build_rustc_version = state.build_info.compiler.version.clone();
 
-    let state_arc = Arc::new(state);
+    let state_arc = Arc::new(state.clone());
 
     let app = Router::with_state(state_arc)
         .route("/health", get(handlers::health::handler))
         .route("/clients", post(handlers::register_client::handler))
+        .route("/clients/:id", delete(handlers::delete_client::handler))
         .route(
             "/clients/:id",
-            delete(handlers::delete_client::handler).post(handlers::push_message::handler),
+            post(handlers::push_message::handler).layer(
+                ServiceBuilder::new().map_request_body(body::boxed).layer(
+                    axum::middleware::from_fn(move |req, next| {
+                        let state = state.clone();
+                        middleware::validate_signature::validate_signature(req, next, state)
+                    }),
+                ),
+            ),
         );
+    // TODO move to only affect specific routes
 
     let header = format!(
         "
