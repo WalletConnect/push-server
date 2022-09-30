@@ -13,13 +13,14 @@ use std::sync::Arc;
 
 #[derive(Deserialize)]
 pub struct MessagePayload {
-    message: String,
+    pub title: String,
+    pub description: String,
 }
 
 #[derive(Deserialize)]
 pub struct PushMessageBody {
-    id: String,
-    payload: MessagePayload,
+    pub id: String,
+    pub payload: MessagePayload,
 }
 
 pub async fn handler(

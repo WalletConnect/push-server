@@ -1,11 +1,12 @@
 use crate::providers::PushProvider;
 use async_trait::async_trait;
 use std::collections::HashMap;
+use crate::handlers::push_message::MessagePayload;
 
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
 pub struct NoopProvider {
-    // token -> [message, message, message]
-    notifications: HashMap<String, Vec<String>>,
+    // token -> [MessagePayload{..}, MessagePayload{..}, MessagePayload{..}]
+    notifications: HashMap<String, Vec<MessagePayload>>,
 }
 
 impl NoopProvider {
@@ -19,12 +20,12 @@ impl PushProvider for NoopProvider {
     async fn send_notification(
         &mut self,
         token: String,
-        message: String,
+        payload: MessagePayload,
     ) -> crate::error::Result<()> {
         self.bootstrap(token.clone());
 
         let notifications = self.notifications.get_mut(&token).unwrap();
-        notifications.append(&mut vec![message]);
+        notifications.append(&mut vec![payload]);
 
         Ok(())
     }

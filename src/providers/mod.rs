@@ -10,13 +10,14 @@ use crate::{providers::apns::ApnsProvider, state::AppState};
 use async_trait::async_trait;
 use std::fs::File;
 use std::io::BufReader;
+use crate::handlers::push_message::MessagePayload;
 
 #[async_trait]
 pub trait PushProvider {
     async fn send_notification(
         &mut self,
         token: String,
-        message: String,
+        payload: MessagePayload,
     ) -> crate::error::Result<()>;
 }
 
@@ -74,12 +75,12 @@ impl PushProvider for Provider {
     async fn send_notification(
         &mut self,
         token: String,
-        message: String,
+        payload: MessagePayload,
     ) -> crate::error::Result<()> {
         match self {
-            Provider::Fcm(p) => p.send_notification(token, message).await,
-            Provider::Apns(p) => p.send_notification(token, message).await,
-            Provider::Noop(p) => p.send_notification(token, message).await,
+            Provider::Fcm(p) => p.send_notification(token, payload).await,
+            Provider::Apns(p) => p.send_notification(token, payload).await,
+            Provider::Noop(p) => p.send_notification(token, payload).await,
         }
     }
 }
