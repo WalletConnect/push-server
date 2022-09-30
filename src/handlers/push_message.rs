@@ -82,9 +82,7 @@ pub async fn handler(
         _ => panic!("cannot be any other error"),
     };
 
-    let res = provider
-        .send_notification(client_token, body.payload)
-        .await;
+    let res = provider.send_notification(client_token, body.payload).await;
     if res.is_err() {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,

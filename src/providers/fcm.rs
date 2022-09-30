@@ -1,8 +1,8 @@
+use crate::handlers::push_message::MessagePayload;
 use crate::providers::PushProvider;
 use async_trait::async_trait;
 use fcm::{MessageBuilder, NotificationBuilder};
 use std::fmt::{Debug, Formatter};
-use crate::handlers::push_message::MessagePayload;
 
 pub struct FcmProvider {
     api_key: String,

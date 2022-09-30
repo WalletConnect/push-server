@@ -1,7 +1,7 @@
+use crate::handlers::push_message::MessagePayload;
 use crate::providers::PushProvider;
 use async_trait::async_trait;
 use std::collections::HashMap;
-use crate::handlers::push_message::MessagePayload;
 
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
 pub struct NoopProvider {

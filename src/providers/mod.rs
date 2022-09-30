@@ -2,6 +2,7 @@ pub mod apns;
 pub mod fcm;
 pub mod noop;
 
+use crate::handlers::push_message::MessagePayload;
 use crate::providers::noop::NoopProvider;
 use crate::store::ClientStore;
 use crate::{env::Config, error::Error::ProviderNotAvailable};
@@ -10,7 +11,6 @@ use crate::{providers::apns::ApnsProvider, state::AppState};
 use async_trait::async_trait;
 use std::fs::File;
 use std::io::BufReader;
-use crate::handlers::push_message::MessagePayload;
 
 #[async_trait]
 pub trait PushProvider {
