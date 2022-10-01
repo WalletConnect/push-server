@@ -12,7 +12,7 @@ tokio = { version = "1", features = ["full"] }
 axum = { version = "0.6.0-rc.2", features = ["json"] }
 hyper = "0.14.20"
 tower = "0.4.13"
-tower-http = "0.3.4"
+tower-http = { version = "0.3.4", features = ["map-request-body", "util"] }
 
 # Database
 sqlx = { version = "0.6", features = ["runtime-tokio-native-tls", "postgres", "json", "macros"] }

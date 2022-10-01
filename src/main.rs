@@ -22,7 +22,6 @@ use opentelemetry::sdk::{
 use opentelemetry::util::tokio_interval_stream;
 use opentelemetry::KeyValue;
 use opentelemetry_otlp::{Protocol, WithExportConfig};
-use reqwest::Request;
 use sqlx::postgres::PgPoolOptions;
 use std::net::SocketAddr;
 use std::sync::Arc;
