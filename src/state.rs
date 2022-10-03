@@ -5,12 +5,28 @@ use crate::{env::Config, providers::ProviderKind};
 use build_info::BuildInfo;
 use opentelemetry::metrics::{Counter, UpDownCounter};
 use opentelemetry::sdk::trace::Tracer;
+use std::sync::Mutex;
 use tracing_subscriber::prelude::*;
 
 #[derive(Clone)]
 pub struct Metrics {
     pub registered_webhooks: UpDownCounter<i64>,
     pub received_notifications: Counter<u64>,
+}
+
+pub trait State<S>
+where
+    S: ClientStore,
+{
+    fn get_config(self) -> Config;
+    fn get_build_info(self) -> BuildInfo;
+    fn get_store(self) -> S;
+    fn get_safe_store(self) -> Mutex<&'static S>;
+    fn get_providers(self) -> Providers;
+    fn get_safe_providers(self) -> Mutex<&'static Providers>;
+    fn get_supported_providers(self) -> Vec<ProviderKind>;
+    fn get_relay_client(self) -> RelayClient;
+    fn get_safe_relay_client(self) -> Mutex<&'static RelayClient>;
 }
 
 #[derive(Clone)]
@@ -64,5 +80,46 @@ where
 
     pub fn supported_providers(&self) -> &[ProviderKind] {
         &self.supported_providers
+    }
+}
+
+impl<S> State<S> for AppState<S>
+where
+    S: Clone + ClientStore,
+{
+    fn get_config(self) -> Config {
+        self.config.clone()
+    }
+
+    fn get_build_info(self) -> BuildInfo {
+        self.build_info.clone()
+    }
+
+    fn get_store(self) -> S {
+        self.store.clone()
+    }
+
+    fn get_safe_store(self) -> Mutex<&'static S> {
+        Mutex::new(&self.store)
+    }
+
+    fn get_providers(self) -> Providers {
+        self.providers.clone()
+    }
+
+    fn get_safe_providers(self) -> Mutex<&'static Providers> {
+        Mutex::new(&self.providers)
+    }
+
+    fn get_supported_providers(self) -> Vec<ProviderKind> {
+        self.supported_providers.clone()
+    }
+
+    fn get_relay_client(self) -> RelayClient {
+        self.relay_client.clone()
+    }
+
+    fn get_safe_relay_client(self) -> Mutex<&'static RelayClient> {
+        Mutex::new(&self.relay_client)
     }
 }

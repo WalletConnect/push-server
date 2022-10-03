@@ -7,7 +7,9 @@ mod relay;
 mod state;
 mod store;
 
+use crate::middleware::validate_signature::RequireValidSignature;
 use crate::state::Metrics;
+use axum::middleware::from_extractor;
 use axum::{
     body,
     routing::{delete, get, post},
@@ -152,7 +154,7 @@ async fn main() -> error::Result<()> {
         .clone();
     let build_rustc_version = state.build_info.compiler.version.clone();
 
-    let state_arc = Arc::new(state.clone());
+    let state_arc = Arc::new(state);
 
     let app = Router::with_state(state_arc)
         .route("/health", get(handlers::health::handler))
@@ -160,16 +162,8 @@ async fn main() -> error::Result<()> {
         .route("/clients/:id", delete(handlers::delete_client::handler))
         .route(
             "/clients/:id",
-            post(handlers::push_message::handler).layer(
-                ServiceBuilder::new().map_request_body(body::boxed).layer(
-                    axum::middleware::from_fn(move |req, next| {
-                        let state = state.clone();
-                        middleware::validate_signature::validate_signature(req, next, state)
-                    }),
-                ),
-            ),
+            post(handlers::push_message::handler).layer(from_extractor::<RequireValidSignature>()),
         );
-    // TODO move to only affect specific routes
 
     let header = format!(
         "
