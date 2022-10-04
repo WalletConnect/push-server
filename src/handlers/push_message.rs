@@ -1,9 +1,9 @@
-use crate::providers::get_provider;
 use crate::{error::Error, state::AppState};
 use crate::{
     handlers::{new_error_response, new_success_response, ErrorReason},
     providers::PushProvider,
 };
+use crate::{middleware::validate_signature::RequireValidSignature, providers::get_provider};
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -25,7 +25,7 @@ pub struct PushMessageBody {
 pub async fn handler(
     Path(id): Path<String>,
     State(state): State<Arc<AppState<impl crate::store::ClientStore>>>,
-    Json(body): Json<PushMessageBody>,
+    RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> impl IntoResponse {
     // TODO de-dup, and return accepted to already acknowledged notifications
     if body.id.as_str() == "0000-0000-0000-0000" {

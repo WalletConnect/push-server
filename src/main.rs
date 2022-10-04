@@ -160,10 +160,7 @@ async fn main() -> error::Result<()> {
         .route("/health", get(handlers::health::handler))
         .route("/clients", post(handlers::register_client::handler))
         .route("/clients/:id", delete(handlers::delete_client::handler))
-        .route(
-            "/clients/:id",
-            post(handlers::push_message::handler).layer(from_extractor::<RequireValidSignature>()),
-        );
+        .route("/clients/:id", post(handlers::push_message::handler));
 
     let header = format!(
         "
