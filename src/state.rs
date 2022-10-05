@@ -5,7 +5,7 @@ use crate::{env::Config, providers::ProviderKind};
 use build_info::BuildInfo;
 use opentelemetry::metrics::{Counter, UpDownCounter};
 use opentelemetry::sdk::trace::Tracer;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc};
 use tracing_subscriber::prelude::*;
 
 #[derive(Clone)]

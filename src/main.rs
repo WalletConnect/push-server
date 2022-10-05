@@ -7,11 +7,8 @@ mod relay;
 mod state;
 mod store;
 
-use crate::middleware::validate_signature::RequireValidSignature;
 use crate::state::Metrics;
-use axum::middleware::from_extractor;
 use axum::{
-    body,
     routing::{delete, get, post},
     Router,
 };
@@ -28,8 +25,6 @@ use sqlx::postgres::PgPoolOptions;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
-use tower::ServiceBuilder;
-use tower_http::ServiceBuilderExt;
 use tracing::warn;
 use tracing_subscriber::fmt::format::FmtSpan;
 
