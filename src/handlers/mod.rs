@@ -8,14 +8,14 @@ pub mod register_client;
 pub enum ErrorLocation {
     Body,
     Query,
-    Header
+    Header,
 }
 
 #[derive(serde::Serialize)]
 pub struct ErrorReason {
     pub field: String,
     pub description: String,
-    pub location: ErrorLocation
+    pub location: ErrorLocation,
 }
 
 #[derive(serde::Serialize)]

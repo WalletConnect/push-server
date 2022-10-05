@@ -1,3 +1,4 @@
+use crate::handlers::ErrorLocation;
 use crate::store::Client;
 use crate::{
     handlers::{new_error_response, new_success_response, ErrorReason},
@@ -9,7 +10,6 @@ use axum::response::IntoResponse;
 use serde::Deserialize;
 use serde_json::json;
 use std::sync::Arc;
-use crate::handlers::ErrorLocation;
 
 #[derive(Deserialize)]
 pub struct RegisterBody {

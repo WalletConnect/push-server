@@ -1,4 +1,4 @@
-use crate::handlers::{new_error_response, ErrorReason, ErrorLocation};
+use crate::handlers::{new_error_response, ErrorLocation, ErrorReason};
 use crate::state::State;
 use async_trait::async_trait;
 use axum::body;

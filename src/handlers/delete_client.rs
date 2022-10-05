@@ -1,3 +1,4 @@
+use crate::handlers::ErrorLocation;
 use crate::{
     handlers::{new_error_response, new_success_response, ErrorReason},
     state::AppState,
@@ -8,7 +9,6 @@ use axum::response::IntoResponse;
 use axum::Json;
 use serde_json::json;
 use std::sync::Arc;
-use crate::handlers::ErrorLocation;
 
 pub async fn handler(
     Path(id): Path<String>,
