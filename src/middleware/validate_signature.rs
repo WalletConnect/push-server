@@ -1,4 +1,4 @@
-use crate::handlers::{new_error_response, ErrorReason};
+use crate::handlers::{new_error_response, ErrorReason, ErrorLocation};
 use crate::state::State;
 use async_trait::async_trait;
 use axum::body;
@@ -64,6 +64,7 @@ where
                         Json(json!(new_error_response(vec![ErrorReason {
                             field: TIMESTAMP_HEADER_NAME.to_string(),
                             description: "Missing timestamp".to_string(),
+                            location: ErrorLocation::Header
                         }]))),
                     )
                 })
@@ -73,6 +74,7 @@ where
                 Json(json!(new_error_response(vec![ErrorReason {
                     field: TIMESTAMP_HEADER_NAME.to_string(),
                     description: "Missing timestamp".to_string(),
+                    location: ErrorLocation::Header
                 }]))),
             )),
             (None, Some(_)) => Err((
@@ -80,6 +82,7 @@ where
                 Json(json!(new_error_response(vec![ErrorReason {
                     field: SIGNATURE_HEADER_NAME.to_string(),
                     description: "Missing signature".to_string(),
+                    location: ErrorLocation::Header
                 },]))),
             )),
             (None, None) => Err((
@@ -88,10 +91,12 @@ where
                     ErrorReason {
                         field: SIGNATURE_HEADER_NAME.to_string(),
                         description: "Missing signature".to_string(),
+                        location: ErrorLocation::Header
                     },
                     ErrorReason {
                         field: TIMESTAMP_HEADER_NAME.to_string(),
                         description: "Missing timestamp".to_string(),
+                        location: ErrorLocation::Header
                     }
                 ]))),
             )),
@@ -118,6 +123,7 @@ pub async fn signature_is_valid(
             Json(json!(new_error_response(vec![ErrorReason {
                 field: SIGNATURE_HEADER_NAME.to_string(),
                 description: "Signature is not valid hex".to_string(),
+                location: ErrorLocation::Header
             }]))),
         ));
     }
@@ -129,6 +135,7 @@ pub async fn signature_is_valid(
             Json(json!(new_error_response(vec![ErrorReason {
                 field: SIGNATURE_HEADER_NAME.to_string(),
                 description: "Failed to parse signature from bytes".to_string(),
+                location: ErrorLocation::Header
             }]))),
         ));
     }

@@ -9,6 +9,7 @@ use axum::response::IntoResponse;
 use serde::Deserialize;
 use serde_json::json;
 use std::sync::Arc;
+use crate::handlers::ErrorLocation;
 
 #[derive(Deserialize)]
 pub struct RegisterBody {
@@ -40,6 +41,7 @@ pub async fn handler(
                             .collect::<Vec<_>>()
                             .join(", ")
                     ),
+                    location: ErrorLocation::Body
                 }]))),
             )
         }
@@ -51,6 +53,7 @@ pub async fn handler(
             Json(json!(new_error_response(vec![ErrorReason {
                 field: "token".to_string(),
                 description: "The `token` field must not be empty".to_string(),
+                location: ErrorLocation::Body
             }]))),
         );
     }
@@ -71,6 +74,7 @@ pub async fn handler(
             Json(json!(new_error_response(vec![ErrorReason {
                 field: "client_id".to_string(),
                 description: "A client is already registered with this id".to_string(),
+                location: ErrorLocation::Body
             }]))),
         );
     }

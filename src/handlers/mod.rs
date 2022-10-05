@@ -4,9 +4,18 @@ pub mod push_message;
 pub mod register_client;
 
 #[derive(serde::Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ErrorLocation {
+    Body,
+    Query,
+    Header
+}
+
+#[derive(serde::Serialize)]
 pub struct ErrorReason {
     pub field: String,
     pub description: String,
+    pub location: ErrorLocation
 }
 
 #[derive(serde::Serialize)]

@@ -10,6 +10,7 @@ use axum::response::IntoResponse;
 use serde::Deserialize;
 use serde_json::json;
 use std::sync::Arc;
+use crate::handlers::ErrorLocation;
 
 #[derive(Deserialize)]
 pub struct MessagePayload {
@@ -43,6 +44,7 @@ pub async fn handler(
                     Json(json!(new_error_response(vec![ErrorReason {
                         field: "id".to_string(),
                         description: "No client found with the provided id".to_string(),
+                        location: ErrorLocation::Body
                     }]))),
                 );
             }
@@ -64,6 +66,7 @@ pub async fn handler(
                 Json(json!(new_error_response(vec![ErrorReason {
                     field: "client.provider".to_string(),
                     description: "The client's registered provider cannot be found.".to_string(),
+                    location: ErrorLocation::Body
                 }]))),
             );
         }
@@ -74,6 +77,7 @@ pub async fn handler(
                 Json(json!(new_error_response(vec![ErrorReason {
                     field: "client.provider".to_string(),
                     description: "The client's registered provider is not available.".to_string(),
+                    location: ErrorLocation::Body
                 }]))),
             );
         }
