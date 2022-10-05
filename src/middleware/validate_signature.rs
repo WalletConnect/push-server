@@ -25,12 +25,6 @@ where
 
     async fn from_request(req: Request<B>, state: &S) -> Result<Self, Self::Rejection> {
         let public_key = {
-            // let relay_client = state.get_relay_client().map_err(|_| {
-            //     (
-            //         StatusCode::INTERNAL_SERVER_ERROR,
-            //         Json(json!(new_error_response(vec![]))),
-            //     )
-            // })?;
             match state.get_relay_client().public_key().await {
                 Ok(key) => key,
                 Err(_) => {
@@ -50,12 +44,6 @@ where
             )
         })?;
         let body = String::from_utf8_lossy(&bytes);
-        // let body = String::from_utf8(bytes.to_vec()).map_err(|_| {
-        //     (
-        //         StatusCode::INTERNAL_SERVER_ERROR,
-        //         Json(json!(new_error_response(vec![]))),
-        //     )
-        // })?;
 
         let signature_header = parts
             .headers
