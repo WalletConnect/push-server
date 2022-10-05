@@ -24,15 +24,13 @@ where
     type Rejection = (StatusCode, Json<serde_json::Value>);
 
     async fn from_request(req: Request<B>, state: &S) -> Result<Self, Self::Rejection> {
-        let public_key = {
-            match state.get_relay_client().public_key().await {
-                Ok(key) => key,
-                Err(_) => {
-                    return Err((
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(json!(new_error_response(vec![]))),
-                    ));
-                }
+        let public_key = match state.get_relay_client().public_key().await {
+            Ok(key) => key,
+            Err(_) => {
+                return Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(json!(new_error_response(vec![]))),
+                ));
             }
         };
 
