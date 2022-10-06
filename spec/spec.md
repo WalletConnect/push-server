@@ -70,7 +70,8 @@ POST <ECHO_SERVER_URL>/clients/<CLIENT_ID>
 {
     "id": "0000-0000-0000-0000"
     "payload": {
-        "message": "You have a signing request."
+        "title": "New Request",
+        "description": "You have a signing request."
     }
 }
 ```

@@ -2,6 +2,7 @@ pub mod apns;
 pub mod fcm;
 pub mod noop;
 
+use crate::handlers::push_message::MessagePayload;
 use crate::providers::noop::NoopProvider;
 use crate::store::ClientStore;
 use crate::{env::Config, error::Error::ProviderNotAvailable};
@@ -16,7 +17,7 @@ pub trait PushProvider {
     async fn send_notification(
         &mut self,
         token: String,
-        message: String,
+        payload: MessagePayload,
     ) -> crate::error::Result<()>;
 }
 
@@ -74,12 +75,12 @@ impl PushProvider for Provider {
     async fn send_notification(
         &mut self,
         token: String,
-        message: String,
+        payload: MessagePayload,
     ) -> crate::error::Result<()> {
         match self {
-            Provider::Fcm(p) => p.send_notification(token, message).await,
-            Provider::Apns(p) => p.send_notification(token, message).await,
-            Provider::Noop(p) => p.send_notification(token, message).await,
+            Provider::Fcm(p) => p.send_notification(token, payload).await,
+            Provider::Apns(p) => p.send_notification(token, payload).await,
+            Provider::Noop(p) => p.send_notification(token, payload).await,
         }
     }
 }
