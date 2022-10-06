@@ -4,3 +4,6 @@
 # Editors
 .idea
 .vscode
+
+# Terraform
+terraform/.terraform*

@@ -11,15 +11,16 @@ use serde::Deserialize;
 use serde_json::json;
 use std::sync::Arc;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct MessagePayload {
-    message: String,
+    pub title: String,
+    pub description: String,
 }
 
 #[derive(Deserialize)]
 pub struct PushMessageBody {
-    id: String,
-    payload: MessagePayload,
+    pub id: String,
+    pub payload: MessagePayload,
 }
 
 pub async fn handler(
@@ -81,9 +82,7 @@ pub async fn handler(
         _ => panic!("cannot be any other error"),
     };
 
-    let res = provider
-        .send_notification(client_token, body.payload.message)
-        .await;
+    let res = provider.send_notification(client_token, body.payload).await;
     if res.is_err() {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
