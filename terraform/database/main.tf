@@ -7,7 +7,7 @@ resource "onepassword_item" "database_password" {
 
   password_recipe {
     length  = 25
-    digits = true
+    digits  = true
     letters = true
     symbols = true
   }

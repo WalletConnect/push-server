@@ -1,6 +1,7 @@
 locals {
-  app_name         = "echo-server"
-  fqdn             = terraform.workspace == "prod" ? var.public_url : "${terraform.workspace}.${var.public_url}"
+  app_name = "echo-server"
+  version  = "0.1.0"
+  fqdn     = terraform.workspace == "prod" ? var.public_url : "${terraform.workspace}.${var.public_url}"
 }
 
 data "assert_test" "workspace" {
@@ -10,7 +11,7 @@ data "assert_test" "workspace" {
 
 module "vpc" {
   source = "terraform-aws-modules/vpc/aws"
-  name = "${terraform.workspace}-${local.app_name}"
+  name   = "${terraform.workspace}-${local.app_name}"
 
   cidr = "10.0.0.0/16"
 
@@ -49,8 +50,16 @@ module "dns" {
 module "database" {
   source = "./database"
 
-  name = local.app_name
+  name                 = local.app_name
   onepassword_vault_id = var.onepassword_vault_id
+}
+
+module "ecs" {
+  source = "./ecs"
+
+  prometheus_endpoint = aws_prometheus_workspace.prometheus.prometheus_endpoint
+  database_url        = module.database.database_url
+  image               = "${data.aws_ecr_repository.repository.repository_url}:${local.version}"
 }
 
 data "aws_ecr_repository" "repository" {
