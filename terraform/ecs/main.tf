@@ -34,7 +34,7 @@ resource "aws_ecs_task_definition" "app_task_definition" {
     {
       name      = var.app_name,
       image     = var.image,
-      cpu       = var.cpu - 128,                                          # Remove sidecar memory/cpu so rest is assigned to primary container
+      cpu       = var.cpu - 128, # Remove sidecar memory/cpu so rest is assigned to primary container
       memory    = var.cpu - 128,
       essential = true,
       environment = [
