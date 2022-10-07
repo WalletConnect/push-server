@@ -140,8 +140,5 @@ pub async fn signature_is_valid(
         ));
     }
 
-    Ok(matches!(
-        public_key.verify(sig_body.as_bytes(), &sig.unwrap()),
-        Ok(_)
-    ))
+    Ok(public_key.verify(sig_body.as_bytes(), &sig.unwrap()).is_ok())
 }
