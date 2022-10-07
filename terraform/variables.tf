@@ -23,3 +23,7 @@ variable "onepassword_endpoint" {
 variable "onepassword_vault_id" {
   type = string
 }
+
+variable "image_version" {
+  type = string
+}

@@ -1,6 +1,5 @@
 locals {
   app_name = "echo-server"
-  version  = "0.1.0"
   fqdn     = terraform.workspace == "prod" ? var.public_url : "${terraform.workspace}.${var.public_url}"
 }
 
@@ -57,9 +56,10 @@ module "database" {
 module "ecs" {
   source = "./ecs"
 
+  app_name = local.app_name
   prometheus_endpoint = aws_prometheus_workspace.prometheus.prometheus_endpoint
   database_url        = module.database.database_url
-  image               = "${data.aws_ecr_repository.repository.repository_url}:${local.version}"
+  image               = "${data.aws_ecr_repository.repository.repository_url}:${var.image_version}"
 }
 
 data "aws_ecr_repository" "repository" {
