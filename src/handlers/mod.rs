@@ -7,7 +7,8 @@ pub mod register_client;
 #[serde(rename_all = "lowercase")]
 pub enum ErrorLocation {
     Body,
-    Query,
+    // Note (Harry): Spec supports this but it currently isn't used
+    //Query,
     Header,
 }
 
