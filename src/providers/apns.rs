@@ -1,3 +1,4 @@
+use crate::handlers::push_message::MessagePayload;
 use crate::providers::PushProvider;
 use a2::NotificationBuilder;
 use async_trait::async_trait;
@@ -42,12 +43,13 @@ impl PushProvider for ApnsProvider {
     async fn send_notification(
         &mut self,
         token: String,
-        message: String,
+        payload: MessagePayload,
     ) -> crate::error::Result<()> {
         let opt = a2::NotificationOptions::default();
 
+        // TODO set title
         let notification =
-            a2::PlainNotificationBuilder::new(message.as_str()).build(token.as_str(), opt);
+            a2::PlainNotificationBuilder::new(&payload.description).build(token.as_str(), opt);
 
         let _ = self.client.send(notification).await?;
 

@@ -1,16 +1,32 @@
 use crate::providers::Providers;
+use crate::relay::RelayClient;
 use crate::store::ClientStore;
 use crate::{env::Config, providers::ProviderKind};
 use build_info::BuildInfo;
 use opentelemetry::metrics::{Counter, UpDownCounter};
 use opentelemetry::sdk::trace::Tracer;
+use std::sync::Arc;
 use tracing_subscriber::prelude::*;
 
+#[derive(Clone)]
 pub struct Metrics {
     pub registered_webhooks: UpDownCounter<i64>,
     pub received_notifications: Counter<u64>,
 }
 
+pub trait State<S>
+where
+    S: ClientStore,
+{
+    fn config(&self) -> Config;
+    fn build_info(&self) -> BuildInfo;
+    fn store(&self) -> S;
+    fn providers(&self) -> Providers;
+    fn supported_providers(&self) -> Vec<ProviderKind>;
+    fn relay_client(&self) -> RelayClient;
+}
+
+#[derive(Clone)]
 pub struct AppState<S>
 where
     S: ClientStore,
@@ -21,6 +37,7 @@ where
     pub store: S,
     pub providers: Providers,
     pub supported_providers: Vec<ProviderKind>,
+    pub relay_client: RelayClient,
 }
 
 build_info::build_info!(fn build_info);
@@ -40,6 +57,7 @@ where
         store,
         providers,
         supported_providers,
+        relay_client: RelayClient::new("https://relay.walletconnect.com".to_string()),
     })
 }
 
@@ -59,5 +77,34 @@ where
 
     pub fn supported_providers(&self) -> &[ProviderKind] {
         &self.supported_providers
+    }
+}
+
+impl<S> State<S> for Arc<AppState<S>>
+where
+    S: Clone + ClientStore,
+{
+    fn config(&self) -> Config {
+        self.config.clone()
+    }
+
+    fn build_info(&self) -> BuildInfo {
+        self.build_info.clone()
+    }
+
+    fn store(&self) -> S {
+        self.store.clone()
+    }
+
+    fn providers(&self) -> Providers {
+        self.providers.clone()
+    }
+
+    fn supported_providers(&self) -> Vec<ProviderKind> {
+        self.supported_providers.clone()
+    }
+
+    fn relay_client(&self) -> RelayClient {
+        self.relay_client.clone()
     }
 }
