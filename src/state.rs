@@ -18,12 +18,12 @@ pub trait State<S>
 where
     S: ClientStore,
 {
-    fn get_config(&self) -> Config;
-    fn get_build_info(&self) -> BuildInfo;
-    fn get_store(&self) -> S;
-    fn get_providers(&self) -> Providers;
-    fn get_supported_providers(&self) -> Vec<ProviderKind>;
-    fn get_relay_client(&self) -> RelayClient;
+    fn config(&self) -> Config;
+    fn build_info(&self) -> BuildInfo;
+    fn store(&self) -> S;
+    fn providers(&self) -> Providers;
+    fn supported_providers(&self) -> Vec<ProviderKind>;
+    fn relay_client(&self) -> RelayClient;
 }
 
 #[derive(Clone)]
@@ -84,27 +84,27 @@ impl<S> State<S> for Arc<AppState<S>>
 where
     S: Clone + ClientStore,
 {
-    fn get_config(&self) -> Config {
+    fn config(&self) -> Config {
         self.config.clone()
     }
 
-    fn get_build_info(&self) -> BuildInfo {
+    fn build_info(&self) -> BuildInfo {
         self.build_info.clone()
     }
 
-    fn get_store(&self) -> S {
+    fn store(&self) -> S {
         self.store.clone()
     }
 
-    fn get_providers(&self) -> Providers {
+    fn providers(&self) -> Providers {
         self.providers.clone()
     }
 
-    fn get_supported_providers(&self) -> Vec<ProviderKind> {
+    fn supported_providers(&self) -> Vec<ProviderKind> {
         self.supported_providers.clone()
     }
 
-    fn get_relay_client(&self) -> RelayClient {
+    fn relay_client(&self) -> RelayClient {
         self.relay_client.clone()
     }
 }
