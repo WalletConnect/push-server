@@ -1,3 +1,4 @@
+use crate::handlers::ErrorLocation;
 use crate::{
     handlers::{new_error_response, new_success_response, ErrorReason},
     state::AppState,
@@ -27,6 +28,7 @@ pub async fn handler(
             Json(json!(new_error_response(vec![ErrorReason {
                 field: "client_id".to_string(),
                 description: "No client is registered with the supplied id".to_string(),
+                location: ErrorLocation::Body
             }]))),
         );
     }

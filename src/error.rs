@@ -23,6 +23,15 @@ pub enum Error {
     #[error(transparent)]
     Database(#[from] sqlx::Error),
 
+    #[error(transparent)]
+    Hex(#[from] hex::FromHexError),
+
+    #[error(transparent)]
+    Ed25519(#[from] ed25519_dalek::ed25519::Error),
+
+    #[error(transparent)]
+    HttpRequest(#[from] reqwest::Error),
+
     #[error("database migration failed: {0}")]
     DatabaseMigration(#[from] sqlx::migrate::MigrateError),
 

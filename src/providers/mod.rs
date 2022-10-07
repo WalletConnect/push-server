@@ -85,6 +85,7 @@ impl PushProvider for Provider {
     }
 }
 
+#[derive(Clone)]
 pub struct Providers {
     apns: Option<ApnsProvider>,
     fcm: Option<FcmProvider>,

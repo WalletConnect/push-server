@@ -1,3 +1,4 @@
+use crate::handlers::ErrorLocation;
 use crate::store::Client;
 use crate::{
     handlers::{new_error_response, new_success_response, ErrorReason},
@@ -40,6 +41,7 @@ pub async fn handler(
                             .collect::<Vec<_>>()
                             .join(", ")
                     ),
+                    location: ErrorLocation::Body
                 }]))),
             )
         }
@@ -51,6 +53,7 @@ pub async fn handler(
             Json(json!(new_error_response(vec![ErrorReason {
                 field: "token".to_string(),
                 description: "The `token` field must not be empty".to_string(),
+                location: ErrorLocation::Body
             }]))),
         );
     }
@@ -71,6 +74,7 @@ pub async fn handler(
             Json(json!(new_error_response(vec![ErrorReason {
                 field: "client_id".to_string(),
                 description: "A client is already registered with this id".to_string(),
+                location: ErrorLocation::Body
             }]))),
         );
     }
