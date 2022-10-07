@@ -29,9 +29,6 @@ jobs:
   plan:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    environment:
-      name: infra/staging
-      url: https://staging.relay.walletconnect.com/hello
     steps:
       - name: Checkout
         uses: actions/checkout@v3
