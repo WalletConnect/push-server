@@ -35,10 +35,9 @@ jobs:
       - name: Run Terraform Plan
         id: plan
         uses: WalletConnect/actions/actions/plan-terraform/@master
-        env:
-          TF_VAR_registry_api_auth_token: ${{ secrets.REGISTRY_API_AUTH_TOKEN }}
-          TF_VAR_canary_project_id: ${{ secrets.TEST_PROJECT_ID }}
-          TF_VAR_ed25519_private_key: ${{ secrets.ED25519_PRIVATE_KEY }}
+#        TODO (Harry): Add required env vars
+#        env:
+#          TF_VAR_variable_name: ${{ secrets.TF_VAR_variable_name }}
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
