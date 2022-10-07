@@ -13,7 +13,7 @@ configuration to help with this.
 3. Write your own implementation using the [spec](./spec/spec.md).
 
 When using the hosted platform or self-hosting this implementation you have to provide the instance
-you FCM API Key or APNS certificates and then following the FCM/APNS docs add support for that within your
+you FCM API Key or APNS certificates and then - following the FCM/APNS docs - add support for that within your
 wallet.
 
 > **Warning** e2e encrypted notifications will be coming soon which will change your implementations!
