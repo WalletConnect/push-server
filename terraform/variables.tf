@@ -31,6 +31,6 @@ variable "image_version" {
 }
 
 variable "fcm_api_key" {
-  type = string
+  type      = string
   sensitive = true
 }
