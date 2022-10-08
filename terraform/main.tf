@@ -33,14 +33,14 @@ module "vpc" {
 }
 
 module "tags" {
-  source = "github.com/WalletConnect/terraform-modules/modules/tags"
+  source = "github.com/WalletConnect/terraform-modules.git//modules/tags"
 
   application = local.app_name
   env         = terraform.workspace
 }
 
 module "dns" {
-  source = "github.com/WalletConnect/terraform-modules/modules/dns"
+  source = "github.com/WalletConnect/terraform-modules.git//modules/dns"
 
   hosted_zone_name = var.public_url
   fqdn             = local.fqdn
