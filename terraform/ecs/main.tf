@@ -37,6 +37,12 @@ resource "aws_ecs_task_definition" "app_task_definition" {
       cpu       = var.cpu - 128, # Remove sidecar memory/cpu so rest is assigned to primary container
       memory    = var.memory - 128,
       essential = true,
+      portMappings = [
+        {
+          containerPort = 8080,
+          hostPort      = 8080
+        }
+      ],
       environment = [
         { name = "PORT", value = "8080" },
         { name = "LOG_LEVEL", value = "INFO" },
@@ -102,7 +108,7 @@ resource "aws_ecs_service" "app_service" {
   load_balancer {
     target_group_arn = aws_lb_target_group.target_group.arn # Referencing our target group
     container_name   = var.app_name
-    container_port   = 80 # Specifying the container port
+    container_port   = 8080 # Specifying the container port
   }
 }
 
