@@ -58,7 +58,7 @@ jobs:
       - name: Add Plan to PR
         uses: actions/github-script@v6
         env:
-          PLAN: "terraform\n${{ steps.plan.outputs.plan }}"
+          PLAN: ${{ steps.plan.outputs.plan }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
