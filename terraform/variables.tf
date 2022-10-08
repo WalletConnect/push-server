@@ -26,5 +26,6 @@ variable "onepassword_vault_id" {
 }
 
 variable "image_version" {
-  type = string
+  type    = string
+  default = "latest"
 }
