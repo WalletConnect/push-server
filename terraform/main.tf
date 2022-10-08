@@ -61,9 +61,9 @@ module "ecs" {
   database_url        = module.database.database_url
   image               = "${data.aws_ecr_repository.repository.repository_url}:${var.image_version}"
   acm_certificate_arn = module.dns.certificate_arn
-  cpu                 = 1024
+  cpu                 = 512
   fqdn                = local.fqdn
-  memory              = 512
+  memory              = 1024
   private_subnets     = module.vpc.private_subnets
   public_subnets      = module.vpc.public_subnets
   region              = var.region
