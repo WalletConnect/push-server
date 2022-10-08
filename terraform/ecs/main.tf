@@ -35,18 +35,42 @@ resource "aws_ecs_task_definition" "app_task_definition" {
       name      = var.app_name,
       image     = var.image,
       cpu       = var.cpu - 128, # Remove sidecar memory/cpu so rest is assigned to primary container
-      memory    = var.cpu - 128,
+      memory    = var.memory - 128,
       essential = true,
       environment = [
-        {
-          name  = "PORT",
-          value = "8080"
-        }
+        { name = "PORT", value = "8080" },
+        { name = "LOG_LEVEL", value = "INFO" },
+        { name = "DATABASE_URL", value = var.database_url },
+        { name = "TELEMETRY_ENABLED", value = "true" },
+        { name = "TELEMETRY_GRPC_URL", value = "http://localhost:4317" }
       ],
       logConfiguration = {
         logDriver = "awslogs",
         options = {
           awslogs-group         = aws_cloudwatch_log_group.cluster_logs.name,
+          awslogs-region        = var.region,
+          awslogs-stream-prefix = "ecs"
+        }
+      }
+    },
+    {
+      name  = "aws-otel-collector",
+      image = "public.ecr.aws/aws-observability/aws-otel-collector:latest",
+      cpu = 128,
+      memory = 128,
+      environment = [
+        { name = "AWS_PROMETHEUS_ENDPOINT", value = "${var.prometheus_endpoint}api/v1/remote_write" },
+        { name = "AWS_REGION", value = "eu-central-1" }
+      ],
+      essential = true,
+      command = [
+        "--config=/etc/ecs/ecs-amp.yaml"
+      ],
+      logConfiguration = {
+        logDriver = "awslogs",
+        options = {
+          awslogs-create-group  = "True",
+          awslogs-group         = "/ecs/${var.app_name}-ecs-aws-otel-sidecar-collector",
           awslogs-region        = var.region,
           awslogs-stream-prefix = "ecs"
         }
