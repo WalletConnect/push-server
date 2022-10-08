@@ -9,7 +9,7 @@ variable "azs" {
 }
 
 variable "public_url" {
-  type = string
+  type    = string
   default = "push.walletconnect.com"
 }
 
