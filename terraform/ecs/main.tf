@@ -55,9 +55,9 @@ resource "aws_ecs_task_definition" "app_task_definition" {
       }
     },
     {
-      name  = "aws-otel-collector",
-      image = "public.ecr.aws/aws-observability/aws-otel-collector:latest",
-      cpu = 128,
+      name   = "aws-otel-collector",
+      image  = "public.ecr.aws/aws-observability/aws-otel-collector:latest",
+      cpu    = 128,
       memory = 128,
       environment = [
         { name = "AWS_PROMETHEUS_ENDPOINT", value = "${var.prometheus_endpoint}api/v1/remote_write" },
