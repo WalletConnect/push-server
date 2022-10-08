@@ -29,6 +29,9 @@ jobs:
   plan:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging.push.walletconnect.com/health
     steps:
       - name: Checkout
         uses: actions/checkout@v3
