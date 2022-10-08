@@ -70,6 +70,7 @@ module "ecs" {
   route53_zone_id     = module.dns.zone_id
   vpc_cidr            = module.vpc.vpc_cidr_block
   vpc_id              = module.vpc.vpc_id
+  fcm_api_key         = var.fcm_api_key
 }
 
 data "aws_ecr_repository" "repository" {

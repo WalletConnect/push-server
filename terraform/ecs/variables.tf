@@ -53,3 +53,8 @@ variable "cpu" {
 variable "memory" {
   type = number
 }
+
+variable "fcm_api_key" {
+  type = string
+  sensitive = true
+}

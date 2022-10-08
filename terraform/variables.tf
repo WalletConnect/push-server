@@ -29,3 +29,8 @@ variable "image_version" {
   type    = string
   default = "latest"
 }
+
+variable "fcm_api_key" {
+  type = string
+  sensitive = true
+}

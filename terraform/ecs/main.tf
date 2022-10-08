@@ -42,7 +42,8 @@ resource "aws_ecs_task_definition" "app_task_definition" {
         { name = "LOG_LEVEL", value = "INFO" },
         { name = "DATABASE_URL", value = var.database_url },
         { name = "TELEMETRY_ENABLED", value = "true" },
-        { name = "TELEMETRY_GRPC_URL", value = "http://localhost:4317" }
+        { name = "TELEMETRY_GRPC_URL", value = "http://localhost:4317" },
+        { name = "FCM_API_KEY", value = var.fcm_api_key }
       ],
       logConfiguration = {
         logDriver = "awslogs",
