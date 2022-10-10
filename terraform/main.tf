@@ -74,7 +74,7 @@ module "ecs" {
 }
 
 data "aws_ecr_repository" "repository" {
-  name = local.app_name
+  name = "echo-server"
 }
 
 resource "aws_prometheus_workspace" "prometheus" {
