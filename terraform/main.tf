@@ -1,5 +1,5 @@
 locals {
-  app_name = "echo-server"
+  app_name = "push"
   fqdn     = terraform.workspace == "prod" ? var.public_url : "${terraform.workspace}.${var.public_url}"
 }
 
