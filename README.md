@@ -30,7 +30,7 @@ New contributors can also look at the [issues labeled with "good first issue"](h
 as they should be suitable to people who are looking at the project for the first time.
 
 ## License
-Copyright 2022 WalletConnect, inc.
+Copyright 2022 WalletConnect, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
