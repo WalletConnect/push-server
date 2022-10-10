@@ -56,7 +56,7 @@ module "database" {
 module "ecs" {
   source = "./ecs"
 
-  app_name            = local.app_name
+  app_name            = "${terraform.workspace}-${local.app_name}"
   prometheus_endpoint = aws_prometheus_workspace.prometheus.prometheus_endpoint
   database_url        = module.database.database_url
   image               = "${data.aws_ecr_repository.repository.repository_url}:${var.image_version}"
