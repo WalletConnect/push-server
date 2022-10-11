@@ -1,0 +1,5 @@
+[target.'cfg(feature = "cargo-clippy")']
+rustflags = [
+  "-Dclippy::all",
+#   "-Dclippy::await_holding_lock"
+]
