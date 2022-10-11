@@ -41,7 +41,7 @@ async fn main() -> error::Result<()> {
 
     let store = PgPoolOptions::new()
         .max_connections(5)
-        .connect(config.database_url())
+        .connect(&config.database_url)
         .await?;
 
     // Run database migrations. `./migrations` is the path to migrations, relative to the root dir (the directory
