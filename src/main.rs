@@ -39,14 +39,9 @@ async fn main() -> error::Result<()> {
         panic!("You must enable at least one provider.");
     }
 
-    let database_url = config
-        .database_url
-        .as_deref()
-        .expect("database url is missing");
-
     let store = PgPoolOptions::new()
         .max_connections(5)
-        .connect(database_url)
+        .connect(config.database_url())
         .await?;
 
     // Run database migrations. `./migrations` is the path to migrations, relative to the root dir (the directory

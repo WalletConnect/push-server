@@ -23,7 +23,7 @@ pub struct Config {
     pub port: u16,
     #[serde(default = "default_log_level")]
     pub log_level: String,
-    pub database_url: Option<String>,
+    pub database_url: String,
     pub telemetry_enabled: Option<bool>,
     pub telemetry_grpc_url: Option<String>,
     pub apns_certificate: Option<ApnsCertificateConfig>,
@@ -34,6 +34,10 @@ pub struct Config {
 impl Config {
     pub fn log_level(&self) -> tracing::Level {
         tracing::Level::from_str(self.log_level.as_str()).expect("Invalid log level")
+    }
+
+    pub fn database_url(&self) -> &str {
+        self.database_url.as_str()
     }
 
     pub fn supported_providers(&self) -> Vec<ProviderKind> {
