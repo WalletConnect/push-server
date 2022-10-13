@@ -34,8 +34,8 @@ resource "aws_ecs_task_definition" "app_task_definition" {
     {
       name      = var.app_name,
       image     = var.image,
-      cpu       = var.cpu - 128, # Remove sidecar memory/cpu so rest is assigned to primary container
-      memory    = var.memory - 128,
+      cpu       = var.cpu    #- 128, # Remove sidecar memory/cpu so rest is assigned to primary container
+      memory    = var.memory #- 128,
       essential = true,
       portMappings = [
         {
@@ -47,7 +47,7 @@ resource "aws_ecs_task_definition" "app_task_definition" {
         { name = "PORT", value = "8080" },
         { name = "LOG_LEVEL", value = "INFO" },
         { name = "DATABASE_URL", value = var.database_url },
-        { name = "TELEMETRY_ENABLED", value = "true" },
+        { name = "TELEMETRY_ENABLED", value = "false" },
         { name = "TELEMETRY_GRPC_URL", value = "http://localhost:4317" },
         { name = "FCM_API_KEY", value = var.fcm_api_key }
       ],
@@ -60,30 +60,35 @@ resource "aws_ecs_task_definition" "app_task_definition" {
         }
       }
     },
-    {
-      name   = "aws-otel-collector",
-      image  = "public.ecr.aws/aws-observability/aws-otel-collector:latest",
-      cpu    = 128,
-      memory = 128,
-      environment = [
-        { name = "AWS_PROMETHEUS_ENDPOINT", value = "${var.prometheus_endpoint}api/v1/remote_write" },
-        { name = "AWS_REGION", value = "eu-central-1" }
-      ],
-      essential = true,
-      command = [
-        "--config=/etc/ecs/ecs-amp.yaml"
-      ],
-      logConfiguration = {
-        logDriver = "awslogs",
-        options = {
-          awslogs-create-group  = "True",
-          awslogs-group         = "/ecs/${var.app_name}-ecs-aws-otel-sidecar-collector",
-          awslogs-region        = var.region,
-          awslogs-stream-prefix = "ecs"
-        }
-      }
-    }
+    #    {
+    #      name   = "aws-otel-collector",
+    #      image  = "public.ecr.aws/aws-observability/aws-otel-collector:latest",
+    #      cpu    = 128,
+    #      memory = 128,
+    #      environment = [
+    #        { name = "AWS_PROMETHEUS_ENDPOINT", value = "${var.prometheus_endpoint}api/v1/remote_write" },
+    #        { name = "AWS_REGION", value = "eu-central-1" }
+    #      ],
+    #      essential = true,
+    #      command = [
+    #        "--config=/etc/ecs/ecs-amp.yaml"
+    #      ],
+    #      logConfiguration = {
+    #        logDriver = "awslogs",
+    #        options = {
+    #          awslogs-create-group  = "True",
+    #          awslogs-group         = "/ecs/${var.app_name}-ecs-aws-otel-sidecar-collector",
+    #          awslogs-region        = var.region,
+    #          awslogs-stream-prefix = "ecs"
+    #        }
+    #      }
+    #    }
   ])
+
+  runtime_platform {
+    operating_system_family = "LINUX"
+    cpu_architecture        = "ARM64"
+  }
 }
 
 ## Service
@@ -121,20 +126,28 @@ resource "aws_lb" "application_load_balancer" {
   security_groups = [aws_security_group.lb_ingress.id]
 }
 
+
+
 resource "aws_lb_target_group" "target_group" {
-  name        = "${var.app_name}-target-group"
-  port        = 80
+  name        = "${var.app_name}-target-group-2"
+  port        = 8080
   protocol    = "HTTP"
   target_type = "ip"
   vpc_id      = var.vpc_id # Referencing the default VPC
   slow_start  = 30         # Give a 30 second delay to allow the service to startup
+
   health_check {
     protocol            = "HTTP"
     path                = "/health" # Echo Server's health path
+    port                = 8080
     interval            = 15
     timeout             = 10
     healthy_threshold   = 3
     unhealthy_threshold = 3
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
@@ -201,7 +214,12 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_cloudwatch_policy" {
+resource "aws_iam_role_policy_attachment" "prometheus_write_policy" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonPrometheusRemoteWriteAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch_write_policy" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
 }
@@ -218,16 +236,16 @@ resource "aws_security_group" "app_ingress" {
   vpc_id      = var.vpc_id
 
   ingress {
-    from_port       = 80
-    to_port         = 80
-    protocol        = "tcp"
+    from_port       = 0
+    to_port         = 0
+    protocol        = "-1"
     security_groups = [aws_security_group.lb_ingress.id]
   }
 
   ingress {
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = [var.vpc_cidr]
   }
 

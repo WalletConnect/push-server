@@ -22,3 +22,5 @@ provider "grafana" {
 provider "onepassword" {
   url = "https://${var.onepassword_endpoint}"
 }
+
+provider "random" {}
