@@ -15,6 +15,7 @@ fn fetch_provider() {
     // Reset the env vars
     crate::env::reset_env();
 
+    env::set_var("DATABASE_URL", "");
     env::set_var("FCM_API_KEY", FCM_API_KEY);
 
     let config = get_config().expect("Failed to get config");

@@ -16,6 +16,7 @@ impl NoopProvider {
 }
 
 #[async_trait]
+#[cfg(any(debug_assertions, test))]
 impl PushProvider for NoopProvider {
     async fn send_notification(
         &mut self,
@@ -32,20 +33,10 @@ impl PushProvider for NoopProvider {
 }
 
 // Utils
+#[cfg(any(debug_assertions, test))]
 impl NoopProvider {
     /// Insert empty notifications for a new token
     fn bootstrap(&mut self, token: String) {
         self.notifications.entry(token).or_insert_with(Vec::new);
     }
 }
-
-// Debug methods for testing
-// #[cfg(test)]
-// impl NoopProvider {
-//     /// Get notifications for a specific token
-//     pub fn get_notifications(&mut self, token: String) -> &Vec<String> {
-//         self.bootstrap(token.clone());
-
-//         self.notifications.get(&token).unwrap()
-//     }
-// }
