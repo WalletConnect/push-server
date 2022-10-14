@@ -3,6 +3,7 @@ use serial_test::serial;
 use std::env;
 
 pub fn reset_env() {
+    env::remove_var("DATABASE_URL");
     env::remove_var("PORT");
     env::remove_var("LOG_LEVEL");
     env::remove_var("TELEMETRY_ENABLED");
@@ -15,6 +16,7 @@ pub fn reset_env() {
 fn default_config() {
     reset_env();
 
+    env::set_var("DATABASE_URL", "");
     let config = get_config().expect("Failed to fetch config");
 
     assert_eq!(
@@ -37,6 +39,7 @@ fn default_config() {
 fn env_config_1() {
     reset_env();
 
+    env::set_var("DATABASE_URL", "");
     env::set_var("TELEMETRY_ENABLED", "false");
 
     let config = get_config().expect("Failed to fetch config");
@@ -61,6 +64,7 @@ fn env_config_1() {
 fn env_config_2() {
     reset_env();
 
+    env::set_var("DATABASE_URL", "");
     env::set_var("PORT", "3001");
     env::set_var("LOG_LEVEL", "TRACE");
 
@@ -86,6 +90,7 @@ fn env_config_2() {
 fn env_config_3() {
     reset_env();
 
+    env::set_var("DATABASE_URL", "");
     env::set_var("PORT", "8080");
     env::set_var("LOG_LEVEL", "ERROR");
 
@@ -111,6 +116,7 @@ fn env_config_3() {
 fn env_config_4() {
     reset_env();
 
+    env::set_var("DATABASE_URL", "");
     env::set_var("PORT", "3001");
     env::set_var("LOG_LEVEL", "TRACE");
     env::set_var("TELEMETRY_ENABLED", "true");
