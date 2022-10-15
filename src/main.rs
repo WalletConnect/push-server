@@ -167,7 +167,7 @@ providers: [{}]
         build_version,
         build_commit,
         build_rustc_version,
-        "127.0.0.1",
+        "0.0.0.0",
         port.clone(),
         supported_providers
             .into_iter()
@@ -177,7 +177,7 @@ providers: [{}]
     );
     println!("{}", header);
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], port));
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await

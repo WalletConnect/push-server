@@ -69,9 +69,6 @@ LABEL               version=${version}
 LABEL               sha=${sha}
 LABEL               maintainer=${maintainer}
 
-ENV                 HOST=0.0.0.0
-ENV                 PORT=3000
-
 WORKDIR             /app
 COPY --from=build   /app/target/${binpath:-debug}/echo-server /usr/local/bin/echo-server
 RUN                 apt-get update \
@@ -80,5 +77,4 @@ RUN                 apt-get update \
                         && rm -rf /var/lib/apt/lists/*
 
 USER                1001:1001
-EXPOSE              3000/tcp
 ENTRYPOINT          ["/usr/local/bin/echo-server"]
