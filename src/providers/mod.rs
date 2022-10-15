@@ -89,7 +89,7 @@ impl PushProvider for Provider {
 pub struct Providers {
     apns: Option<ApnsProvider>,
     fcm: Option<FcmProvider>,
-    noop: NoopProvider,
+    noop: Option<NoopProvider>,
 }
 
 impl Providers {
@@ -144,11 +144,12 @@ impl Providers {
             }
         }
 
-        Ok(Providers {
-            apns,
-            fcm,
-            noop: NoopProvider::new(),
-        })
+        let mut noop = None;
+        if cfg!(any(debug_assertions, test)) {
+            noop = Some(NoopProvider::new());
+        }
+
+        Ok(Providers { apns, fcm, noop })
     }
 }
 
@@ -172,13 +173,9 @@ pub fn get_provider(
             Some(p) => Ok(Provider::Fcm(p)),
             None => Err(ProviderNotAvailable(name.into())),
         },
-        ProviderKind::Noop => {
-            // Only available in debug/testing
-            if cfg!(any(test, debug_assertions)) {
-                return Ok(Provider::Noop(state.providers.noop.clone()));
-            }
-
-            Err(ProviderNotAvailable(name.into()))
-        }
+        ProviderKind::Noop => match state.providers.noop.clone() {
+            Some(p) => Ok(Provider::Noop(p)),
+            None => Err(ProviderNotAvailable(name.into())),
+        },
     }
 }
