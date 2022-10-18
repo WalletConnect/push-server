@@ -3,6 +3,14 @@ Push server for the WalletConnect v2 Protocol
 
 > **Note** This is only available for WalletConnect v2 and is a breaking change from the Push supported in v1.
 
+## Notification Providers
+This list contains both supported and potentially planned providers
+- [x] FCM (API Key)
+- [ ] FCM (Google Services)
+- [x] APNS (Certificate Based)
+- [ ] APNS (Token Based)
+- [ ] Web Push
+
 ## Supporting Notifications
 > **Note** Full documentation will be available soon. This is only a brief overview.
 
