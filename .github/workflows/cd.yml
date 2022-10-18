@@ -1,0 +1,129 @@
+name: cd
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  get-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get.outputs.version }}
+    steps:
+      - id: get
+        run: |
+          $(echo "${{ github.event.release.tag_name }}" | sed 's/v//g') >> $GITHUB_OUTPUT
+
+  build-container:
+    runs-on: ubuntu-latest
+    needs:
+      - get-version
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      # Authenticate with ECR
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Login to GHCR
+        id: login-ghcr
+        run: |
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u USERNAME --password-stdin
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ steps.login-ecr.outputs.registry }}/echo-server
+            ghcr.io/walletconnect/echo-server
+            walletconnect/echo-server,enable=false
+          flavor: |
+            latest=auto
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=${{ needs.get-version.outputs.version }}
+      # Setup Buildkit
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build, tag, and push image to Amazon ECR
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-infra-staging:
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging.echo.walletconnect.com/health
+    needs:
+      - build-container
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - id: deploy-staging
+        uses: WalletConnect/actions/actions/deploy-terraform/@master
+        env:
+          TF_VAR_onepassword_vault_id: ${{ secrets.ONEPASSWORD_VAULT_ID }}
+          TF_VAR_fcm_api_key: ${{ secrets.FCM_API_KEY }}
+          TF_VAR_image_version: ${{ needs.get-version.outputs.version }}
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+          environment: staging
+          onepassword-api-key: ${{ secrets.OP_CONNECT_TOKEN }}
+          app-name: ${{ github.event.repository.name }}
+
+  # TODO: Run integration test suite here
+
+  check-staging-health:
+    needs:
+      - deploy-staging-infra
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Staging Up
+        run: curl --fail --connect-timeout 15 --retry 5 --retry-delay 5 https://staging.echo.walletconnect.com/health
+
+  deploy-infra-prod:
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://echo.walletconnect.com/health
+    needs:
+      - check-staging-health
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - id: deploy-staging
+        uses: WalletConnect/actions/actions/deploy-terraform/@master
+        env:
+          TF_VAR_onepassword_vault_id: ${{ secrets.ONEPASSWORD_VAULT_ID }}
+          TF_VAR_fcm_api_key: ${{ secrets.FCM_API_KEY }}
+          TF_VAR_image_version: ${{ needs.get-version.outputs.version }}
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+          environment: prod
+          onepassword-api-key: ${{ secrets.OP_CONNECT_TOKEN }}
+          app-name: ${{ github.event.repository.name }}
