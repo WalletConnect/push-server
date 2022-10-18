@@ -13,7 +13,7 @@ axum = { version = "0.6.0-rc.2", features = ["json"] }
 hyper = "0.14"
 
 # Database
-sqlx = { version = "0.6", features = ["runtime-tokio-native-tls", "postgres", "json", "macros"] }
+sqlx = { version = "0.6", features = ["runtime-tokio-native-tls", "postgres", "json", "chrono", "macros"] }
 
 # Seralisation
 serde = { version = "1.0", features = ["derive"] }
