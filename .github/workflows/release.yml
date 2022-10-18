@@ -1,0 +1,80 @@
+name: release
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '.github/**'
+      - 'terraform/**'
+      - 'docs/**'
+      - 'README.md'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check-not-ci:
+    runs-on: ubuntu-latest
+    outputs:
+      pusher: ${{ steps.check.outputs.pusher }}
+    steps:
+      - id: check
+        run: |
+          echo "pusher=${{ github.event.pusher.name }}" >> $GITHUB_OUTPUT
+
+  release:
+    runs-on: ubuntu-latest
+    if: jobs.check-not-ci.outputs.pusher != "github-actions[bot]"
+    needs:
+      - check-not-ci
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: "Cocogitto release"
+        id: release
+        uses: cocogitto/cocogitto-action@v3
+        with:
+          check: true
+          check-latest-tag-only: true
+          release: true
+          git-user: 'github-actions[bot]'
+          git-user-email: "github-actions[bot]@users.noreply.github.com"
+
+      - name: "Update version in Cargo.toml"
+        shell: bash
+        run: |
+          version=$(echo "${{ steps.release.outputs.version }}" | sed 's/v//g')
+
+          sed "s/^version = \".*\"\$/version = \"$version\"/" /Cargo.toml > /tmp/cargo.toml
+          mv /tmp/cargo.toml /Cargo.toml
+
+      - name: "Commit version bump"
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "chore: Bump version for release"
+          commit_user_name: "github-actions[bot]"
+          commit_user_email: "github-actions[bot]@users.noreply.github.com"
+
+      - name: "Install Rust toolchain (stable)"
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          default: true
+
+      - name: Cache cargo registry
+        uses: Swatinem/rust-cache@v2
+
+      - name: "Generate Changelog"
+        run: cog changelog --at ${{ steps.release.outputs.version }} -t full_hash > GITHUB_CHANGELOG.md
+
+      - name: "Update Github release notes"
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: GITHUB_CHANGELOG.md
+          tag_name: ${{ steps.release.outputs.version }}
+          token: ${{ secrets.GITHUB_TOKEN }}
