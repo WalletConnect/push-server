@@ -22,20 +22,6 @@ impl ApnsProvider {
             client: a2::Client::certificate(cert, password.as_str(), endpoint)?,
         })
     }
-
-    pub fn new_token<R>(
-        pem: &mut R,
-        key_id: String,
-        team_id: String,
-        endpoint: a2::Endpoint,
-    ) -> crate::error::Result<Self>
-    where
-        R: Read,
-    {
-        Ok(ApnsProvider {
-            client: a2::Client::token(pem, key_id, team_id, endpoint)?,
-        })
-    }
 }
 
 #[async_trait]

@@ -9,7 +9,6 @@ use crate::{env::Config, error::Error::ProviderNotAvailable};
 use crate::{error, providers::fcm::FcmProvider};
 use crate::{providers::apns::ApnsProvider, state::AppState};
 use async_trait::async_trait;
-use std::fs::File;
 use std::io::BufReader;
 
 #[async_trait]
@@ -97,44 +96,23 @@ impl Providers {
         let supported = config.supported_providers();
         let mut apns = None;
         if supported.contains(&ProviderKind::Apns) {
-            // Certificate Based
-            if let Some(cert_config) = &config.apns_certificate {
-                let f = File::open(cert_config.cert_path.clone())?;
-                let mut reader = BufReader::new(f);
+            let endpoint = match config.apns_sandbox {
+                true => a2::Endpoint::Sandbox,
+                false => a2::Endpoint::Production,
+            };
+            apns = Some(
+                match (&config.apns_certificate, &config.apns_certificate_password) {
+                    (Some(certificate), Some(password)) => {
+                        let mut reader = BufReader::new(certificate.as_bytes());
 
-                let mut endpoint = a2::Endpoint::Production;
-                if let Some(sandbox) = cert_config.sandbox {
-                    if sandbox {
-                        endpoint = a2::Endpoint::Sandbox;
+                        let apns_client =
+                            ApnsProvider::new_cert(&mut reader, password.clone(), endpoint)?;
+
+                        Ok(apns_client)
                     }
-                }
-
-                apns = Some(ApnsProvider::new_cert(
-                    &mut reader,
-                    cert_config.password.clone(),
-                    endpoint,
-                )?);
-            }
-
-            // Token Based
-            if let Some(token_config) = &config.apns_token {
-                let f = File::open(token_config.token_path.clone())?;
-                let mut reader = BufReader::new(f);
-
-                let mut endpoint = a2::Endpoint::Production;
-                if let Some(sandbox) = token_config.sandbox {
-                    if sandbox {
-                        endpoint = a2::Endpoint::Sandbox;
-                    }
-                }
-
-                apns = Some(ApnsProvider::new_token(
-                    &mut reader,
-                    token_config.key_id.clone(),
-                    token_config.team_id.clone(),
-                    endpoint,
-                )?);
-            }
+                    _ => Err(error::Error::RequiredEnvNotFound),
+                }?,
+            );
         }
 
         let mut fcm = None;

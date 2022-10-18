@@ -27,9 +27,10 @@ fn default_config() {
             database_url: Default::default(),
             telemetry_enabled: None,
             telemetry_grpc_url: None,
+            apns_sandbox: false,
             apns_certificate: None,
-            apns_token: None,
-            fcm_api_key: None
+            fcm_api_key: None,
+            apns_certificate_password: None
         }
     )
 }
@@ -52,9 +53,10 @@ fn env_config_1() {
             database_url: Default::default(),
             telemetry_enabled: Some(false),
             telemetry_grpc_url: None,
+            apns_sandbox: false,
             apns_certificate: None,
-            apns_token: None,
-            fcm_api_key: None
+            fcm_api_key: None,
+            apns_certificate_password: None
         }
     )
 }
@@ -78,9 +80,10 @@ fn env_config_2() {
             database_url: Default::default(),
             telemetry_enabled: None,
             telemetry_grpc_url: None,
+            apns_sandbox: false,
             apns_certificate: None,
-            apns_token: None,
-            fcm_api_key: None
+            fcm_api_key: None,
+            apns_certificate_password: None
         }
     )
 }
@@ -104,9 +107,10 @@ fn env_config_3() {
             database_url: Default::default(),
             telemetry_enabled: None,
             telemetry_grpc_url: None,
+            apns_sandbox: false,
             apns_certificate: None,
-            apns_token: None,
-            fcm_api_key: None
+            fcm_api_key: None,
+            apns_certificate_password: None
         }
     )
 }
@@ -133,9 +137,10 @@ fn env_config_4() {
             database_url: Default::default(),
             telemetry_enabled: Some(true),
             telemetry_grpc_url: Some("http://localhost:4317".to_string()),
+            apns_sandbox: false,
             apns_certificate: None,
-            apns_token: None,
-            fcm_api_key: Some("API-KEY".to_string())
+            fcm_api_key: Some("API-KEY".to_string()),
+            apns_certificate_password: None
         }
     )
 }
