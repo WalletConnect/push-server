@@ -40,7 +40,7 @@ impl NotificationStore for sqlx::PgPool {
 
     async fn get_notification(&self, id: &str) -> error::Result<Option<Notification>> {
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Notification>(
-            "SELECT * FROM public.clients WHERE id = $1",
+            "SELECT * FROM public.notifications WHERE id = $1",
         )
             .bind(id)
             .fetch_one(self)
