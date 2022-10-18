@@ -1,0 +1,8 @@
+name: cd
+on:
+  release:
+    types:
+      - published
+
+jobs:
+
