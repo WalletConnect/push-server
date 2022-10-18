@@ -1,8 +1,8 @@
 use crate::handlers::ErrorLocation;
-use crate::{
-    handlers::{new_error_response, new_success_response, ErrorReason},
-    state::AppState,
-};
+use crate::handlers::{new_error_response, new_success_response, ErrorReason};
+use crate::state::AppState;
+use crate::stores::client::ClientStore;
+use crate::stores::notification::NotificationStore;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -12,9 +12,9 @@ use std::sync::Arc;
 
 pub async fn handler(
     Path(id): Path<String>,
-    State(state): State<Arc<AppState<impl crate::store::ClientStore>>>,
+    State(state): State<Arc<AppState<impl ClientStore, impl NotificationStore>>>,
 ) -> impl IntoResponse {
-    let exists = state.store.get_client(&id).await;
+    let exists = state.client_store.get_client(&id).await;
     if exists.is_err() {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -33,7 +33,7 @@ pub async fn handler(
         );
     }
 
-    let delete_result = state.store.delete_client(&id).await;
+    let delete_result = state.client_store.delete_client(&id).await;
     if delete_result.is_err() {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,

@@ -1,5 +1,8 @@
+use crate::error::Error;
 use crate::handlers::ErrorLocation;
-use crate::{error::Error, state::AppState};
+use crate::state::AppState;
+use crate::stores::client::ClientStore;
+use crate::stores::notification::NotificationStore;
 use crate::{
     handlers::{new_error_response, new_success_response, ErrorReason},
     providers::PushProvider,
@@ -8,17 +11,17 @@ use crate::{middleware::validate_signature::RequireValidSignature, providers::ge
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::sync::Arc;
 
-#[derive(Deserialize, Debug, Clone, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct MessagePayload {
     pub title: String,
     pub description: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct PushMessageBody {
     pub id: String,
     pub payload: MessagePayload,
@@ -26,16 +29,31 @@ pub struct PushMessageBody {
 
 pub async fn handler(
     Path(id): Path<String>,
-    State(state): State<Arc<AppState<impl crate::store::ClientStore>>>,
+    State(state): State<Arc<AppState<impl ClientStore, impl NotificationStore>>>,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> impl IntoResponse {
-    // TODO de-dup, and return accepted to already acknowledged notifications
-    if body.id.as_str() == "0000-0000-0000-0000" {
-        return (StatusCode::ACCEPTED, Json(json!(new_success_response())));
+    match state
+        .notification_store
+        .create_or_update_notification(&body.id, &id, &body.payload)
+        .await
+    {
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!(new_error_response(vec![]))),
+            );
+        }
+        Ok(notification) => {
+            // TODO make better by only ignoring if previously executed successfully
+            // If notification received more than once then discard
+            if notification.previous_payloads.len() > 1 {
+                return (StatusCode::ACCEPTED, Json(json!(new_success_response())));
+            }
+        }
     }
 
     let (client_token, provider) = {
-        let client_result = state.store.get_client(&id).await;
+        let client_result = state.client_store.get_client(&id).await;
         if let Ok(client) = client_result {
             if let Some(client) = client {
                 (client.token.clone(), get_provider(client.push_type, &state))
