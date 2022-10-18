@@ -7,14 +7,14 @@ use sqlx::Executor;
 
 #[derive(Debug, Clone, PartialEq, Eq, sqlx::FromRow)]
 pub struct Notification {
-    id: String,
-    client_id: String,
+    pub id: String,
+    pub client_id: String,
 
-    last_payload: Json<MessagePayload>,
-    previous_payloads: Vec<Json<MessagePayload>>,
+    pub last_payload: Json<MessagePayload>,
+    pub previous_payloads: Vec<Json<MessagePayload>>,
 
-    last_received_at: DateTime<Utc>,
-    created_at: DateTime<Utc>,
+    pub last_received_at: DateTime<Utc>,
+    pub created_at: DateTime<Utc>,
 }
 
 #[async_trait]
@@ -23,7 +23,7 @@ pub trait NotificationStore {
         &self,
         id: &str,
         client_id: &str,
-        payload: MessagePayload,
+        payload: &MessagePayload,
     ) -> error::Result<Notification>;
     async fn get_notification(&self, id: &str) -> error::Result<Option<Notification>>;
     async fn delete_notification(&self, id: &str) -> error::Result<()>;
@@ -35,7 +35,7 @@ impl NotificationStore for sqlx::PgPool {
         &self,
         id: &str,
         client_id: &str,
-        payload: MessagePayload,
+        payload: &MessagePayload,
     ) -> error::Result<Notification> {
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Notification>(
             "INSERT INTO public.notifications (id, client_id, last_payload)
@@ -48,7 +48,7 @@ RETURNING *;",
         )
         .bind(id)
         .bind(client_id)
-        .bind(payload)
+        .bind(Json(payload))
         .fetch_one(self)
         .await;
 

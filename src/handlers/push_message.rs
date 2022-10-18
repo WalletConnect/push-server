@@ -32,9 +32,24 @@ pub async fn handler(
     State(state): State<Arc<AppState<impl ClientStore, impl NotificationStore>>>,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> impl IntoResponse {
-    // TODO de-dup, and return accepted to already acknowledged notifications
-    if body.id.as_str() == "0000-0000-0000-0000" {
-        return (StatusCode::ACCEPTED, Json(json!(new_success_response())));
+    match state
+        .notification_store
+        .create_or_update_notification(&body.id, &id, &body.payload)
+        .await
+    {
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!(new_error_response(vec![]))),
+            );
+        }
+        Ok(notification) => {
+            // TODO make better by only ignoring if previously executed successfully
+            // If notification received more than once then discard
+            if notification.previous_payloads.len() > 1 {
+                return (StatusCode::ACCEPTED, Json(json!(new_success_response())));
+            }
+        }
     }
 
     let (client_token, provider) = {
