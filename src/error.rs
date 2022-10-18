@@ -40,4 +40,7 @@ pub enum Error {
 
     #[error("{0} is an invalid push provider as it has not been enabled")]
     ProviderNotAvailable(String),
+
+    #[error("A required environment variable cannot be found")]
+    RequiredEnvNotFound,
 }
