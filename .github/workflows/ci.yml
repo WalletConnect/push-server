@@ -2,15 +2,17 @@ name: ci
 
 on:
   pull_request:
-    paths-ignore:
-      - '.github/**'
-      - 'README.md'
+    paths:
+      - './src/**'
+      - './tests/**'
+      - './cargo.toml'
 
   push:
     branches: ['main']
-    paths-ignore:
-      - '.github/**'
-      - 'README.md'
+    paths:
+      - './src/**'
+      - './tests/**'
+      - './cargo.toml'
 
 concurrency:
   # Support push/pr as event types with different behaviors each:
