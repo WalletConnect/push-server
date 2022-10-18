@@ -5,7 +5,7 @@ mod middleware;
 mod providers;
 mod relay;
 mod state;
-mod store;
+mod stores;
 
 use crate::state::Metrics;
 use axum::{
@@ -48,7 +48,7 @@ async fn main() -> error::Result<()> {
     // containing `Cargo.toml`).
     sqlx::migrate!("./migrations").run(&store).await?;
 
-    let mut state = state::new_state(config, store)?;
+    let mut state = state::new_state(config, store.clone(), store.clone())?;
 
     // Fetch public key so it's cached for the first 6hrs
     let public_key = state.relay_client.public_key().await;

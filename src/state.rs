@@ -1,6 +1,7 @@
 use crate::providers::Providers;
 use crate::relay::RelayClient;
-use crate::store::ClientStore;
+use crate::stores::client::ClientStore;
+use crate::stores::notification::NotificationStore;
 use crate::{env::Config, providers::ProviderKind};
 use build_info::BuildInfo;
 use opentelemetry::metrics::{Counter, UpDownCounter};
@@ -14,27 +15,31 @@ pub struct Metrics {
     pub received_notifications: Counter<u64>,
 }
 
-pub trait State<S>
+pub trait State<C, N>
 where
-    S: ClientStore,
+    C: ClientStore,
+    N: NotificationStore,
 {
     fn config(&self) -> Config;
     fn build_info(&self) -> BuildInfo;
-    fn store(&self) -> S;
+    fn client_store(&self) -> C;
+    fn notification_store(&self) -> N;
     fn providers(&self) -> Providers;
     fn supported_providers(&self) -> Vec<ProviderKind>;
     fn relay_client(&self) -> RelayClient;
 }
 
 #[derive(Clone)]
-pub struct AppState<S>
+pub struct AppState<C, N>
 where
-    S: ClientStore,
+    C: ClientStore,
+    N: NotificationStore,
 {
     pub config: Config,
     pub build_info: BuildInfo,
     pub metrics: Option<Metrics>,
-    pub store: S,
+    pub client_store: C,
+    pub notification_store: N,
     pub providers: Providers,
     pub supported_providers: Vec<ProviderKind>,
     pub relay_client: RelayClient,
@@ -42,9 +47,14 @@ where
 
 build_info::build_info!(fn build_info);
 
-pub fn new_state<S>(config: Config, store: S) -> crate::error::Result<AppState<S>>
+pub fn new_state<C, N>(
+    config: Config,
+    client_store: C,
+    notification_store: N,
+) -> crate::error::Result<AppState<C, N>>
 where
-    S: ClientStore,
+    C: ClientStore,
+    N: NotificationStore,
 {
     let build_info: &BuildInfo = build_info();
     let providers = Providers::new(&config)?;
@@ -54,16 +64,18 @@ where
         config,
         build_info: build_info.clone(),
         metrics: None,
-        store,
+        client_store,
+        notification_store,
         providers,
         supported_providers,
         relay_client: RelayClient::new("https://relay.walletconnect.com".to_string()),
     })
 }
 
-impl<S> AppState<S>
+impl<C, N> AppState<C, N>
 where
-    S: ClientStore,
+    C: ClientStore,
+    N: NotificationStore,
 {
     pub fn set_telemetry(&mut self, tracer: Tracer, metrics: Metrics) {
         let otel_tracing_layer = tracing_opentelemetry::layer().with_tracer(tracer);
@@ -80,9 +92,10 @@ where
     }
 }
 
-impl<S> State<S> for Arc<AppState<S>>
+impl<C, N> State<C, N> for Arc<AppState<C, N>>
 where
-    S: Clone + ClientStore,
+    C: Clone + ClientStore,
+    N: Clone + NotificationStore,
 {
     fn config(&self) -> Config {
         self.config.clone()
@@ -92,8 +105,12 @@ where
         self.build_info.clone()
     }
 
-    fn store(&self) -> S {
-        self.store.clone()
+    fn client_store(&self) -> C {
+        self.client_store.clone()
+    }
+
+    fn notification_store(&self) -> N {
+        self.notification_store.clone()
     }
 
     fn providers(&self) -> Providers {

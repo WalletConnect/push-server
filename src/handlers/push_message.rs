@@ -1,5 +1,8 @@
+use crate::error::Error;
 use crate::handlers::ErrorLocation;
-use crate::{error::Error, state::AppState};
+use crate::state::AppState;
+use crate::stores::client::ClientStore;
+use crate::stores::notification::NotificationStore;
 use crate::{
     handlers::{new_error_response, new_success_response, ErrorReason},
     providers::PushProvider,
@@ -26,7 +29,7 @@ pub struct PushMessageBody {
 
 pub async fn handler(
     Path(id): Path<String>,
-    State(state): State<Arc<AppState<impl crate::store::ClientStore>>>,
+    State(state): State<Arc<AppState<impl ClientStore, impl NotificationStore>>>,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> impl IntoResponse {
     // TODO de-dup, and return accepted to already acknowledged notifications
@@ -35,7 +38,7 @@ pub async fn handler(
     }
 
     let (client_token, provider) = {
-        let client_result = state.store.get_client(&id).await;
+        let client_result = state.client_store.get_client(&id).await;
         if let Ok(client) = client_result {
             if let Some(client) = client {
                 (client.token.clone(), get_provider(client.push_type, &state))

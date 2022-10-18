@@ -1,9 +1,8 @@
 use crate::handlers::ErrorLocation;
-use crate::store::Client;
-use crate::{
-    handlers::{new_error_response, new_success_response, ErrorReason},
-    state::AppState,
-};
+use crate::handlers::{new_error_response, new_success_response, ErrorReason};
+use crate::state::AppState;
+use crate::stores::client::{Client, ClientStore};
+use crate::stores::notification::NotificationStore;
 use axum::extract::{Json, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -20,7 +19,7 @@ pub struct RegisterBody {
 }
 
 pub async fn handler(
-    State(state): State<Arc<AppState<impl crate::store::ClientStore>>>,
+    State(state): State<Arc<AppState<impl ClientStore, impl NotificationStore>>>,
     Json(body): Json<RegisterBody>,
 ) -> impl IntoResponse {
     let push_type = body.push_type.as_str().try_into();
@@ -60,7 +59,7 @@ pub async fn handler(
 
     let internal_server_error = new_error_response(vec![]);
 
-    let exists = state.store.get_client(&body.client_id).await;
+    let exists = state.client_store.get_client(&body.client_id).await;
     if exists.is_err() {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -80,7 +79,7 @@ pub async fn handler(
     }
 
     let create_client_res = state
-        .store
+        .client_store
         .create_client(
             &body.client_id,
             Client {
