@@ -3,31 +3,25 @@ use serde::Deserialize;
 use std::str::FromStr;
 
 #[derive(Deserialize, Debug, Clone, Eq, PartialEq)]
-pub struct ApnsCertificateConfig {
-    pub cert_path: String,
-    pub password: String,
-    pub sandbox: Option<bool>,
-}
-
-#[derive(Deserialize, Debug, Clone, Eq, PartialEq)]
-pub struct ApnsTokenConfig {
-    pub token_path: String,
-    pub team_id: String,
-    pub key_id: String,
-    pub sandbox: Option<bool>,
-}
-
-#[derive(Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct Config {
     #[serde(default = "default_port")]
     pub port: u16,
     #[serde(default = "default_log_level")]
     pub log_level: String,
     pub database_url: String,
+
+    // TELEMETRY
     pub telemetry_enabled: Option<bool>,
     pub telemetry_grpc_url: Option<String>,
-    pub apns_certificate: Option<ApnsCertificateConfig>,
-    pub apns_token: Option<ApnsTokenConfig>,
+
+    // APNS
+    /// This defaults to false and should be changed if sandbox mode is required.
+    #[serde(default = "default_apns_sandbox_mode")]
+    pub apns_sandbox: bool,
+    pub apns_certificate: Option<String>,
+    pub apns_certificate_password: Option<String>,
+
+    // FCM
     pub fcm_api_key: Option<String>,
 }
 
@@ -39,7 +33,7 @@ impl Config {
     pub fn supported_providers(&self) -> Vec<ProviderKind> {
         let mut supported = vec![];
 
-        if self.apns_certificate.is_some() || self.apns_token.is_some() {
+        if self.apns_certificate.is_some() && self.apns_certificate_password.is_some() {
             supported.push(ProviderKind::Apns)
         }
 
@@ -62,6 +56,10 @@ fn default_port() -> u16 {
 
 fn default_log_level() -> String {
     "WARN".to_string()
+}
+
+fn default_apns_sandbox_mode() -> bool {
+    false
 }
 
 pub fn get_config() -> error::Result<Config> {
