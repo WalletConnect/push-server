@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.3.1 - 2022-10-20
+#### Bug Fixes
+- Typo in depedencies - (27e13be) - Harry Bairstow
+- - -
+
 ## v0.3.0 - 2022-10-20
 #### Bug Fixes
 - Rename - (09a3194) - Harry Bairstow
