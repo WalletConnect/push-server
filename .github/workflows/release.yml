@@ -57,4 +57,4 @@ jobs:
         with:
           body_path: GITHUB_CHANGELOG.md
           tag_name: "v${{ steps.release.outputs.version }}"
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_PAT }}
