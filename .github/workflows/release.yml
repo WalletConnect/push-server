@@ -1,32 +1,14 @@
 name: release
 
 on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - '.github/**'
-      - 'terraform/**'
-      - 'docs/**'
-      - 'README.md'
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  check-not-ci:
-    runs-on: ubuntu-latest
-    outputs:
-      pusher: ${{ steps.check.outputs.pusher }}
-    steps:
-      - id: check
-        run: |
-          echo "pusher=${{ github.event.pusher.name }}" >> $GITHUB_OUTPUT
-
   release:
     runs-on: ubuntu-latest
-    if: needs.check-not-ci.outputs.pusher != 'github-actions[bot]'
     needs:
       - check-not-ci
     steps:
