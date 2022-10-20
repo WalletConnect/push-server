@@ -108,6 +108,8 @@ jobs:
         env:
           TF_VAR_onepassword_vault_id: ${{ secrets.ONEPASSWORD_VAULT_ID }}
           TF_VAR_fcm_api_key: ${{ secrets.FCM_API_KEY }}
+          TF_VAR_apns_certificate: ${{ secrets.APNS_CERTIFICATE }}
+          TF_VAR_apns_certificate_password: ${{ secrets.APNS_CERTIFICATE_PASSWORD }}
           TF_VAR_image_version: ${{ needs.get-version.outputs.version }}
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -143,6 +145,8 @@ jobs:
         env:
           TF_VAR_onepassword_vault_id: ${{ secrets.ONEPASSWORD_VAULT_ID }}
           TF_VAR_fcm_api_key: ${{ secrets.FCM_API_KEY }}
+          TF_VAR_apns_certificate: ${{ secrets.APNS_CERTIFICATE }}
+          TF_VAR_apns_certificate_password: ${{ secrets.APNS_CERTIFICATE_PASSWORD }}
           TF_VAR_image_version: ${{ needs.get-version.outputs.version }}
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
