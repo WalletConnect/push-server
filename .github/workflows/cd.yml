@@ -106,6 +106,7 @@ jobs:
       name: staging
       url: https://staging.echo.walletconnect.com/health
     needs:
+      - get-version
       - build-container
     steps:
       - name: Checkout
@@ -143,6 +144,7 @@ jobs:
       name: staging
       url: https://echo.walletconnect.com/health
     needs:
+      - get-version
       - check-staging-health
     steps:
       - name: Checkout
