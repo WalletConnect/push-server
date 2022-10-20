@@ -34,3 +34,13 @@ variable "fcm_api_key" {
   type      = string
   sensitive = true
 }
+
+variable "apns_certificate" {
+  type      = string
+  sensitive = true
+}
+
+variable "apns_certificate_password" {
+  type      = string
+  sensitive = true
+}
