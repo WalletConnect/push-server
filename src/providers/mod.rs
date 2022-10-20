@@ -2,7 +2,6 @@ pub mod apns;
 pub mod fcm;
 pub mod noop;
 
-use std::fs::File;
 use crate::handlers::push_message::MessagePayload;
 #[cfg(any(debug_assertions, test))]
 use crate::providers::noop::NoopProvider;
@@ -112,9 +111,9 @@ impl Providers {
             };
             apns = Some(
                 match (&config.apns_certificate, &config.apns_certificate_password) {
-                    (Some(certificate_path), Some(password)) => {
-                        let file = File::open(certificate_path)?;
-                        let mut reader = BufReader::new(file);
+                    (Some(certificate), Some(password)) => {
+                        let decoded = base64::decode(certificate)?;
+                        let mut reader = BufReader::new(&*decoded);
 
                         let apns_client =
                             ApnsProvider::new_cert(&mut reader, password.clone(), endpoint)?;
@@ -137,7 +136,7 @@ impl Providers {
             apns,
             fcm,
             #[cfg(any(debug_assertions, test))]
-            noop: Some(NoopProvider::new())
+            noop: Some(NoopProvider::new()),
         })
     }
 }
