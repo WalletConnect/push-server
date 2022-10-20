@@ -1,8 +1,16 @@
 name: cd
 on:
+  push:
+    paths:
+      - "terraform/**"
   release:
-    types:
-      - published
+    types: ["published"]
+
+concurrency:
+  # Only allow for one action to run at once, queue any others
+  group: cd
+  # Don't cancel existing
+  cancel-in-progress: false
 
 jobs:
   get-version:
@@ -11,8 +19,21 @@ jobs:
       version: ${{ steps.get.outputs.version }}
     steps:
       - id: get
+        if: github.event_name == 'release'
         run: |
           $(echo "${{ github.event.release.tag_name }}" | sed 's/v//g') >> $GITHUB_OUTPUT
+
+      - id: latest_release
+        uses: pozetroninc/github-action-get-latest-release@master
+        if: github.event_name != 'release'
+        with:
+          repository: ${{ github.repository }}
+          excludes: draft
+
+      - id: get
+        if: github.event_name != 'release'
+        run: |
+          $(echo "${{ steps.latest_release.outputs.release }}" | sed 's/v//g') >> $GITHUB_OUTPUT
 
   build-container:
     runs-on: ubuntu-latest
@@ -43,6 +64,7 @@ jobs:
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v4
+        if: github.event_name == 'release'
         with:
           images: |
             ${{ steps.login-ecr.outputs.registry }}/echo-server
@@ -57,9 +79,11 @@ jobs:
       # Setup Buildkit
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
+        if: github.event_name == 'release'
 
       - name: Build, tag, and push image to Amazon ECR
         uses: docker/build-push-action@v3
+        if: github.event_name == 'release'
         with:
           context: .
           push: true
