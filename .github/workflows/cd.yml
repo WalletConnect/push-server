@@ -16,13 +16,8 @@ jobs:
   get-version:
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.get.outputs.version }}
+      version: ${{ steps.clean_version.outputs.version }}
     steps:
-      - id: get
-        if: github.event_name == 'release'
-        run: |
-          $(echo "${{ github.event.release.tag_name }}" | sed 's/v//g') >> $GITHUB_OUTPUT
-
       - id: latest_release
         uses: pozetroninc/github-action-get-latest-release@master
         if: github.event_name != 'release'
@@ -31,9 +26,22 @@ jobs:
           excludes: draft
 
       - id: get
-        if: github.event_name != 'release'
+        uses: actions/github-script@v6
+        env:
+          LATEST_TAG: ${{ steps.latest_release.outputs.release }}
+        with:
+          result-encoding: string
+          script: |
+            if (context.eventName == "release") {
+              return context.payload.release.tag_name
+            } else {
+              return process.env.LATEST_TAG
+            }
+
+      - id: clean_version
         run: |
-          $(echo "${{ steps.latest_release.outputs.release }}" | sed 's/v//g') >> $GITHUB_OUTPUT
+          version=$(echo "${{ steps.get.outputs.result }}" | sed 's/v//g')
+          echo "version=$(version)" >> $GITHUB_OUTPUT
 
   build-container:
     runs-on: ubuntu-latest
