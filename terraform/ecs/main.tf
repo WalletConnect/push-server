@@ -90,7 +90,6 @@ resource "aws_ecs_task_definition" "app_task_definition" {
 
   runtime_platform {
     operating_system_family = "LINUX"
-    cpu_architecture        = "ARM64"
   }
 }
 
