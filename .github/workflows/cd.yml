@@ -141,7 +141,7 @@ jobs:
   deploy-infra-prod:
     runs-on: ubuntu-latest
     environment:
-      name: staging
+      name: prod
       url: https://echo.walletconnect.com/health
     needs:
       - get-version
