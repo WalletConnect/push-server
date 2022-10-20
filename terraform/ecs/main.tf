@@ -49,7 +49,10 @@ resource "aws_ecs_task_definition" "app_task_definition" {
         { name = "DATABASE_URL", value = var.database_url },
         { name = "TELEMETRY_ENABLED", value = "false" },
         { name = "TELEMETRY_GRPC_URL", value = "http://localhost:4317" },
-        { name = "FCM_API_KEY", value = var.fcm_api_key }
+        { name = "FCM_API_KEY", value = var.fcm_api_key },
+        { name = "APNS_SANDBOX", value = terraform.workspace == "dev" ? "true" : "false" },
+        { name = "APNS_CERTIFICATE", value = var.apns_certificate },
+        { name = "APNS_CERTIFICATE_PASSWORD", value = var.apns_certificate_password }
       ],
       logConfiguration = {
         logDriver = "awslogs",
