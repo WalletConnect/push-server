@@ -32,6 +32,9 @@ pub enum Error {
     #[error(transparent)]
     HttpRequest(#[from] reqwest::Error),
 
+    #[error(transparent)]
+    Base64Decode(#[from] base64::DecodeError),
+
     #[error("database migration failed: {0}")]
     DatabaseMigration(#[from] sqlx::migrate::MigrateError),
 

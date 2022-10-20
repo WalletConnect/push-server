@@ -3,6 +3,7 @@ pub mod fcm;
 pub mod noop;
 
 use crate::handlers::push_message::MessagePayload;
+#[cfg(any(debug_assertions, test))]
 use crate::providers::noop::NoopProvider;
 use crate::stores::client::ClientStore;
 use crate::stores::notification::NotificationStore;
@@ -23,6 +24,7 @@ pub trait PushProvider {
 
 const PROVIDER_APNS: &str = "apns";
 const PROVIDER_FCM: &str = "fcm";
+#[cfg(any(debug_assertions, test))]
 const PROVIDER_NOOP: &str = "noop";
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, sqlx::Type)]
@@ -31,6 +33,7 @@ const PROVIDER_NOOP: &str = "noop";
 pub enum ProviderKind {
     Apns,
     Fcm,
+    #[cfg(any(debug_assertions, test))]
     Noop,
 }
 
@@ -39,6 +42,7 @@ impl ProviderKind {
         match self {
             Self::Apns => PROVIDER_APNS,
             Self::Fcm => PROVIDER_FCM,
+            #[cfg(any(debug_assertions, test))]
             Self::Noop => PROVIDER_NOOP,
         }
     }
@@ -57,6 +61,7 @@ impl TryFrom<&str> for ProviderKind {
         match value {
             PROVIDER_APNS => Ok(Self::Apns),
             PROVIDER_FCM => Ok(Self::Fcm),
+            #[cfg(any(debug_assertions, test))]
             PROVIDER_NOOP => Ok(Self::Noop),
             _ => Err(error::Error::ProviderNotFound(value.to_owned())),
         }
@@ -67,6 +72,7 @@ impl TryFrom<&str> for ProviderKind {
 pub enum Provider {
     Fcm(FcmProvider),
     Apns(ApnsProvider),
+    #[cfg(any(debug_assertions, test))]
     Noop(NoopProvider),
 }
 
@@ -80,6 +86,7 @@ impl PushProvider for Provider {
         match self {
             Provider::Fcm(p) => p.send_notification(token, payload).await,
             Provider::Apns(p) => p.send_notification(token, payload).await,
+            #[cfg(any(debug_assertions, test))]
             Provider::Noop(p) => p.send_notification(token, payload).await,
         }
     }
@@ -89,6 +96,7 @@ impl PushProvider for Provider {
 pub struct Providers {
     apns: Option<ApnsProvider>,
     fcm: Option<FcmProvider>,
+    #[cfg(any(debug_assertions, test))]
     noop: Option<NoopProvider>,
 }
 
@@ -104,7 +112,8 @@ impl Providers {
             apns = Some(
                 match (&config.apns_certificate, &config.apns_certificate_password) {
                     (Some(certificate), Some(password)) => {
-                        let mut reader = BufReader::new(certificate.as_bytes());
+                        let decoded = base64::decode(certificate)?;
+                        let mut reader = BufReader::new(&*decoded);
 
                         let apns_client =
                             ApnsProvider::new_cert(&mut reader, password.clone(), endpoint)?;
@@ -123,12 +132,12 @@ impl Providers {
             }
         }
 
-        let mut noop = None;
-        if cfg!(any(debug_assertions, test)) {
-            noop = Some(NoopProvider::new());
-        }
-
-        Ok(Providers { apns, fcm, noop })
+        Ok(Providers {
+            apns,
+            fcm,
+            #[cfg(any(debug_assertions, test))]
+            noop: Some(NoopProvider::new()),
+        })
     }
 }
 
@@ -152,6 +161,7 @@ pub fn get_provider(
             Some(p) => Ok(Provider::Fcm(p)),
             None => Err(ProviderNotAvailable(name.into())),
         },
+        #[cfg(any(debug_assertions, test))]
         ProviderKind::Noop => match state.providers.noop.clone() {
             Some(p) => Ok(Provider::Noop(p)),
             None => Err(ProviderNotAvailable(name.into())),

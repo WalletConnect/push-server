@@ -554,6 +554,7 @@ dependencies = [
  "a2",
  "async-trait",
  "axum",
+ "base64",
  "build-info",
  "build-info-build",
  "chrono",

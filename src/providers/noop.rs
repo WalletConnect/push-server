@@ -1,5 +1,7 @@
 use crate::handlers::push_message::MessagePayload;
+#[cfg(any(debug_assertions, test))]
 use crate::providers::PushProvider;
+#[cfg(any(debug_assertions, test))]
 use async_trait::async_trait;
 use std::collections::HashMap;
 
@@ -9,6 +11,7 @@ pub struct NoopProvider {
     notifications: HashMap<String, Vec<MessagePayload>>,
 }
 
+#[cfg(any(debug_assertions, test))]
 impl NoopProvider {
     pub fn new() -> Self {
         Default::default()

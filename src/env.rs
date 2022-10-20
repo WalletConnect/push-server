@@ -34,17 +34,16 @@ impl Config {
         let mut supported = vec![];
 
         if self.apns_certificate.is_some() && self.apns_certificate_password.is_some() {
-            supported.push(ProviderKind::Apns)
+            supported.push(ProviderKind::Apns);
         }
 
         if self.fcm_api_key.is_some() {
-            supported.push(ProviderKind::Fcm)
+            supported.push(ProviderKind::Fcm);
         }
 
         // Only available in debug/testing
-        if cfg!(any(test, debug_assertions)) {
-            supported.push(ProviderKind::Noop)
-        }
+        #[cfg(any(debug_assertions, test))]
+        supported.push(ProviderKind::Noop);
 
         supported
     }
