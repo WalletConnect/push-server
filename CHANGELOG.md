@@ -2,6 +2,19 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.4.0 - 2022-10-20
+#### Bug Fixes
+- Env name wrong - (7eb151e) - Harry Bairstow
+- cd use as string instead of command - (eb34282) - Harry Bairstow
+- CD use as var instead of command - (c06ef38) - Harry Bairstow
+- Remove `cpu_architecture` - (5341d17) - Harry Bairstow
+- Add missing job requirement - (db9ba2c) - Harry Bairstow
+#### Features
+- Change URL (#33) - (3a65ff3) - Harry Bairstow
+#### Miscellaneous Chores
+- Create missing file - (208e8e6) - Harry Bairstow
+- - -
+
 ## v0.3.1 - 2022-10-20
 #### Bug Fixes
 - Typo in depedencies - (27e13be) - Harry Bairstow
