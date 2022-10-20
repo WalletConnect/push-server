@@ -41,7 +41,7 @@ jobs:
       - id: clean_version
         run: |
           version=$(echo "${{ steps.get.outputs.result }}" | sed 's/v//g')
-          echo "version=$(version)" >> $GITHUB_OUTPUT
+          echo "version=$($version)" >> $GITHUB_OUTPUT
 
   build-container:
     runs-on: ubuntu-latest
