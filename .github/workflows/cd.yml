@@ -131,7 +131,7 @@ jobs:
 
   check-staging-health:
     needs:
-      - deploy-staging-infra
+      - deploy-infra-staging
     runs-on: ubuntu-latest
     steps:
       - name: Check Staging Up
