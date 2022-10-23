@@ -12,6 +12,9 @@ services:
 
   echo-server:
       build: .
+      depends_on:
+        - jaeger
+        - postgres
       ports:
         - "3000:3000"
       environment:

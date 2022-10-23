@@ -12,6 +12,7 @@ use crate::{error, providers::fcm::FcmProvider};
 use crate::{providers::apns::ApnsProvider, state::AppState};
 use async_trait::async_trait;
 use std::io::BufReader;
+use tracing::span;
 
 #[async_trait]
 pub trait PushProvider {
@@ -83,6 +84,8 @@ impl PushProvider for Provider {
         token: String,
         payload: MessagePayload,
     ) -> crate::error::Result<()> {
+        let s = span!(tracing::Level::INFO, "send_notification");
+        let _ = s.enter();
         match self {
             Provider::Fcm(p) => p.send_notification(token, payload).await,
             Provider::Apns(p) => p.send_notification(token, payload).await,

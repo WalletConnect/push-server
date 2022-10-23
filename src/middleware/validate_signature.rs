@@ -6,6 +6,7 @@ use axum::extract::{FromRequest, Json};
 use axum::http::{Request, StatusCode};
 use ed25519_dalek::{PublicKey, Signature, Verifier};
 use serde_json::json;
+use tracing::{error, span};
 
 const SIGNATURE_HEADER_NAME: &str = "X-Ed25519-Signature";
 const TIMESTAMP_HEADER_NAME: &str = "X-Ed25519-Timestamp";
@@ -24,9 +25,13 @@ where
     type Rejection = (StatusCode, Json<serde_json::Value>);
 
     async fn from_request(req: Request<B>, state: &S) -> Result<Self, Self::Rejection> {
+        let s = span!(tracing::Level::DEBUG, "validate_signature");
+        let _ = s.enter();
+
         let public_key = match state.relay_client().public_key().await {
             Ok(key) => key,
             Err(_) => {
+                error!("Failed to fetch relay's public key");
                 return Err((
                     StatusCode::INTERNAL_SERVER_ERROR,
                     Json(json!(new_error_response(vec![]))),
@@ -61,11 +66,7 @@ where
                 T::from_request(req, state).await.map(Self).map_err(|_| {
                     (
                         StatusCode::UNAUTHORIZED,
-                        Json(json!(new_error_response(vec![ErrorReason {
-                            field: TIMESTAMP_HEADER_NAME.to_string(),
-                            description: "Missing timestamp".to_string(),
-                            location: ErrorLocation::Header
-                        }]))),
+                        Json(json!(new_error_response(vec![]))),
                     )
                 })
             }

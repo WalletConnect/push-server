@@ -3,6 +3,7 @@ use crate::providers::PushProvider;
 use async_trait::async_trait;
 use fcm::{MessageBuilder, NotificationBuilder};
 use std::fmt::{Debug, Formatter};
+use tracing::span;
 
 pub struct FcmProvider {
     api_key: String,
@@ -25,6 +26,9 @@ impl PushProvider for FcmProvider {
         token: String,
         payload: MessagePayload,
     ) -> crate::error::Result<()> {
+        let s = span!(tracing::Level::DEBUG, "send_fcm_notification");
+        let _ = s.enter();
+
         let mut builder = NotificationBuilder::new();
         builder.title(&payload.title);
         builder.body(&payload.description);
