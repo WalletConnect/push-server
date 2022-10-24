@@ -21,11 +21,16 @@ use opentelemetry::sdk::{
 use opentelemetry::util::tokio_interval_stream;
 use opentelemetry::KeyValue;
 use opentelemetry_otlp::{Protocol, WithExportConfig};
-use sqlx::postgres::PgPoolOptions;
+use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
+use sqlx::ConnectOptions;
 use std::net::SocketAddr;
+use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
-use tracing::warn;
+use tower::ServiceBuilder;
+use tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer};
+use tracing::log::LevelFilter;
+use tracing::{warn, Level};
 use tracing_subscriber::fmt::format::FmtSpan;
 
 #[tokio::main]
@@ -39,9 +44,14 @@ async fn main() -> error::Result<()> {
         panic!("You must enable at least one provider.");
     }
 
+    let pg_options = PgConnectOptions::from_str(&config.database_url)?
+        .log_statements(LevelFilter::Debug)
+        .log_slow_statements(LevelFilter::Info, Duration::from_millis(250))
+        .clone();
+
     let store = PgPoolOptions::new()
         .max_connections(5)
-        .connect(&config.database_url)
+        .connect_with(pg_options)
         .await?;
 
     // Run database migrations. `./migrations` is the path to migrations, relative to the root dir (the directory
@@ -146,11 +156,23 @@ async fn main() -> error::Result<()> {
 
     let state_arc = Arc::new(state);
 
+    let global_middleware = ServiceBuilder::new().layer(
+        TraceLayer::new_for_http()
+            .make_span_with(DefaultMakeSpan::new().include_headers(true))
+            .on_request(DefaultOnRequest::new().level(Level::INFO))
+            .on_response(
+                DefaultOnResponse::new()
+                    .level(Level::INFO)
+                    .include_headers(true),
+            ),
+    );
+
     let app = Router::with_state(state_arc)
         .route("/health", get(handlers::health::handler))
         .route("/clients", post(handlers::register_client::handler))
         .route("/clients/:id", delete(handlers::delete_client::handler))
-        .route("/clients/:id", post(handlers::push_message::handler));
+        .route("/clients/:id", post(handlers::push_message::handler))
+        .layer(global_middleware);
 
     let header = format!(
         "

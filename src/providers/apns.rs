@@ -3,6 +3,7 @@ use crate::providers::PushProvider;
 use a2::NotificationBuilder;
 use async_trait::async_trait;
 use std::io::Read;
+use tracing::span;
 
 #[derive(Debug, Clone)]
 pub struct ApnsProvider {
@@ -31,6 +32,9 @@ impl PushProvider for ApnsProvider {
         token: String,
         payload: MessagePayload,
     ) -> crate::error::Result<()> {
+        let s = span!(tracing::Level::DEBUG, "send_apns_notification");
+        let _ = s.enter();
+
         let opt = a2::NotificationOptions::default();
 
         // TODO set title

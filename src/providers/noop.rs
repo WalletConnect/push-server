@@ -4,6 +4,7 @@ use crate::providers::PushProvider;
 #[cfg(any(debug_assertions, test))]
 use async_trait::async_trait;
 use std::collections::HashMap;
+use tracing::span;
 
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
 pub struct NoopProvider {
@@ -26,6 +27,9 @@ impl PushProvider for NoopProvider {
         token: String,
         payload: MessagePayload,
     ) -> crate::error::Result<()> {
+        let s = span!(tracing::Level::DEBUG, "send_noop_notification");
+        let _ = s.enter();
+
         self.bootstrap(token.clone());
 
         let notifications = self.notifications.get_mut(&token).unwrap();
