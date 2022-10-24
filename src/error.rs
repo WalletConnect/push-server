@@ -1,3 +1,5 @@
+use crate::stores;
+
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, thiserror::Error)]
@@ -34,6 +36,9 @@ pub enum Error {
 
     #[error(transparent)]
     Base64Decode(#[from] base64::DecodeError),
+
+    #[error(transparent)]
+    Store(#[from] stores::StoreError),
 
     #[error("database migration failed: {0}")]
     DatabaseMigration(#[from] sqlx::migrate::MigrateError),
