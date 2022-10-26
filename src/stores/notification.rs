@@ -43,7 +43,7 @@ impl NotificationStore for sqlx::PgPool {
 VALUES ($1, $2, $3)
 ON CONFLICT (id)
     DO UPDATE SET last_payload      = $3,
-                  previous_payloads = array_append(previous_payloads, $3),
+                  previous_payloads = array_append(excluded.previous_payloads, $3),
                   last_received_at  = now()
 RETURNING *;",
         )
