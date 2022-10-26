@@ -83,7 +83,7 @@ impl PushProvider for Provider {
         &mut self,
         token: String,
         payload: MessagePayload,
-    ) -> crate::error::Result<()> {
+    ) -> error::Result<()> {
         let s = span!(tracing::Level::INFO, "send_notification");
         let _ = s.enter();
         match self {
@@ -104,7 +104,7 @@ pub struct Providers {
 }
 
 impl Providers {
-    pub fn new(config: &Config) -> crate::error::Result<Providers> {
+    pub fn new(config: &Config) -> error::Result<Providers> {
         let supported = config.supported_providers();
         let mut apns = None;
         if supported.contains(&ProviderKind::Apns) {
@@ -113,13 +113,13 @@ impl Providers {
                 false => a2::Endpoint::Production,
             };
             apns = Some(
-                match (&config.apns_certificate, &config.apns_certificate_password) {
-                    (Some(certificate), Some(password)) => {
+                match (&config.apns_certificate, &config.apns_certificate_password, &config.apns_topic) {
+                    (Some(certificate), Some(password), Some(topic)) => {
                         let decoded = base64::decode(certificate)?;
                         let mut reader = BufReader::new(&*decoded);
 
                         let apns_client =
-                            ApnsProvider::new_cert(&mut reader, password.clone(), endpoint)?;
+                            ApnsProvider::new_cert(&mut reader, password.clone(), endpoint, topic)?;
 
                         Ok(apns_client)
                     }
@@ -147,7 +147,7 @@ impl Providers {
 pub fn get_provider(
     provider: ProviderKind,
     state: &AppState<impl ClientStore, impl NotificationStore>,
-) -> crate::error::Result<Provider> {
+) -> error::Result<Provider> {
     let name = provider.as_str();
     let supported = state.config.supported_providers();
 

@@ -35,6 +35,10 @@ variable "fcm_api_key" {
   sensitive = true
 }
 
+variable "apns_topic" {
+  type = string
+}
+
 variable "apns_certificate" {
   type      = string
   sensitive = true

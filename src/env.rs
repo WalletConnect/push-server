@@ -20,6 +20,7 @@ pub struct Config {
     pub apns_sandbox: bool,
     pub apns_certificate: Option<String>,
     pub apns_certificate_password: Option<String>,
+    pub apns_topic: Option<String>,
 
     // FCM
     pub fcm_api_key: Option<String>,
