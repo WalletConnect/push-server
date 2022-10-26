@@ -8,6 +8,7 @@ use tracing::span;
 #[derive(Debug, Clone)]
 pub struct ApnsProvider {
     client: a2::Client,
+    topic: String,
 }
 
 impl ApnsProvider {
@@ -15,12 +16,14 @@ impl ApnsProvider {
         cert: &mut R,
         password: String,
         endpoint: a2::Endpoint,
+        topic: String,
     ) -> crate::error::Result<Self>
     where
         R: Read,
     {
         Ok(ApnsProvider {
             client: a2::Client::certificate(cert, password.as_str(), endpoint)?,
+            topic
         })
     }
 }
@@ -35,7 +38,8 @@ impl PushProvider for ApnsProvider {
         let s = span!(tracing::Level::DEBUG, "send_apns_notification");
         let _ = s.enter();
 
-        let opt = a2::NotificationOptions::default();
+        let mut opt = a2::NotificationOptions::default();
+        opt.apns_topic = Some(&self.topic);
 
         // TODO set title
         let notification =

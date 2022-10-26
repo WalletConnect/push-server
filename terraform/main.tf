@@ -94,6 +94,7 @@ module "ecs" {
   vpc_cidr                  = module.vpc.vpc_cidr_block
   vpc_id                    = module.vpc.vpc_id
   fcm_api_key               = var.fcm_api_key
+  apns_topic                = var.apns_topic
   apns_certificate          = var.apns_certificate
   apns_certificate_password = var.apns_certificate_password
 }
