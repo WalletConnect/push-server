@@ -1,6 +1,6 @@
 use crate::providers::ProviderKind;
+use crate::stores;
 use crate::stores::StoreError::NotFound;
-use crate::{error, stores};
 use async_trait::async_trait;
 use sqlx::Executor;
 
@@ -14,7 +14,7 @@ pub struct Client {
 #[async_trait]
 pub trait ClientStore {
     async fn create_client(&self, id: &str, client: Client) -> stores::Result<()>;
-    async fn get_client(&self, id: &str) -> stores::Result<Option<Client>>;
+    async fn get_client(&self, id: &str) -> stores::Result<Client>;
     async fn delete_client(&self, id: &str) -> stores::Result<()>;
 }
 
@@ -38,7 +38,7 @@ impl ClientStore for sqlx::PgPool {
         Ok(())
     }
 
-    async fn get_client(&self, id: &str) -> stores::Result<Option<Client>> {
+    async fn get_client(&self, id: &str) -> stores::Result<Client> {
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Client>(
             "SELECT push_type, device_token FROM public.clients WHERE id = $1",
         )
@@ -49,17 +49,25 @@ impl ClientStore for sqlx::PgPool {
         match res {
             Err(sqlx::Error::RowNotFound) => Err(NotFound("client".to_string(), id.to_string())),
             Err(e) => Err(e.into()),
-            Ok(row) => Ok(Some(row)),
+            Ok(row) => Ok(row),
         }
     }
 
     async fn delete_client(&self, id: &str) -> stores::Result<()> {
+        let mut notification_query_builder =
+            sqlx::QueryBuilder::new("DELETE FROM public.notifications WHERE client_id = ");
+        notification_query_builder.push_bind(id);
+        let notification_query = notification_query_builder.build();
+
+        self.execute(notification_query).await?;
+
         let mut query_builder = sqlx::QueryBuilder::new("DELETE FROM public.clients WHERE id = ");
         query_builder.push_bind(id);
         let query = query_builder.build();
 
-        self.execute(query).await?;
-
-        Ok(())
+        match self.execute(query).await {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e.into()),
+        }
     }
 }

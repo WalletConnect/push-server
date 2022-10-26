@@ -1,6 +1,6 @@
 use crate::handlers::push_message::MessagePayload;
+use crate::stores;
 use crate::stores::StoreError::NotFound;
-use crate::{error, stores};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use sqlx::types::Json;
@@ -25,8 +25,8 @@ pub trait NotificationStore {
         id: &str,
         client_id: &str,
         payload: &MessagePayload,
-    ) -> error::Result<Notification>;
-    async fn get_notification(&self, id: &str) -> stores::Result<Option<Notification>>;
+    ) -> stores::Result<Notification>;
+    async fn get_notification(&self, id: &str) -> stores::Result<Notification>;
     async fn delete_notification(&self, id: &str) -> stores::Result<()>;
 }
 
@@ -59,7 +59,7 @@ RETURNING *;",
         }
     }
 
-    async fn get_notification(&self, id: &str) -> stores::Result<Option<Notification>> {
+    async fn get_notification(&self, id: &str) -> stores::Result<Notification> {
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Notification>(
             "SELECT * FROM public.notifications WHERE id = $1",
         )
@@ -72,7 +72,7 @@ RETURNING *;",
                 Err(NotFound("notification".to_string(), id.to_string()))
             }
             Err(e) => Err(e.into()),
-            Ok(row) => Ok(Some(row)),
+            Ok(row) => Ok(row),
         }
     }
 
