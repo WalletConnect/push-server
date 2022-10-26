@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.5.2 - 2022-10-26
+#### Bug Fixes
+- Check client before notification insert - (5df746b) - Harry Bairstow
+#### Miscellaneous Chores
+- Bump lockfile - (70fc233) - Harry Bairstow
+- - -
+
 ## v0.5.1 - 2022-10-26
 #### Bug Fixes
 - SQL (#38) - (2bdd074) - Harry Bairstow
