@@ -119,7 +119,7 @@ impl Providers {
                         let mut reader = BufReader::new(&*decoded);
 
                         let apns_client =
-                            ApnsProvider::new_cert(&mut reader, password.clone(), endpoint, topic)?;
+                            ApnsProvider::new_cert(&mut reader, password.clone(), endpoint, topic.clone())?;
 
                         Ok(apns_client)
                     }
