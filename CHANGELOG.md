@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.5.3 - 2022-10-26
+#### Bug Fixes
+- Remove reference to `topic` with `clone()` - (775f09d) - Harry Bairstow
+- APNS Topic (#39) - (e1fffc1) - Harry Bairstow
+- - -
+
 ## v0.5.2 - 2022-10-26
 #### Bug Fixes
 - Check client before notification insert - (5df746b) - Harry Bairstow
