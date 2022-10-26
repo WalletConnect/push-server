@@ -1,15 +1,17 @@
-use crate::handlers::{new_error_response, ErrorLocation, ErrorReason};
+use crate::error::Error::{
+    FromRequestError, MissingAllSignatureHeader, MissingSignatureHeader, MissingTimestampHeader,
+    ToBytesError,
+};
 use crate::state::State;
 use async_trait::async_trait;
 use axum::body;
-use axum::extract::{FromRequest, Json};
-use axum::http::{Request, StatusCode};
+use axum::extract::FromRequest;
+use axum::http::Request;
 use ed25519_dalek::{PublicKey, Signature, Verifier};
-use serde_json::json;
-use tracing::{error, span};
+use tracing::span;
 
-const SIGNATURE_HEADER_NAME: &str = "X-Ed25519-Signature";
-const TIMESTAMP_HEADER_NAME: &str = "X-Ed25519-Timestamp";
+pub const SIGNATURE_HEADER_NAME: &str = "X-Ed25519-Signature";
+pub const TIMESTAMP_HEADER_NAME: &str = "X-Ed25519-Timestamp";
 
 pub struct RequireValidSignature<T>(pub T);
 
@@ -22,30 +24,18 @@ where
     S: Send + Sync + State<sqlx::PgPool, sqlx::PgPool>,
     T: FromRequest<S, B>,
 {
-    type Rejection = (StatusCode, Json<serde_json::Value>);
+    type Rejection = crate::error::Error;
 
     async fn from_request(req: Request<B>, state: &S) -> Result<Self, Self::Rejection> {
         let s = span!(tracing::Level::DEBUG, "validate_signature");
         let _ = s.enter();
 
-        let public_key = match state.relay_client().public_key().await {
-            Ok(key) => key,
-            Err(_) => {
-                error!("Failed to fetch relay's public key");
-                return Err((
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(json!(new_error_response(vec![]))),
-                ));
-            }
-        };
+        let public_key = state.relay_client().public_key().await?;
 
         let (parts, body_raw) = req.into_parts();
-        let bytes = hyper::body::to_bytes(body_raw).await.map_err(|_| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!(new_error_response(vec![]))),
-            )
-        })?;
+        let bytes = hyper::body::to_bytes(body_raw)
+            .await
+            .map_err(|_| ToBytesError)?;
         let body = String::from_utf8_lossy(&bytes);
 
         let signature_header = parts
@@ -63,48 +53,15 @@ where
                 if signature_is_valid(signature, timestamp, &body, &public_key).await? =>
             {
                 let req = Request::<B>::from_parts(parts, bytes.into());
-                T::from_request(req, state).await.map(Self).map_err(|_| {
-                    (
-                        StatusCode::UNAUTHORIZED,
-                        Json(json!(new_error_response(vec![]))),
-                    )
-                })
+                Ok(T::from_request(req, state)
+                    .await
+                    .map(Self)
+                    .map_err(|_| FromRequestError)?)
             }
-            (Some(_), None) => Err((
-                StatusCode::UNAUTHORIZED,
-                Json(json!(new_error_response(vec![ErrorReason {
-                    field: TIMESTAMP_HEADER_NAME.to_string(),
-                    description: "Missing timestamp".to_string(),
-                    location: ErrorLocation::Header
-                }]))),
-            )),
-            (None, Some(_)) => Err((
-                StatusCode::UNAUTHORIZED,
-                Json(json!(new_error_response(vec![ErrorReason {
-                    field: SIGNATURE_HEADER_NAME.to_string(),
-                    description: "Missing signature".to_string(),
-                    location: ErrorLocation::Header
-                },]))),
-            )),
-            (None, None) => Err((
-                StatusCode::UNAUTHORIZED,
-                Json(json!(new_error_response(vec![
-                    ErrorReason {
-                        field: SIGNATURE_HEADER_NAME.to_string(),
-                        description: "Missing signature".to_string(),
-                        location: ErrorLocation::Header
-                    },
-                    ErrorReason {
-                        field: TIMESTAMP_HEADER_NAME.to_string(),
-                        description: "Missing timestamp".to_string(),
-                        location: ErrorLocation::Header
-                    }
-                ]))),
-            )),
-            _ => Err((
-                StatusCode::UNAUTHORIZED,
-                Json(json!(new_error_response(vec![]))),
-            )),
+            (Some(_), None) => Err(MissingTimestampHeader),
+            (None, Some(_)) => Err(MissingSignatureHeader),
+            (None, None) => Err(MissingAllSignatureHeader),
+            _ => Err(MissingAllSignatureHeader),
         }
     }
 }
@@ -114,34 +71,11 @@ pub async fn signature_is_valid(
     timestamp: &str,
     body: &str,
     public_key: &PublicKey,
-) -> Result<bool, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<bool, crate::error::Error> {
     let sig_body = format!("{}.{}.{}", timestamp, body.len(), body);
 
-    let sig_bytes_result = hex::decode(signature);
-    if sig_bytes_result.is_err() {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(json!(new_error_response(vec![ErrorReason {
-                field: SIGNATURE_HEADER_NAME.to_string(),
-                description: "Signature is not valid hex".to_string(),
-                location: ErrorLocation::Header
-            }]))),
-        ));
-    }
-    let sig_bytes = sig_bytes_result.unwrap();
-    let sig = Signature::from_bytes(&sig_bytes);
-    if sig.is_err() {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(json!(new_error_response(vec![ErrorReason {
-                field: SIGNATURE_HEADER_NAME.to_string(),
-                description: "Failed to parse signature from bytes".to_string(),
-                location: ErrorLocation::Header
-            }]))),
-        ));
-    }
+    let sig_bytes = hex::decode(signature)?;
+    let sig = Signature::from_bytes(&sig_bytes)?;
 
-    Ok(public_key
-        .verify(sig_body.as_bytes(), &sig.unwrap())
-        .is_ok())
+    Ok(public_key.verify(sig_body.as_bytes(), &sig).is_ok())
 }

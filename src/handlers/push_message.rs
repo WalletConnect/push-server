@@ -1,18 +1,12 @@
-use crate::error::Error;
-use crate::handlers::ErrorLocation;
+use crate::error::Result;
 use crate::state::AppState;
 use crate::stores::client::ClientStore;
 use crate::stores::notification::NotificationStore;
-use crate::{
-    handlers::{new_error_response, new_success_response, ErrorReason},
-    providers::PushProvider,
-};
+use crate::{handlers::Response, providers::PushProvider};
 use crate::{middleware::validate_signature::RequireValidSignature, providers::get_provider};
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
-use axum::response::IntoResponse;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 use std::sync::Arc;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
@@ -31,86 +25,24 @@ pub async fn handler(
     Path(id): Path<String>,
     State(state): State<Arc<AppState<impl ClientStore, impl NotificationStore>>>,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
-) -> impl IntoResponse {
-    match state
+) -> Result<Response> {
+    let notification = state
         .notification_store
         .create_or_update_notification(&body.id, &id, &body.payload)
-        .await
-    {
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!(new_error_response(vec![]))),
-            );
-        }
-        Ok(notification) => {
-            // TODO make better by only ignoring if previously executed successfully
-            // If notification received more than once then discard
-            if notification.previous_payloads.len() > 1 {
-                return (StatusCode::ACCEPTED, Json(json!(new_success_response())));
-            }
-        }
+        .await?;
+
+    // TODO make better by only ignoring if previously executed successfully
+    // If notification received more than once then discard
+    if notification.previous_payloads.len() > 1 {
+        return Ok(Response::new_success(StatusCode::ACCEPTED));
     }
 
-    let (client_token, provider) = {
-        let client_result = state.client_store.get_client(&id).await;
-        if let Ok(client) = client_result {
-            if let Some(client) = client {
-                (client.token.clone(), get_provider(client.push_type, &state))
-            } else {
-                return (
-                    StatusCode::NOT_FOUND,
-                    Json(json!(new_error_response(vec![ErrorReason {
-                        field: "id".to_string(),
-                        description: "No client found with the provided id".to_string(),
-                        location: ErrorLocation::Body
-                    }]))),
-                );
-            }
-        } else {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!(new_error_response(vec![]))),
-            );
-        }
-    };
+    let client = state.client_store.get_client(&id).await?;
+    let mut provider = get_provider(client.push_type, &state)?;
 
-    let mut provider = match provider {
-        Ok(provider) => provider,
+    provider
+        .send_notification(client.token, body.payload)
+        .await?;
 
-        Err(Error::ProviderNotFound(..)) => {
-            // NOT POSSIBLE IN THEORY!
-            return (
-                StatusCode::NOT_FOUND,
-                Json(json!(new_error_response(vec![ErrorReason {
-                    field: "client.provider".to_string(),
-                    description: "The client's registered provider cannot be found.".to_string(),
-                    location: ErrorLocation::Body
-                }]))),
-            );
-        }
-
-        Err(Error::ProviderNotAvailable(..)) => {
-            return (
-                StatusCode::NOT_FOUND,
-                Json(json!(new_error_response(vec![ErrorReason {
-                    field: "client.provider".to_string(),
-                    description: "The client's registered provider is not available.".to_string(),
-                    location: ErrorLocation::Body
-                }]))),
-            );
-        }
-
-        _ => panic!("cannot be any other error"),
-    };
-
-    let res = provider.send_notification(client_token, body.payload).await;
-    if res.is_err() {
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!(new_error_response(vec![]))),
-        );
-    }
-
-    (StatusCode::ACCEPTED, Json(json!(new_success_response())))
+    Ok(Response::new_success(StatusCode::ACCEPTED))
 }
