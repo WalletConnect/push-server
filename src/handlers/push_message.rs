@@ -26,6 +26,8 @@ pub async fn handler(
     State(state): State<Arc<AppState<impl ClientStore, impl NotificationStore>>>,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<Response> {
+    let client = state.client_store.get_client(&id).await?;
+
     let notification = state
         .notification_store
         .create_or_update_notification(&body.id, &id, &body.payload)
@@ -37,7 +39,6 @@ pub async fn handler(
         return Ok(Response::new_success(StatusCode::ACCEPTED));
     }
 
-    let client = state.client_store.get_client(&id).await?;
     let mut provider = get_provider(client.push_type, &state)?;
 
     provider
