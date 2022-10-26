@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.5.0 - 2022-10-26
+#### Features
+- Better Errors (#37) - (c031272) - Harry Bairstow
+- Logging (#36) - (a6eeb33) - Harry Bairstow
+- - -
+
 ## v0.4.0 - 2022-10-20
 #### Bug Fixes
 - Env name wrong - (7eb151e) - Harry Bairstow
