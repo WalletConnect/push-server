@@ -7,6 +7,7 @@ use crate::handlers::push_message::MessagePayload;
 use crate::providers::noop::NoopProvider;
 use crate::stores::client::ClientStore;
 use crate::stores::notification::NotificationStore;
+use crate::stores::tenant::TenantStore;
 use crate::{env::Config, error::Error::ProviderNotAvailable};
 use crate::{error, providers::fcm::FcmProvider};
 use crate::{providers::apns::ApnsProvider, state::AppState};
@@ -146,7 +147,7 @@ impl Providers {
 
 pub fn get_provider(
     provider: ProviderKind,
-    state: &AppState<impl ClientStore, impl NotificationStore>,
+    state: &AppState<impl ClientStore, impl NotificationStore, impl TenantStore>,
 ) -> error::Result<Provider> {
     let name = provider.as_str();
     let supported = state.config.supported_providers();

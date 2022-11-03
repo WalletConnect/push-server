@@ -1,5 +1,6 @@
 pub mod client;
 pub mod notification;
+pub mod tenant;
 
 type Result<T> = std::result::Result<T, StoreError>;
 

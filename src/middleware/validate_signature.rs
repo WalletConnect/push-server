@@ -9,6 +9,7 @@ use axum::extract::FromRequest;
 use axum::http::Request;
 use ed25519_dalek::{PublicKey, Signature, Verifier};
 use tracing::span;
+use crate::stores::tenant::TenantStore;
 
 pub const SIGNATURE_HEADER_NAME: &str = "X-Ed25519-Signature";
 pub const TIMESTAMP_HEADER_NAME: &str = "X-Ed25519-Timestamp";
@@ -21,7 +22,7 @@ where
     // these bounds are required by `async_trait`
     B: Send + 'static + body::HttpBody + From<hyper::body::Bytes>,
     B::Data: Send,
-    S: Send + Sync + State<sqlx::PgPool, sqlx::PgPool>,
+    S: Send + Sync + State<sqlx::PgPool, sqlx::PgPool, dyn TenantStore>,
     T: FromRequest<S, B>,
 {
     type Rejection = crate::error::Error;

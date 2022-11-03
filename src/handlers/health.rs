@@ -5,9 +5,10 @@ use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use std::sync::Arc;
+use crate::stores::tenant::TenantStore;
 
 pub async fn handler(
-    State(state): State<Arc<AppState<impl ClientStore, impl NotificationStore>>>,
+    State(state): State<Arc<AppState<impl ClientStore, impl NotificationStore, impl TenantStore>>>,
 ) -> impl IntoResponse {
     (
         StatusCode::OK,

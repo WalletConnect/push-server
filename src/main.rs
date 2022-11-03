@@ -22,7 +22,7 @@ use opentelemetry::util::tokio_interval_stream;
 use opentelemetry::KeyValue;
 use opentelemetry_otlp::{Protocol, WithExportConfig};
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
-use sqlx::ConnectOptions;
+use sqlx::{ConnectOptions, PgPool};
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -32,6 +32,7 @@ use tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, Tr
 use tracing::log::LevelFilter;
 use tracing::{warn, Level};
 use tracing_subscriber::fmt::format::FmtSpan;
+use crate::stores::tenant::{DefaultTenantStore, TenantStore};
 
 #[tokio::main]
 async fn main() -> error::Result<()> {
@@ -58,7 +59,26 @@ async fn main() -> error::Result<()> {
     // containing `Cargo.toml`).
     sqlx::migrate!("./migrations").run(&store).await?;
 
-    let mut state = state::new_state(config, store.clone(), store.clone())?;
+    let mut tenant_store: impl TenantStore = DefaultTenantStore(Arc::new(config.clone()));
+    if let Some(tenant_database_url) = &config.tenant_database_url {
+        let tenant_pg_options = PgConnectOptions::from_str(tenant_database_url)?
+            .log_statements(LevelFilter::Debug)
+            .log_slow_statements(LevelFilter::Info, Duration::from_millis(250))
+            .clone();
+
+        let tenant_database = PgPoolOptions::new()
+            .max_connections(5)
+            .connect_with(tenant_pg_options)
+            .await?;
+
+        // Run database migrations. `./tenant_migrations` is the path to migrations, relative to the root dir (the directory
+        // containing `Cargo.toml`).
+        sqlx::migrate!("./tenant_migrations").run(&tenant_database).await?;
+
+        tenant_store = Some(tenant_database);
+    }
+
+    let mut state = state::new_state(config, store.clone(), store.clone(), tenant_store)?;
 
     // Fetch public key so it's cached for the first 6hrs
     let public_key = state.relay_client.public_key().await;
@@ -95,6 +115,7 @@ async fn main() -> error::Result<()> {
                             "service.version",
                             state.build_info.crate_info.version.clone().to_string(),
                         ),
+                        KeyValue::new("service.multitenant", state.config.is_multitenant()),
                     ])),
             )
             .install_batch(opentelemetry::runtime::Tokio)?;
@@ -169,9 +190,12 @@ async fn main() -> error::Result<()> {
 
     let app = Router::with_state(state_arc)
         .route("/health", get(handlers::health::handler))
-        .route("/clients", post(handlers::register_client::handler))
-        .route("/clients/:id", delete(handlers::delete_client::handler))
-        .route("/clients/:id", post(handlers::push_message::handler))
+        .route("/clients", post(handlers::single_tenant_wrappers::register_handler))
+        .route("/clients/:id", delete(handlers::single_tenant_wrappers::delete_handler))
+        .route("/clients/:id", post(handlers::single_tenant_wrappers::push_handler))
+        .route("/:tenant/clients", post(handlers::register_client::handler))
+        .route("/:tenant/clients/:id", delete(handlers::delete_client::handler))
+        .route("/:tenant/clients/:id", post(handlers::push_message::handler))
         .layer(global_middleware);
 
     let header = format!(
