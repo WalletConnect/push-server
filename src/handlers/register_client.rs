@@ -17,10 +17,11 @@ pub struct RegisterBody {
 }
 
 pub async fn handler(
-    Path(_tenant): Path<String>,
+    Path(tenant): Path<String>,
     State(state): State<Arc<AppState>>,
     Json(body): Json<RegisterBody>,
 ) -> Result<Response> {
+    // TODO (Harry): Rewrite provider check logic
     let push_type = body.push_type.as_str().try_into()?;
     let supported_providers = state.supported_providers();
     if !supported_providers.contains(&push_type) {
@@ -31,7 +32,7 @@ pub async fn handler(
         return Err(EmptyField("token".to_string()));
     }
 
-    let exists = match state.client_store.get_client(&body.client_id).await {
+    let exists = match state.client_store.get_client(&tenant, &body.client_id).await {
         Ok(_) => true,
         Err(e) => match e {
             StoreError::Database(db_error) => {
@@ -48,6 +49,7 @@ pub async fn handler(
     state
         .client_store
         .create_client(
+            &tenant,
             &body.client_id,
             Client {
                 push_type,

@@ -76,6 +76,15 @@ pub enum Error {
 
     #[error("neither signature or timestamp header cannot not found")]
     MissingAllSignatureHeader,
+
+    #[error("single-tenant request made while echo server in multi-tenant mode")]
+    MissingTenantId,
+
+    #[error("multi-tenant request made while echo server in single-tenant mode")]
+    InvalidTenantId,
+
+    #[error("invalid configuration: {0}")]
+    InvalidConfiguration(String),
 }
 
 impl IntoResponse for Error {
@@ -213,11 +222,27 @@ impl IntoResponse for Error {
                 }
             ], vec![
                 ErrorField {
-                                    field: TIMESTAMP_HEADER_NAME.to_string(),
-                                    description: "Missing timestamp".to_string(),
-                                    location: ErrorLocation::Header
-                                }
+                    field: TIMESTAMP_HEADER_NAME.to_string(),
+                    description: "Missing timestamp".to_string(),
+                    location: ErrorLocation::Header
+                }
             ]),
+            Error::MissingTenantId => crate::handlers::Response::new_failure(
+                StatusCode::BAD_REQUEST,
+                vec![ResponseError {
+                    name: "tenancy-mode".to_string(),
+                    message: "single-tenant request made while echo server in multi-tenant mode".to_string(),
+                }],
+                vec![],
+            ),
+            Error::InvalidTenantId => crate::handlers::Response::new_failure(
+                StatusCode::BAD_REQUEST,
+                vec![ResponseError {
+                    name: "tenancy-mode".to_string(),
+                    message: "multi-tenant request made while echo server in single-tenant mode".to_string(),
+                }],
+                vec![],
+            ),
             _ => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
                 ResponseError {
                     name: "unknown_error".to_string(),

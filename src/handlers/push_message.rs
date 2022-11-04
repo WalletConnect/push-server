@@ -20,7 +20,7 @@ pub struct PushMessageBody {
 }
 
 pub async fn handler(
-    Path((_tenant, id)): Path<(String, String)>,
+    Path((tenant, id)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<Response> {
@@ -28,7 +28,7 @@ pub async fn handler(
 
     let notification = state
         .notification_store
-        .create_or_update_notification(&body.id, &id, &body.payload)
+        .create_or_update_notification(&body.id, &tenant, &id, &body.payload)
         .await?;
 
     // TODO make better by only ignoring if previously executed successfully
@@ -37,7 +37,10 @@ pub async fn handler(
         return Ok(Response::new_success(StatusCode::ACCEPTED));
     }
 
-    let mut provider = get_provider(client.push_type, &state)?;
+    let mut provider = state
+        .tenant_store
+        .get_tenant_provider(&tenant, &client.push_type)
+        .await?;
 
     provider
         .send_notification(client.token, body.payload)

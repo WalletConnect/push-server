@@ -1,4 +1,3 @@
-use crate::providers::Providers;
 use crate::relay::RelayClient;
 use crate::stores::client::ClientStore;
 use crate::stores::notification::NotificationStore;
@@ -26,9 +25,8 @@ pub trait State {
     fn client_store(&self) -> ClientStoreArc;
     fn notification_store(&self) -> NotificationStoreArc;
     fn tenant_store(&self) -> TenantStoreArc;
-    fn providers(&self) -> Providers;
-    fn supported_providers(&self) -> Vec<ProviderKind>;
     fn relay_client(&self) -> RelayClient;
+    fn is_multitenant(&self) -> bool;
 }
 
 #[derive(Clone)]
@@ -39,9 +37,8 @@ pub struct AppState {
     pub client_store: ClientStoreArc,
     pub notification_store: NotificationStoreArc,
     pub tenant_store: TenantStoreArc,
-    pub providers: Providers,
-    pub supported_providers: Vec<ProviderKind>,
     pub relay_client: RelayClient,
+    is_multitenant: bool,
 }
 
 build_info::build_info!(fn build_info);
@@ -53,8 +50,6 @@ pub fn new_state(
     tenant_store: TenantStoreArc,
 ) -> crate::error::Result<AppState> {
     let build_info: &BuildInfo = build_info();
-    let providers = Providers::new(&config)?;
-    let supported_providers = config.supported_providers();
 
     Ok(AppState {
         config,
@@ -63,9 +58,8 @@ pub fn new_state(
         client_store,
         notification_store,
         tenant_store,
-        providers,
-        supported_providers,
         relay_client: RelayClient::new("https://relay.walletconnect.com".to_string()),
+        is_multitenant: config.tenant_database_url.is_some(),
     })
 }
 
@@ -106,15 +100,11 @@ impl State for Arc<AppState> {
         self.tenant_store.clone()
     }
 
-    fn providers(&self) -> Providers {
-        self.providers.clone()
-    }
-
-    fn supported_providers(&self) -> Vec<ProviderKind> {
-        self.supported_providers.clone()
-    }
-
     fn relay_client(&self) -> RelayClient {
         self.relay_client.clone()
+    }
+
+    fn is_multitenant(&self) -> bool {
+        self.is_multitenant
     }
 }

@@ -95,10 +95,10 @@ impl PushProvider for Provider {
 
 #[derive(Clone)]
 pub struct Providers {
-    apns: Option<ApnsProvider>,
-    fcm: Option<FcmProvider>,
+    pub apns: Option<ApnsProvider>,
+    pub fcm: Option<FcmProvider>,
     #[cfg(any(debug_assertions, test))]
-    noop: Option<NoopProvider>,
+    pub noop: Option<NoopProvider>,
 }
 
 impl Providers {
@@ -145,30 +145,5 @@ impl Providers {
             #[cfg(any(debug_assertions, test))]
             noop: Some(NoopProvider::new()),
         })
-    }
-}
-
-pub fn get_provider(provider: ProviderKind, state: &AppState) -> error::Result<Provider> {
-    let name = provider.as_str();
-    let supported = state.config.supported_providers();
-
-    if !supported.contains(&provider) {
-        return Err(ProviderNotAvailable(name.into()));
-    }
-
-    match provider {
-        ProviderKind::Apns => match state.providers.apns.clone() {
-            Some(p) => Ok(Provider::Apns(p)),
-            None => Err(ProviderNotAvailable(name.into())),
-        },
-        ProviderKind::Fcm => match state.providers.fcm.clone() {
-            Some(p) => Ok(Provider::Fcm(p)),
-            None => Err(ProviderNotAvailable(name.into())),
-        },
-        #[cfg(any(debug_assertions, test))]
-        ProviderKind::Noop => match state.providers.noop.clone() {
-            Some(p) => Ok(Provider::Noop(p)),
-            None => Err(ProviderNotAvailable(name.into())),
-        },
     }
 }

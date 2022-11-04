@@ -40,10 +40,8 @@ async fn main() -> error::Result<()> {
     let config =
         env::get_config().expect("Failed to load config, please ensure all env vars are defined.");
 
-    let supported_providers = config.supported_providers();
-    if supported_providers.is_empty() {
-        panic!("You must enable at least one provider.");
-    }
+    // Check config is valid and then throw the error if its not
+    config.is_valid()?;
 
     let pg_options = PgConnectOptions::from_str(&config.database_url)?
         .log_statements(LevelFilter::Debug)
@@ -60,7 +58,7 @@ async fn main() -> error::Result<()> {
     sqlx::migrate!("./migrations").run(&store).await?;
 
     let mut tenant_store: TenantStoreArc =
-        Arc::new(DefaultTenantStore::new(Arc::new(config.clone())));
+        Arc::new(DefaultTenantStore::new(Arc::new(config.clone()))?);
     if let Some(tenant_database_url) = &config.tenant_database_url {
         let tenant_pg_options = PgConnectOptions::from_str(tenant_database_url)?
             .log_statements(LevelFilter::Debug)
