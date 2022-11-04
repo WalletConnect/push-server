@@ -1,8 +1,8 @@
+use crate::env::Config;
 use crate::relay::RelayClient;
 use crate::stores::client::ClientStore;
 use crate::stores::notification::NotificationStore;
 use crate::stores::tenant::TenantStore;
-use crate::{env::Config, providers::ProviderKind};
 use build_info::BuildInfo;
 use opentelemetry::metrics::{Counter, UpDownCounter};
 use opentelemetry::sdk::trace::Tracer;
@@ -51,6 +51,9 @@ pub fn new_state(
 ) -> crate::error::Result<AppState> {
     let build_info: &BuildInfo = build_info();
 
+    let is_multitenant = config.tenant_database_url.clone().is_some();
+    let relay_url = config.relay_url.clone().to_string();
+
     Ok(AppState {
         config,
         build_info: build_info.clone(),
@@ -58,8 +61,8 @@ pub fn new_state(
         client_store,
         notification_store,
         tenant_store,
-        relay_client: RelayClient::new("https://relay.walletconnect.com".to_string()),
-        is_multitenant: config.tenant_database_url.is_some(),
+        relay_client: RelayClient::new(relay_url),
+        is_multitenant,
     })
 }
 
@@ -72,10 +75,6 @@ impl AppState {
             .init();
 
         self.metrics = Some(metrics);
-    }
-
-    pub fn supported_providers(&self) -> &[ProviderKind] {
-        &self.supported_providers
     }
 }
 

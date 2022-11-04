@@ -2,12 +2,12 @@ pub mod apns;
 pub mod fcm;
 pub mod noop;
 
+use crate::env::Config;
 use crate::handlers::push_message::MessagePayload;
+use crate::providers::apns::ApnsProvider;
 #[cfg(any(debug_assertions, test))]
 use crate::providers::noop::NoopProvider;
-use crate::{env::Config, error::Error::ProviderNotAvailable};
 use crate::{error, providers::fcm::FcmProvider};
-use crate::{providers::apns::ApnsProvider, state::AppState};
 use async_trait::async_trait;
 use std::io::BufReader;
 use tracing::span;
@@ -44,6 +44,18 @@ impl ProviderKind {
             #[cfg(any(debug_assertions, test))]
             Self::Noop => PROVIDER_NOOP,
         }
+    }
+}
+
+impl Into<String> for ProviderKind {
+    fn into(self) -> String {
+        self.as_str().to_string()
+    }
+}
+
+impl Into<String> for &ProviderKind {
+    fn into(self) -> String {
+        self.as_str().to_string()
     }
 }
 
@@ -103,7 +115,7 @@ pub struct Providers {
 
 impl Providers {
     pub fn new(config: &Config) -> error::Result<Providers> {
-        let supported = config.supported_providers();
+        let supported = config.single_tenant_supported_providers();
         let mut apns = None;
         if supported.contains(&ProviderKind::Apns) {
             let endpoint = match config.apns_sandbox {

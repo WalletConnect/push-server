@@ -21,18 +21,21 @@ pub async fn handler(
     State(state): State<Arc<AppState>>,
     Json(body): Json<RegisterBody>,
 ) -> Result<Response> {
-    // TODO (Harry): Rewrite provider check logic
     let push_type = body.push_type.as_str().try_into()?;
-    let supported_providers = state.supported_providers();
+    let supported_providers = state.tenant_store.get_tenant_providers(&tenant).await?;
     if !supported_providers.contains(&push_type) {
-        return Err(ProviderNotAvailable(push_type.as_str().into()));
+        return Err(ProviderNotAvailable(push_type.into()));
     }
 
     if body.token.is_empty() {
         return Err(EmptyField("token".to_string()));
     }
 
-    let exists = match state.client_store.get_client(&tenant, &body.client_id).await {
+    let exists = match state
+        .client_store
+        .get_client(&tenant, &body.client_id)
+        .await
+    {
         Ok(_) => true,
         Err(e) => match e {
             StoreError::Database(db_error) => {

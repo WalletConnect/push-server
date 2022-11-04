@@ -40,6 +40,16 @@ async fn main() -> error::Result<()> {
     let config =
         env::get_config().expect("Failed to load config, please ensure all env vars are defined.");
 
+    let mut supported_providers_string = "multi-tenant".to_string();
+    if config.tenant_database_url.is_some() {
+        supported_providers_string = config
+            .single_tenant_supported_providers()
+            .into_iter()
+            .map(Into::into)
+            .collect::<Vec<&str>>()
+            .join(", ");
+    }
+
     // Check config is valid and then throw the error if its not
     config.is_valid()?;
 
@@ -235,11 +245,7 @@ providers: [{}]
         build_rustc_version,
         "0.0.0.0",
         port.clone(),
-        supported_providers
-            .into_iter()
-            .map(Into::into)
-            .collect::<Vec<&str>>()
-            .join(", ")
+        supported_providers_string
     );
     println!("{}", header);
 

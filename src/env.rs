@@ -9,6 +9,8 @@ pub struct Config {
     pub port: u16,
     #[serde(default = "default_log_level")]
     pub log_level: String,
+    #[serde(default = "default_relay_url")]
+    pub relay_url: String,
     pub database_url: String,
     pub tenant_database_url: Option<String>,
     #[serde(default = "default_tenant_id")]
@@ -55,7 +57,7 @@ impl Config {
         tracing::Level::from_str(self.log_level.as_str()).expect("Invalid log level")
     }
 
-    fn single_tenant_supported_providers(&self) -> Vec<ProviderKind> {
+    pub fn single_tenant_supported_providers(&self) -> Vec<ProviderKind> {
         let mut supported = vec![];
 
         if self.apns_certificate.is_some() && self.apns_certificate_password.is_some() {
@@ -84,6 +86,10 @@ fn default_log_level() -> String {
 
 fn default_apns_sandbox_mode() -> bool {
     false
+}
+
+fn default_relay_url() -> String {
+    "https://relay.walletconnect.com".to_string()
 }
 
 fn default_tenant_id() -> String {

@@ -11,18 +11,18 @@ use std::sync::Arc;
 
 #[async_trait]
 pub trait TenantStore {
-    async fn get_tenant_providers(&self, id: &str) -> Result<&[ProviderKind]>;
+    async fn get_tenant_providers(&self, id: &str) -> Result<Vec<ProviderKind>>;
 
-    async fn get_tenant_provider(&self, id: &str, name: &ProviderKind) -> Result<&Provider>;
+    async fn get_tenant_provider(&self, id: &str, name: &ProviderKind) -> Result<Provider>;
 }
 
 #[async_trait]
 impl TenantStore for PgPool {
-    async fn get_tenant_providers(&self, id: &str) -> Result<&[ProviderKind]> {
+    async fn get_tenant_providers(&self, _id: &str) -> Result<Vec<ProviderKind>> {
         todo!()
     }
 
-    async fn get_tenant_provider(&self, id: &str, name: &str) -> Result<&Provider> {
+    async fn get_tenant_provider(&self, _id: &str, _name: &ProviderKind) -> Result<Provider> {
         todo!()
     }
 }
@@ -51,7 +51,7 @@ impl DefaultTenantStore {
 
 #[async_trait]
 impl TenantStore for DefaultTenantStore {
-    async fn get_tenant_providers(&self, _id: &str) -> Result<&[ProviderKind]> {
+    async fn get_tenant_providers(&self, _id: &str) -> Result<Vec<ProviderKind>> {
         let mut supported = vec![];
 
         if self.config.apns_certificate.is_some() && self.config.apns_certificate_password.is_some()
@@ -67,26 +67,26 @@ impl TenantStore for DefaultTenantStore {
         #[cfg(any(debug_assertions, test))]
         supported.push(ProviderKind::Noop);
 
-        Ok(&supported)
+        Ok(supported)
     }
 
-    async fn get_tenant_provider(&self, id: &str, name: &ProviderKind) -> Result<&Provider> {
+    async fn get_tenant_provider(&self, id: &str, name: &ProviderKind) -> Result<Provider> {
         if !self.get_tenant_providers(id).await?.contains(name) {
-            Err(ProviderNotAvailable(name.into()))
+            return Err(ProviderNotAvailable(name.into()));
         }
 
         match name {
             ProviderKind::Apns => match self.apns.clone() {
-                Some(p) => Ok(&Provider::Apns(p)),
+                Some(p) => Ok(Provider::Apns(p)),
                 None => Err(ProviderNotAvailable(name.into())),
             },
             ProviderKind::Fcm => match self.fcm.clone() {
-                Some(p) => Ok(&Provider::Fcm(p)),
+                Some(p) => Ok(Provider::Fcm(p)),
                 None => Err(ProviderNotAvailable(name.into())),
             },
             #[cfg(any(debug_assertions, test))]
             ProviderKind::Noop => match self.noop.clone() {
-                Some(p) => Ok(&Provider::Noop(p)),
+                Some(p) => Ok(Provider::Noop(p)),
                 None => Err(ProviderNotAvailable(name.into())),
             },
         }

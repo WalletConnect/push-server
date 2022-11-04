@@ -1,7 +1,7 @@
 use crate::error::Result;
+use crate::middleware::validate_signature::RequireValidSignature;
 use crate::state::AppState;
 use crate::{handlers::Response, providers::PushProvider};
-use crate::{middleware::validate_signature::RequireValidSignature, providers::get_provider};
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
@@ -24,7 +24,7 @@ pub async fn handler(
     State(state): State<Arc<AppState>>,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<Response> {
-    let client = state.client_store.get_client(&id).await?;
+    let client = state.client_store.get_client(&tenant, &id).await?;
 
     let notification = state
         .notification_store
