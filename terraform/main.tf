@@ -109,21 +109,21 @@ module "tenant_database_cluster" {
 module "ecs" {
   source = "./ecs"
 
-  app_name                  = "${terraform.workspace}-${local.app_name}"
-  prometheus_endpoint       = aws_prometheus_workspace.prometheus.prometheus_endpoint
-  database_url              = "postgres://${module.database_cluster.cluster_master_username}:${module.database_cluster.cluster_master_password}@${module.database_cluster.cluster_endpoint}:${module.database_cluster.cluster_port}/postgres"
-  tenant_database_url       = "postgres://${module.tenant_database_cluster.cluster_master_username}:${module.tenant_database_cluster.cluster_master_password}@${module.tenant_database_cluster.cluster_endpoint}:${module.tenant_database_cluster.cluster_port}/postgres"
-  image                     = "${data.aws_ecr_repository.repository.repository_url}:${var.image_version}"
-  acm_certificate_arn       = module.dns.certificate_arn
-  cpu                       = 512
-  fqdn                      = local.fqdn
-  memory                    = 1024
-  private_subnets           = module.vpc.private_subnets
-  public_subnets            = module.vpc.public_subnets
-  region                    = var.region
-  route53_zone_id           = module.dns.zone_id
-  vpc_cidr                  = module.vpc.vpc_cidr_block
-  vpc_id                    = module.vpc.vpc_id
+  app_name            = "${terraform.workspace}-${local.app_name}"
+  prometheus_endpoint = aws_prometheus_workspace.prometheus.prometheus_endpoint
+  database_url        = "postgres://${module.database_cluster.cluster_master_username}:${module.database_cluster.cluster_master_password}@${module.database_cluster.cluster_endpoint}:${module.database_cluster.cluster_port}/postgres"
+  tenant_database_url = "postgres://${module.tenant_database_cluster.cluster_master_username}:${module.tenant_database_cluster.cluster_master_password}@${module.tenant_database_cluster.cluster_endpoint}:${module.tenant_database_cluster.cluster_port}/postgres"
+  image               = "${data.aws_ecr_repository.repository.repository_url}:${var.image_version}"
+  acm_certificate_arn = module.dns.certificate_arn
+  cpu                 = 512
+  fqdn                = local.fqdn
+  memory              = 1024
+  private_subnets     = module.vpc.private_subnets
+  public_subnets      = module.vpc.public_subnets
+  region              = var.region
+  route53_zone_id     = module.dns.zone_id
+  vpc_cidr            = module.vpc.vpc_cidr_block
+  vpc_id              = module.vpc.vpc_id
 }
 
 data "aws_ecr_repository" "repository" {

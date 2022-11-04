@@ -11,12 +11,12 @@ variable "image" {
 }
 
 variable "database_url" {
-  type = string
+  type      = string
   sensitive = true
 }
 
 variable "tenant_database_url" {
-  type = string
+  type      = string
   sensitive = true
 }
 
