@@ -1,8 +1,5 @@
 use crate::error::Result;
 use crate::state::AppState;
-use crate::stores::client::ClientStore;
-use crate::stores::notification::NotificationStore;
-use crate::stores::tenant::TenantStore;
 use crate::{handlers::Response, providers::PushProvider};
 use crate::{middleware::validate_signature::RequireValidSignature, providers::get_provider};
 use axum::extract::{Json, Path, State};
@@ -23,9 +20,8 @@ pub struct PushMessageBody {
 }
 
 pub async fn handler(
-    Path(tenant): Path<String>,
-    Path(id): Path<String>,
-    State(state): State<Arc<AppState<impl ClientStore, impl NotificationStore, impl TenantStore>>>,
+    Path((_tenant, id)): Path<(String, String)>,
+    State(state): State<Arc<AppState>>,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<Response> {
     let client = state.client_store.get_client(&id).await?;

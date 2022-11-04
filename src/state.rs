@@ -2,13 +2,17 @@ use crate::providers::Providers;
 use crate::relay::RelayClient;
 use crate::stores::client::ClientStore;
 use crate::stores::notification::NotificationStore;
+use crate::stores::tenant::TenantStore;
 use crate::{env::Config, providers::ProviderKind};
 use build_info::BuildInfo;
 use opentelemetry::metrics::{Counter, UpDownCounter};
 use opentelemetry::sdk::trace::Tracer;
 use std::sync::Arc;
 use tracing_subscriber::prelude::*;
-use crate::stores::tenant::TenantStore;
+
+pub type ClientStoreArc = Arc<dyn ClientStore + Send + Sync + 'static>;
+pub type NotificationStoreArc = Arc<dyn NotificationStore + Send + Sync + 'static>;
+pub type TenantStoreArc = Arc<dyn TenantStore + Send + Sync + 'static>;
 
 #[derive(Clone)]
 pub struct Metrics {
@@ -16,35 +20,25 @@ pub struct Metrics {
     pub received_notifications: Counter<u64>,
 }
 
-pub trait State<C, N, T>
-    where
-        C: ClientStore,
-        N: NotificationStore,
-        T: TenantStore,
-{
+pub trait State {
     fn config(&self) -> Config;
     fn build_info(&self) -> BuildInfo;
-    fn client_store(&self) -> C;
-    fn notification_store(&self) -> N;
-    fn tenant_store(&self) -> T;
+    fn client_store(&self) -> ClientStoreArc;
+    fn notification_store(&self) -> NotificationStoreArc;
+    fn tenant_store(&self) -> TenantStoreArc;
     fn providers(&self) -> Providers;
     fn supported_providers(&self) -> Vec<ProviderKind>;
     fn relay_client(&self) -> RelayClient;
 }
 
 #[derive(Clone)]
-pub struct AppState<C, N, T>
-    where
-        C: ClientStore,
-        N: NotificationStore,
-        T: TenantStore,
-{
+pub struct AppState {
     pub config: Config,
     pub build_info: BuildInfo,
     pub metrics: Option<Metrics>,
-    pub client_store: C,
-    pub notification_store: N,
-    pub tenant_store: T,
+    pub client_store: ClientStoreArc,
+    pub notification_store: NotificationStoreArc,
+    pub tenant_store: TenantStoreArc,
     pub providers: Providers,
     pub supported_providers: Vec<ProviderKind>,
     pub relay_client: RelayClient,
@@ -52,17 +46,12 @@ pub struct AppState<C, N, T>
 
 build_info::build_info!(fn build_info);
 
-pub fn new_state<C, N, T>(
+pub fn new_state(
     config: Config,
-    client_store: C,
-    notification_store: N,
-    tenant_store: T,
-) -> crate::error::Result<AppState<C, N, T>>
-    where
-        C: ClientStore,
-        N: NotificationStore,
-        T: TenantStore,
-{
+    client_store: ClientStoreArc,
+    notification_store: NotificationStoreArc,
+    tenant_store: TenantStoreArc,
+) -> crate::error::Result<AppState> {
     let build_info: &BuildInfo = build_info();
     let providers = Providers::new(&config)?;
     let supported_providers = config.supported_providers();
@@ -80,12 +69,7 @@ pub fn new_state<C, N, T>(
     })
 }
 
-impl<C, N, T> AppState<C, N, T>
-    where
-        C: ClientStore,
-        N: NotificationStore,
-        T: TenantStore,
-{
+impl AppState {
     pub fn set_telemetry(&mut self, tracer: Tracer, metrics: Metrics) {
         let otel_tracing_layer = tracing_opentelemetry::layer().with_tracer(tracer);
 
@@ -101,12 +85,7 @@ impl<C, N, T> AppState<C, N, T>
     }
 }
 
-impl<C, N, T> State<C, N, T> for Arc<AppState<C, N, T>>
-    where
-        C: Clone + ClientStore,
-        N: Clone + NotificationStore,
-        T: TenantStore,
-{
+impl State for Arc<AppState> {
     fn config(&self) -> Config {
         self.config.clone()
     }
@@ -115,15 +94,15 @@ impl<C, N, T> State<C, N, T> for Arc<AppState<C, N, T>>
         self.build_info.clone()
     }
 
-    fn client_store(&self) -> C {
+    fn client_store(&self) -> ClientStoreArc {
         self.client_store.clone()
     }
 
-    fn notification_store(&self) -> N {
+    fn notification_store(&self) -> NotificationStoreArc {
         self.notification_store.clone()
     }
 
-    fn tenant_store(&self) -> T {
+    fn tenant_store(&self) -> TenantStoreArc {
         self.tenant_store.clone()
     }
 

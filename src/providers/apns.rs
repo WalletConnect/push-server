@@ -23,7 +23,7 @@ impl ApnsProvider {
     {
         Ok(ApnsProvider {
             client: a2::Client::certificate(cert, password.as_str(), endpoint)?,
-            topic
+            topic,
         })
     }
 }

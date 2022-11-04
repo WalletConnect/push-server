@@ -7,7 +7,8 @@ mod relay;
 mod state;
 mod stores;
 
-use crate::state::Metrics;
+use crate::state::{Metrics, TenantStoreArc};
+use crate::stores::tenant::DefaultTenantStore;
 use axum::{
     routing::{delete, get, post},
     Router,
@@ -22,7 +23,7 @@ use opentelemetry::util::tokio_interval_stream;
 use opentelemetry::KeyValue;
 use opentelemetry_otlp::{Protocol, WithExportConfig};
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
-use sqlx::{ConnectOptions, PgPool};
+use sqlx::ConnectOptions;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -32,7 +33,6 @@ use tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, Tr
 use tracing::log::LevelFilter;
 use tracing::{warn, Level};
 use tracing_subscriber::fmt::format::FmtSpan;
-use crate::stores::tenant::{DefaultTenantStore, TenantStore};
 
 #[tokio::main]
 async fn main() -> error::Result<()> {
@@ -59,7 +59,8 @@ async fn main() -> error::Result<()> {
     // containing `Cargo.toml`).
     sqlx::migrate!("./migrations").run(&store).await?;
 
-    let mut tenant_store: impl TenantStore = DefaultTenantStore(Arc::new(config.clone()));
+    let mut tenant_store: TenantStoreArc =
+        Arc::new(DefaultTenantStore::new(Arc::new(config.clone())));
     if let Some(tenant_database_url) = &config.tenant_database_url {
         let tenant_pg_options = PgConnectOptions::from_str(tenant_database_url)?
             .log_statements(LevelFilter::Debug)
@@ -73,12 +74,19 @@ async fn main() -> error::Result<()> {
 
         // Run database migrations. `./tenant_migrations` is the path to migrations, relative to the root dir (the directory
         // containing `Cargo.toml`).
-        sqlx::migrate!("./tenant_migrations").run(&tenant_database).await?;
+        sqlx::migrate!("./tenant_migrations")
+            .run(&tenant_database)
+            .await?;
 
-        tenant_store = Some(tenant_database);
+        tenant_store = Arc::new(tenant_database);
     }
 
-    let mut state = state::new_state(config, store.clone(), store.clone(), tenant_store)?;
+    let mut state = state::new_state(
+        config,
+        Arc::new(store.clone()),
+        Arc::new(store.clone()),
+        tenant_store,
+    )?;
 
     // Fetch public key so it's cached for the first 6hrs
     let public_key = state.relay_client.public_key().await;
@@ -115,7 +123,6 @@ async fn main() -> error::Result<()> {
                             "service.version",
                             state.build_info.crate_info.version.clone().to_string(),
                         ),
-                        KeyValue::new("service.multitenant", state.config.is_multitenant()),
                     ])),
             )
             .install_batch(opentelemetry::runtime::Tokio)?;
@@ -190,12 +197,27 @@ async fn main() -> error::Result<()> {
 
     let app = Router::with_state(state_arc)
         .route("/health", get(handlers::health::handler))
-        .route("/clients", post(handlers::single_tenant_wrappers::register_handler))
-        .route("/clients/:id", delete(handlers::single_tenant_wrappers::delete_handler))
-        .route("/clients/:id", post(handlers::single_tenant_wrappers::push_handler))
+        .route(
+            "/clients",
+            post(handlers::single_tenant_wrappers::register_handler),
+        )
+        .route(
+            "/clients/:id",
+            delete(handlers::single_tenant_wrappers::delete_handler),
+        )
+        .route(
+            "/clients/:id",
+            post(handlers::single_tenant_wrappers::push_handler),
+        )
         .route("/:tenant/clients", post(handlers::register_client::handler))
-        .route("/:tenant/clients/:id", delete(handlers::delete_client::handler))
-        .route("/:tenant/clients/:id", post(handlers::push_message::handler))
+        .route(
+            "/:tenant/clients/:id",
+            delete(handlers::delete_client::handler),
+        )
+        .route(
+            "/:tenant/clients/:id",
+            post(handlers::push_message::handler),
+        )
         .layer(global_middleware);
 
     let header = format!(

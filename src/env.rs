@@ -65,7 +65,9 @@ fn default_apns_sandbox_mode() -> bool {
     false
 }
 
-fn default_tenant_id() -> String { "0000-0000-0000-0000".to_string() }
+fn default_tenant_id() -> String {
+    "0000-0000-0000-0000".to_string()
+}
 
 pub fn get_config() -> error::Result<Config> {
     let config = envy::from_env::<Config>()?;

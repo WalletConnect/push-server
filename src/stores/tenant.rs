@@ -1,12 +1,10 @@
-use std::sync::Arc;
-use sqlx::PgPool;
 use crate::env::Config;
 use async_trait::async_trait;
+use sqlx::PgPool;
+use std::sync::Arc;
 
 #[async_trait]
-pub trait TenantStore {
-
-}
+pub trait TenantStore {}
 
 #[async_trait]
 impl TenantStore for PgPool {
@@ -14,6 +12,11 @@ impl TenantStore for PgPool {
 }
 
 pub struct DefaultTenantStore(Arc<Config>);
+impl DefaultTenantStore {
+    pub fn new(config: Arc<Config>) -> DefaultTenantStore {
+        DefaultTenantStore(config)
+    }
+}
 
 #[async_trait]
 impl TenantStore for DefaultTenantStore {

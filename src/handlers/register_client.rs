@@ -2,9 +2,7 @@ use crate::error::Error::{ClientAlreadyRegistered, EmptyField, ProviderNotAvaila
 use crate::error::Result;
 use crate::handlers::Response;
 use crate::state::AppState;
-use crate::stores::client::{Client, ClientStore};
-use crate::stores::notification::NotificationStore;
-use crate::stores::tenant::TenantStore;
+use crate::stores::client::Client;
 use crate::stores::StoreError;
 use axum::extract::{Json, Path, State};
 use serde::Deserialize;
@@ -19,8 +17,8 @@ pub struct RegisterBody {
 }
 
 pub async fn handler(
-    Path(tenant): Path<String>,
-    State(state): State<Arc<AppState<impl ClientStore, impl NotificationStore, impl TenantStore>>>,
+    Path(_tenant): Path<String>,
+    State(state): State<Arc<AppState>>,
     Json(body): Json<RegisterBody>,
 ) -> Result<Response> {
     let push_type = body.push_type.as_str().try_into()?;

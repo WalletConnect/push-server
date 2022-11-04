@@ -5,9 +5,6 @@ pub mod noop;
 use crate::handlers::push_message::MessagePayload;
 #[cfg(any(debug_assertions, test))]
 use crate::providers::noop::NoopProvider;
-use crate::stores::client::ClientStore;
-use crate::stores::notification::NotificationStore;
-use crate::stores::tenant::TenantStore;
 use crate::{env::Config, error::Error::ProviderNotAvailable};
 use crate::{error, providers::fcm::FcmProvider};
 use crate::{providers::apns::ApnsProvider, state::AppState};
@@ -113,20 +110,26 @@ impl Providers {
                 true => a2::Endpoint::Sandbox,
                 false => a2::Endpoint::Production,
             };
-            apns = Some(
-                match (&config.apns_certificate, &config.apns_certificate_password, &config.apns_topic) {
-                    (Some(certificate), Some(password), Some(topic)) => {
-                        let decoded = base64::decode(certificate)?;
-                        let mut reader = BufReader::new(&*decoded);
+            apns = Some(match (
+                &config.apns_certificate,
+                &config.apns_certificate_password,
+                &config.apns_topic,
+            ) {
+                (Some(certificate), Some(password), Some(topic)) => {
+                    let decoded = base64::decode(certificate)?;
+                    let mut reader = BufReader::new(&*decoded);
 
-                        let apns_client =
-                            ApnsProvider::new_cert(&mut reader, password.clone(), endpoint, topic.clone())?;
+                    let apns_client = ApnsProvider::new_cert(
+                        &mut reader,
+                        password.clone(),
+                        endpoint,
+                        topic.clone(),
+                    )?;
 
-                        Ok(apns_client)
-                    }
-                    _ => Err(error::Error::RequiredEnvNotFound),
-                }?,
-            );
+                    Ok(apns_client)
+                }
+                _ => Err(error::Error::RequiredEnvNotFound),
+            }?);
         }
 
         let mut fcm = None;
@@ -145,10 +148,7 @@ impl Providers {
     }
 }
 
-pub fn get_provider(
-    provider: ProviderKind,
-    state: &AppState<impl ClientStore, impl NotificationStore, impl TenantStore>,
-) -> error::Result<Provider> {
+pub fn get_provider(provider: ProviderKind, state: &AppState) -> error::Result<Provider> {
     let name = provider.as_str();
     let supported = state.config.supported_providers();
 
