@@ -29,22 +29,3 @@ variable "image_version" {
   type    = string
   default = "latest"
 }
-
-variable "fcm_api_key" {
-  type      = string
-  sensitive = true
-}
-
-variable "apns_topic" {
-  type = string
-}
-
-variable "apns_certificate" {
-  type      = string
-  sensitive = true
-}
-
-variable "apns_certificate_password" {
-  type      = string
-  sensitive = true
-}
