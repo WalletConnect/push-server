@@ -2,14 +2,12 @@ pub mod apns;
 pub mod fcm;
 pub mod noop;
 
-use crate::env::Config;
 use crate::handlers::push_message::MessagePayload;
 use crate::providers::apns::ApnsProvider;
 #[cfg(any(debug_assertions, test))]
 use crate::providers::noop::NoopProvider;
 use crate::{error, providers::fcm::FcmProvider};
 use async_trait::async_trait;
-use std::io::BufReader;
 use tracing::span;
 
 #[async_trait]
@@ -18,7 +16,7 @@ pub trait PushProvider {
         &mut self,
         token: String,
         payload: MessagePayload,
-    ) -> crate::error::Result<()>;
+    ) -> error::Result<()>;
 }
 
 const PROVIDER_APNS: &str = "apns";
@@ -102,60 +100,5 @@ impl PushProvider for Provider {
             #[cfg(any(debug_assertions, test))]
             Provider::Noop(p) => p.send_notification(token, payload).await,
         }
-    }
-}
-
-#[derive(Clone)]
-pub struct Providers {
-    pub apns: Option<ApnsProvider>,
-    pub fcm: Option<FcmProvider>,
-    #[cfg(any(debug_assertions, test))]
-    pub noop: Option<NoopProvider>,
-}
-
-impl Providers {
-    pub fn new(config: &Config) -> error::Result<Providers> {
-        let supported = config.single_tenant_supported_providers();
-        let mut apns = None;
-        if supported.contains(&ProviderKind::Apns) {
-            let endpoint = match config.apns_sandbox {
-                true => a2::Endpoint::Sandbox,
-                false => a2::Endpoint::Production,
-            };
-            apns = Some(match (
-                &config.apns_certificate,
-                &config.apns_certificate_password,
-                &config.apns_topic,
-            ) {
-                (Some(certificate), Some(password), Some(topic)) => {
-                    let decoded = base64::decode(certificate)?;
-                    let mut reader = BufReader::new(&*decoded);
-
-                    let apns_client = ApnsProvider::new_cert(
-                        &mut reader,
-                        password.clone(),
-                        endpoint,
-                        topic.clone(),
-                    )?;
-
-                    Ok(apns_client)
-                }
-                _ => Err(error::Error::RequiredEnvNotFound),
-            }?);
-        }
-
-        let mut fcm = None;
-        if supported.contains(&ProviderKind::Fcm) {
-            if let Some(api_key) = &config.fcm_api_key {
-                fcm = Some(FcmProvider::new(api_key.clone()))
-            }
-        }
-
-        Ok(Providers {
-            apns,
-            fcm,
-            #[cfg(any(debug_assertions, test))]
-            noop: Some(NoopProvider::new()),
-        })
     }
 }

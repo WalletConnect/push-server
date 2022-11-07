@@ -16,6 +16,7 @@ pub enum ErrorLocation {
     // Note (Harry): Spec supports this but it currently isn't used
     //Query,
     Header,
+    Path,
 }
 
 #[derive(serde::Serialize)]

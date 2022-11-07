@@ -41,7 +41,7 @@ async fn main() -> error::Result<()> {
         env::get_config().expect("Failed to load config, please ensure all env vars are defined.");
 
     let mut supported_providers_string = "multi-tenant".to_string();
-    if config.tenant_database_url.is_some() {
+    if config.tenant_database_url.is_none() {
         supported_providers_string = config
             .single_tenant_supported_providers()
             .into_iter()
@@ -217,13 +217,16 @@ async fn main() -> error::Result<()> {
             "/clients/:id",
             post(handlers::single_tenant_wrappers::push_handler),
         )
-        .route("/:tenant/clients", post(handlers::register_client::handler))
         .route(
-            "/:tenant/clients/:id",
+            "/:tenant_id/clients",
+            post(handlers::register_client::handler),
+        )
+        .route(
+            "/:tenant_id/clients/:id",
             delete(handlers::delete_client::handler),
         )
         .route(
-            "/:tenant/clients/:id",
+            "/:tenant_id/clients/:id",
             post(handlers::push_message::handler),
         )
         .layer(global_middleware);

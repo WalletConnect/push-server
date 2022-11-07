@@ -81,10 +81,13 @@ pub enum Error {
     MissingTenantId,
 
     #[error("multi-tenant request made while echo server in single-tenant mode")]
-    InvalidTenantId,
+    IncludedTenantIdWhenNotNeeded,
 
     #[error("invalid configuration: {0}")]
     InvalidConfiguration(String),
+
+    #[error("invalid tenant id: {0}")]
+    InvalidTenantId(String),
 }
 
 impl IntoResponse for Error {
@@ -227,6 +230,18 @@ impl IntoResponse for Error {
                     location: ErrorLocation::Header
                 }
             ]),
+            Error::InvalidTenantId(id) => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
+                ResponseError {
+                    name: "tenant".to_string(),
+                    message: format!("The provided Tenant ID, {}, is invalid. Please ensure it's valid and the url is in the format /:tenant_id/...path", &id),
+                }
+            ], vec![
+                ErrorField {
+                    field: "tenant_id".to_string(),
+                    description: format!("Invalid Tenant ID, {}", &id),
+                    location: ErrorLocation::Path
+                }
+            ]),
             Error::MissingTenantId => crate::handlers::Response::new_failure(
                 StatusCode::BAD_REQUEST,
                 vec![ResponseError {
@@ -235,7 +250,7 @@ impl IntoResponse for Error {
                 }],
                 vec![],
             ),
-            Error::InvalidTenantId => crate::handlers::Response::new_failure(
+            Error::IncludedTenantIdWhenNotNeeded => crate::handlers::Response::new_failure(
                 StatusCode::BAD_REQUEST,
                 vec![ResponseError {
                     name: "tenancy-mode".to_string(),

@@ -1,10 +1,10 @@
-use crate::error::Error::{ClientAlreadyRegistered, EmptyField, ProviderNotAvailable};
+use crate::error::Error::{ClientAlreadyRegistered, EmptyField, IncludedTenantIdWhenNotNeeded, ProviderNotAvailable};
 use crate::error::Result;
 use crate::handlers::Response;
-use crate::state::AppState;
+use crate::state::{AppState, State};
 use crate::stores::client::Client;
 use crate::stores::StoreError;
-use axum::extract::{Json, Path, State};
+use axum::extract::{Json, Path, State as StateExtractor};
 use serde::Deserialize;
 use std::sync::Arc;
 
@@ -17,12 +17,17 @@ pub struct RegisterBody {
 }
 
 pub async fn handler(
-    Path(tenant): Path<String>,
-    State(state): State<Arc<AppState>>,
+    Path(tenant_id): Path<String>,
+    StateExtractor(state): StateExtractor<Arc<AppState>>,
     Json(body): Json<RegisterBody>,
 ) -> Result<Response> {
+    if state.config.default_tenant_id != tenant_id && !state.is_multitenant() {
+        return Err(IncludedTenantIdWhenNotNeeded)
+    }
+
     let push_type = body.push_type.as_str().try_into()?;
-    let supported_providers = state.tenant_store.get_tenant_providers(&tenant).await?;
+    let tenant = state.tenant_store.get_tenant(&tenant_id).await?;
+    let supported_providers = tenant.providers();
     if !supported_providers.contains(&push_type) {
         return Err(ProviderNotAvailable(push_type.into()));
     }
@@ -33,7 +38,7 @@ pub async fn handler(
 
     let exists = match state
         .client_store
-        .get_client(&tenant, &body.client_id)
+        .get_client(&tenant_id, &body.client_id)
         .await
     {
         Ok(_) => true,
@@ -52,7 +57,7 @@ pub async fn handler(
     state
         .client_store
         .create_client(
-            &tenant,
+            &tenant_id,
             &body.client_id,
             Client {
                 push_type,

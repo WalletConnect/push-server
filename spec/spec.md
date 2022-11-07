@@ -37,7 +37,7 @@ This is sent whenever echo server encounters an error.
 The `fields` property will only be available if it is a user provided field that caused the error. 
 The `errors` property will only be available when we can provide more generic errors e.g. Postgres error.
 
-> **Note** `location` should be treated as an enum (`body`, `query`, `header`) where `body` is the
+> **Note** `location` should be treated as an enum (`body`, `query`, `header`, `path`) where `body` is the
 > default unless otherwise specified.
 
 ## Requests

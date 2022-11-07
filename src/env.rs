@@ -70,7 +70,9 @@ impl Config {
 
         // Only available in debug/testing
         #[cfg(any(debug_assertions, test))]
-        supported.push(ProviderKind::Noop);
+        if self.tenant_database_url.is_none() {
+            supported.push(ProviderKind::Noop);
+        }
 
         supported
     }
