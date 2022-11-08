@@ -7,7 +7,8 @@ mod relay;
 mod state;
 mod stores;
 
-use crate::state::Metrics;
+use crate::state::{Metrics, TenantStoreArc};
+use crate::stores::tenant::DefaultTenantStore;
 use axum::{
     routing::{delete, get, post},
     Router,
@@ -39,10 +40,18 @@ async fn main() -> error::Result<()> {
     let config =
         env::get_config().expect("Failed to load config, please ensure all env vars are defined.");
 
-    let supported_providers = config.supported_providers();
-    if supported_providers.is_empty() {
-        panic!("You must enable at least one provider.");
+    let mut supported_providers_string = "multi-tenant".to_string();
+    if config.tenant_database_url.is_none() {
+        supported_providers_string = config
+            .single_tenant_supported_providers()
+            .into_iter()
+            .map(Into::into)
+            .collect::<Vec<&str>>()
+            .join(", ");
     }
+
+    // Check config is valid and then throw the error if its not
+    config.is_valid()?;
 
     let pg_options = PgConnectOptions::from_str(&config.database_url)?
         .log_statements(LevelFilter::Debug)
@@ -58,7 +67,34 @@ async fn main() -> error::Result<()> {
     // containing `Cargo.toml`).
     sqlx::migrate!("./migrations").run(&store).await?;
 
-    let mut state = state::new_state(config, store.clone(), store.clone())?;
+    let mut tenant_store: TenantStoreArc =
+        Arc::new(DefaultTenantStore::new(Arc::new(config.clone()))?);
+    if let Some(tenant_database_url) = &config.tenant_database_url {
+        let tenant_pg_options = PgConnectOptions::from_str(tenant_database_url)?
+            .log_statements(LevelFilter::Debug)
+            .log_slow_statements(LevelFilter::Info, Duration::from_millis(250))
+            .clone();
+
+        let tenant_database = PgPoolOptions::new()
+            .max_connections(5)
+            .connect_with(tenant_pg_options)
+            .await?;
+
+        // Run database migrations. `./tenant_migrations` is the path to migrations, relative to the root dir (the directory
+        // containing `Cargo.toml`).
+        sqlx::migrate!("./tenant_migrations")
+            .run(&tenant_database)
+            .await?;
+
+        tenant_store = Arc::new(tenant_database);
+    }
+
+    let mut state = state::new_state(
+        config,
+        Arc::new(store.clone()),
+        Arc::new(store.clone()),
+        tenant_store,
+    )?;
 
     // Fetch public key so it's cached for the first 6hrs
     let public_key = state.relay_client.public_key().await;
@@ -169,9 +205,30 @@ async fn main() -> error::Result<()> {
 
     let app = Router::with_state(state_arc)
         .route("/health", get(handlers::health::handler))
-        .route("/clients", post(handlers::register_client::handler))
-        .route("/clients/:id", delete(handlers::delete_client::handler))
-        .route("/clients/:id", post(handlers::push_message::handler))
+        .route(
+            "/clients",
+            post(handlers::single_tenant_wrappers::register_handler),
+        )
+        .route(
+            "/clients/:id",
+            delete(handlers::single_tenant_wrappers::delete_handler),
+        )
+        .route(
+            "/clients/:id",
+            post(handlers::single_tenant_wrappers::push_handler),
+        )
+        .route(
+            "/:tenant_id/clients",
+            post(handlers::register_client::handler),
+        )
+        .route(
+            "/:tenant_id/clients/:id",
+            delete(handlers::delete_client::handler),
+        )
+        .route(
+            "/:tenant_id/clients/:id",
+            post(handlers::push_message::handler),
+        )
         .layer(global_middleware);
 
     let header = format!(
@@ -191,11 +248,7 @@ providers: [{}]
         build_rustc_version,
         "0.0.0.0",
         port.clone(),
-        supported_providers
-            .into_iter()
-            .map(Into::into)
-            .collect::<Vec<&str>>()
-            .join(", ")
+        supported_providers_string
     );
     println!("{}", header);
 

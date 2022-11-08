@@ -21,7 +21,7 @@ where
     // these bounds are required by `async_trait`
     B: Send + 'static + body::HttpBody + From<hyper::body::Bytes>,
     B::Data: Send,
-    S: Send + Sync + State<sqlx::PgPool, sqlx::PgPool>,
+    S: Send + Sync + State,
     T: FromRequest<S, B>,
 {
     type Rejection = crate::error::Error;

@@ -7,6 +7,7 @@ pub mod delete_client;
 pub mod health;
 pub mod push_message;
 pub mod register_client;
+pub mod single_tenant_wrappers;
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -15,6 +16,7 @@ pub enum ErrorLocation {
     // Note (Harry): Spec supports this but it currently isn't used
     //Query,
     Header,
+    Path,
 }
 
 #[derive(serde::Serialize)]

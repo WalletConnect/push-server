@@ -1,3 +1,4 @@
+use crate::error::Error::InvalidConfiguration;
 use crate::{error, providers::ProviderKind};
 use serde::Deserialize;
 use std::str::FromStr;
@@ -8,7 +9,12 @@ pub struct Config {
     pub port: u16,
     #[serde(default = "default_log_level")]
     pub log_level: String,
+    #[serde(default = "default_relay_url")]
+    pub relay_url: String,
     pub database_url: String,
+    pub tenant_database_url: Option<String>,
+    #[serde(default = "default_tenant_id")]
+    pub default_tenant_id: String,
 
     // TELEMETRY
     pub telemetry_enabled: Option<bool>,
@@ -27,11 +33,31 @@ pub struct Config {
 }
 
 impl Config {
+    /// Run validations against config and throw error
+    pub fn is_valid(&self) -> error::Result<()> {
+        if self.tenant_database_url.is_none() && self.single_tenant_supported_providers().is_empty()
+        {
+            return Err(InvalidConfiguration(
+                "no tenant database url provided and no provider keys found".to_string(),
+            ));
+        }
+
+        if !self.single_tenant_supported_providers().is_empty()
+            && self.tenant_database_url.is_some()
+        {
+            return Err(InvalidConfiguration(
+                "tenant database and providers keys found in config".to_string(),
+            ));
+        }
+
+        Ok(())
+    }
+
     pub fn log_level(&self) -> tracing::Level {
         tracing::Level::from_str(self.log_level.as_str()).expect("Invalid log level")
     }
 
-    pub fn supported_providers(&self) -> Vec<ProviderKind> {
+    pub fn single_tenant_supported_providers(&self) -> Vec<ProviderKind> {
         let mut supported = vec![];
 
         if self.apns_certificate.is_some() && self.apns_certificate_password.is_some() {
@@ -44,7 +70,9 @@ impl Config {
 
         // Only available in debug/testing
         #[cfg(any(debug_assertions, test))]
-        supported.push(ProviderKind::Noop);
+        if self.tenant_database_url.is_none() {
+            supported.push(ProviderKind::Noop);
+        }
 
         supported
     }
@@ -60,6 +88,14 @@ fn default_log_level() -> String {
 
 fn default_apns_sandbox_mode() -> bool {
     false
+}
+
+fn default_relay_url() -> String {
+    "https://relay.walletconnect.com".to_string()
+}
+
+fn default_tenant_id() -> String {
+    "0000-0000-0000-0000".to_string()
 }
 
 pub fn get_config() -> error::Result<Config> {

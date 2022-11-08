@@ -11,7 +11,13 @@ variable "image" {
 }
 
 variable "database_url" {
-  type = string
+  type      = string
+  sensitive = true
+}
+
+variable "tenant_database_url" {
+  type      = string
+  sensitive = true
 }
 
 variable "prometheus_endpoint" {
@@ -52,23 +58,4 @@ variable "cpu" {
 
 variable "memory" {
   type = number
-}
-
-variable "fcm_api_key" {
-  type      = string
-  sensitive = true
-}
-
-variable "apns_topic" {
-  type = string
-}
-
-variable "apns_certificate" {
-  type      = string
-  sensitive = true
-}
-
-variable "apns_certificate_password" {
-  type      = string
-  sensitive = true
 }

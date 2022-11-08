@@ -1,13 +1,12 @@
 use crate::error::Result;
-use crate::state::AppState;
-use crate::stores::client::ClientStore;
-use crate::stores::notification::NotificationStore;
+use crate::middleware::validate_signature::RequireValidSignature;
+use crate::state::{AppState, State};
 use crate::{handlers::Response, providers::PushProvider};
-use crate::{middleware::validate_signature::RequireValidSignature, providers::get_provider};
-use axum::extract::{Json, Path, State};
+use axum::extract::{Json, Path, State as StateExtractor};
 use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use crate::error::Error::IncludedTenantIdWhenNotNeeded;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct MessagePayload {
@@ -22,15 +21,19 @@ pub struct PushMessageBody {
 }
 
 pub async fn handler(
-    Path(id): Path<String>,
-    State(state): State<Arc<AppState<impl ClientStore, impl NotificationStore>>>,
+    Path((tenant_id, id)): Path<(String, String)>,
+    StateExtractor(state): StateExtractor<Arc<AppState>>,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<Response> {
-    let client = state.client_store.get_client(&id).await?;
+    if state.config.default_tenant_id != tenant_id && !state.is_multitenant() {
+        return Err(IncludedTenantIdWhenNotNeeded)
+    }
+
+    let client = state.client_store.get_client(&tenant_id, &id).await?;
 
     let notification = state
         .notification_store
-        .create_or_update_notification(&body.id, &id, &body.payload)
+        .create_or_update_notification(&body.id, &tenant_id, &id, &body.payload)
         .await?;
 
     // TODO make better by only ignoring if previously executed successfully
@@ -39,7 +42,9 @@ pub async fn handler(
         return Ok(Response::new_success(StatusCode::ACCEPTED));
     }
 
-    let mut provider = get_provider(client.push_type, &state)?;
+    let tenant = state.tenant_store.get_tenant(&tenant_id).await?;
+
+    let mut provider = tenant.provider(&client.push_type)?;
 
     provider
         .send_notification(client.token, body.payload)

@@ -76,6 +76,18 @@ pub enum Error {
 
     #[error("neither signature or timestamp header cannot not found")]
     MissingAllSignatureHeader,
+
+    #[error("single-tenant request made while echo server in multi-tenant mode")]
+    MissingTenantId,
+
+    #[error("multi-tenant request made while echo server in single-tenant mode")]
+    IncludedTenantIdWhenNotNeeded,
+
+    #[error("invalid configuration: {0}")]
+    InvalidConfiguration(String),
+
+    #[error("invalid tenant id: {0}")]
+    InvalidTenantId(String),
 }
 
 impl IntoResponse for Error {
@@ -213,11 +225,39 @@ impl IntoResponse for Error {
                 }
             ], vec![
                 ErrorField {
-                                    field: TIMESTAMP_HEADER_NAME.to_string(),
-                                    description: "Missing timestamp".to_string(),
-                                    location: ErrorLocation::Header
-                                }
+                    field: TIMESTAMP_HEADER_NAME.to_string(),
+                    description: "Missing timestamp".to_string(),
+                    location: ErrorLocation::Header
+                }
             ]),
+            Error::InvalidTenantId(id) => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
+                ResponseError {
+                    name: "tenant".to_string(),
+                    message: format!("The provided Tenant ID, {}, is invalid. Please ensure it's valid and the url is in the format /:tenant_id/...path", &id),
+                }
+            ], vec![
+                ErrorField {
+                    field: "tenant_id".to_string(),
+                    description: format!("Invalid Tenant ID, {}", &id),
+                    location: ErrorLocation::Path
+                }
+            ]),
+            Error::MissingTenantId => crate::handlers::Response::new_failure(
+                StatusCode::BAD_REQUEST,
+                vec![ResponseError {
+                    name: "tenancy-mode".to_string(),
+                    message: "single-tenant request made while echo server in multi-tenant mode".to_string(),
+                }],
+                vec![],
+            ),
+            Error::IncludedTenantIdWhenNotNeeded => crate::handlers::Response::new_failure(
+                StatusCode::BAD_REQUEST,
+                vec![ResponseError {
+                    name: "tenancy-mode".to_string(),
+                    message: "multi-tenant request made while echo server in single-tenant mode".to_string(),
+                }],
+                vec![],
+            ),
             _ => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
                 ResponseError {
                     name: "unknown_error".to_string(),
