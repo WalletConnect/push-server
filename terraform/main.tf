@@ -112,7 +112,7 @@ module "ecs" {
   app_name            = "${terraform.workspace}-${local.app_name}"
   prometheus_endpoint = aws_prometheus_workspace.prometheus.prometheus_endpoint
   database_url        = "postgres://${module.database_cluster.cluster_master_username}:${module.database_cluster.cluster_master_password}@${module.database_cluster.cluster_endpoint}:${module.database_cluster.cluster_port}/postgres"
-  tenant_database_url = "postgres://${module.tenant_database_cluster.cluster_master_username}:${module.tenant_database_cluster.cluster_master_password}@${module.tenant_database_cluster.cluster_endpoint}:${module.tenant_database_cluster.cluster_port}/postgres"
+  tenant_database_url = "postgres://${module.tenant_database_cluster.cluster_master_username}:${module.tenant_database_cluster.cluster_master_password}@${module.tenant_database_cluster.cluster_reader_endpoint}:${module.tenant_database_cluster.cluster_port}/postgres"
   image               = "${data.aws_ecr_repository.repository.repository_url}:${var.image_version}"
   acm_certificate_arn = module.dns.certificate_arn
   cpu                 = 512
