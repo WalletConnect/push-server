@@ -1,6 +1,8 @@
 name: cd
 on:
   push:
+    branches:
+      - "main"
     paths:
       - "terraform/**"
   release:
