@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.6.0 - 2022-11-08
+#### Features
+- Initial Multi-Tenant Work (#40) - (cb66818) - Harry Bairstow
+- - -
+
 ## v0.5.3 - 2022-10-26
 #### Bug Fixes
 - Remove reference to `topic` with `clone()` - (775f09d) - Harry Bairstow
