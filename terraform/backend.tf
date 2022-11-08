@@ -21,6 +21,10 @@ terraform {
       source  = "hashicorp/random"
       version = "3.4.3"
     }
+    github = {
+      source = "integrations/github"
+      version = "5.7.0"
+    }
   }
 
   backend "s3" {

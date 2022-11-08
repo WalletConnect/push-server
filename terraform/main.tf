@@ -1,11 +1,19 @@
 locals {
   app_name = "push"
   fqdn     = terraform.workspace == "prod" ? var.public_url : "${terraform.workspace}.${var.public_url}"
+  latest_release_name = github_release.latest_release.name
+  version = coalesce(var.image_version, substr(local.latest_release_name, 1, length(local.latest_release_name)))
 }
 
 data "assert_test" "workspace" {
   test  = terraform.workspace != "default"
   throw = "default workspace is not valid in this project"
+}
+
+data "github_release" "latest_release" {
+  repository  = "echo-server"
+  owner       = "walletconnect"
+  retrieve_by = "latest"
 }
 
 module "vpc" {
@@ -113,7 +121,7 @@ module "ecs" {
   prometheus_endpoint = aws_prometheus_workspace.prometheus.prometheus_endpoint
   database_url        = "postgres://${module.database_cluster.cluster_master_username}:${module.database_cluster.cluster_master_password}@${module.database_cluster.cluster_endpoint}:${module.database_cluster.cluster_port}/postgres"
   tenant_database_url = "postgres://${module.tenant_database_cluster.cluster_master_username}:${module.tenant_database_cluster.cluster_master_password}@${module.tenant_database_cluster.cluster_reader_endpoint}:${module.tenant_database_cluster.cluster_port}/postgres"
-  image               = "${data.aws_ecr_repository.repository.repository_url}:${var.image_version}"
+  image               = "${var.image_url}:${local.version}"
   acm_certificate_arn = module.dns.certificate_arn
   cpu                 = 512
   fqdn                = local.fqdn
@@ -124,10 +132,6 @@ module "ecs" {
   route53_zone_id     = module.dns.zone_id
   vpc_cidr            = module.vpc.vpc_cidr_block
   vpc_id              = module.vpc.vpc_id
-}
-
-data "aws_ecr_repository" "repository" {
-  name = "echo-server"
 }
 
 resource "aws_prometheus_workspace" "prometheus" {

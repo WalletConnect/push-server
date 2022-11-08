@@ -24,3 +24,5 @@ provider "onepassword" {
 }
 
 provider "random" {}
+
+provider "github" {}

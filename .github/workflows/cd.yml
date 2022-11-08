@@ -20,13 +20,6 @@ jobs:
     outputs:
       version: ${{ steps.clean_version.outputs.version }}
     steps:
-      - id: latest_release
-        uses: pozetroninc/github-action-get-latest-release@master
-        if: github.event_name != 'release'
-        with:
-          repository: ${{ github.repository }}
-          excludes: draft
-
       - id: get
         uses: actions/github-script@v6
         env:
@@ -37,7 +30,7 @@ jobs:
             if (context.eventName == "release") {
               return context.payload.release.tag_name
             } else {
-              return process.env.LATEST_TAG
+              return ""
             }
 
       - id: clean_version
