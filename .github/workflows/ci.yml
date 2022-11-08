@@ -2,17 +2,20 @@ name: ci
 
 on:
   pull_request:
-    paths:
-      - './src/**'
-      - './tests/**'
-      - './cargo.toml'
+    paths-ignore:
+      - "spec/**"
+      - "terraform/**"
+      - "*.md"
+      - "LICENSE"
 
   push:
-    branches: ['main']
+    branches:
+      - "main"
     paths:
-      - './src/**'
-      - './tests/**'
-      - './cargo.toml'
+      - "spec/**"
+      - "terraform/**"
+      - "*.md"
+      - "LICENSE"
 
 concurrency:
   # Support push/pr as event types with different behaviors each:
