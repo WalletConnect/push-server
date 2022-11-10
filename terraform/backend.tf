@@ -13,10 +13,6 @@ terraform {
       source  = "grafana/grafana"
       version = "~> 1.28"
     }
-    onepassword = {
-      source  = "1password/onepassword"
-      version = "~> 1.1"
-    }
     random = {
       source  = "hashicorp/random"
       version = "3.4.3"
