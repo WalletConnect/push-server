@@ -1,8 +1,8 @@
 locals {
-  app_name = "push"
-  fqdn     = terraform.workspace == "prod" ? var.public_url : "${terraform.workspace}.${var.public_url}"
+  app_name            = "push"
+  fqdn                = terraform.workspace == "prod" ? var.public_url : "${terraform.workspace}.${var.public_url}"
   latest_release_name = data.github_release.latest_release.name
-  version = coalesce(var.image_version, substr(local.latest_release_name, 1, length(local.latest_release_name)))
+  version             = coalesce(var.image_version, substr(local.latest_release_name, 1, length(local.latest_release_name)))
 }
 
 data "assert_test" "workspace" {

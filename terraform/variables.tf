@@ -18,7 +18,7 @@ variable "grafana_endpoint" {
 }
 
 variable "image_url" {
-  type = string
+  type    = string
   default = "ghcr.io/walletconnect/echo-server"
 }
 
