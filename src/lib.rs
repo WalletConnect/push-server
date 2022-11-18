@@ -30,10 +30,18 @@ pub mod relay;
 pub mod state;
 pub mod stores;
 
-pub async fn bootstap(
-    mut state: AppState,
-    supported_providers_string: String,
-) -> error::Result<()> {
+pub async fn bootstap(mut state: AppState) -> error::Result<()> {
+    let mut supported_providers_string = "multi-tenant".to_string();
+    if state.config.tenant_database_url.is_none() {
+        supported_providers_string = state
+            .config
+            .single_tenant_supported_providers()
+            .into_iter()
+            .map(Into::into)
+            .collect::<Vec<&str>>()
+            .join(", ");
+    }
+
     // Fetch public key so it's cached for the first 6hrs
     let public_key = state.relay_client.public_key().await;
     if public_key.is_err() {
