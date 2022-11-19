@@ -11,18 +11,21 @@ use opentelemetry::sdk::{
 use opentelemetry::util::tokio_interval_stream;
 use opentelemetry::KeyValue;
 use opentelemetry_otlp::{Protocol, WithExportConfig};
+use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
+use sqlx::ConnectOptions;
 use std::net::SocketAddr;
+use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
 use tower::ServiceBuilder;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer};
-use tracing::{warn, Level};
-use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
-use sqlx::ConnectOptions;
-use std::str::FromStr;
 use tracing::log::LevelFilter;
+use tracing::{warn, Level};
 
-use crate::{state::{Metrics, TenantStoreArc}, stores::tenant::DefaultTenantStore};
+use crate::{
+    state::{Metrics, TenantStoreArc},
+    stores::tenant::DefaultTenantStore,
+};
 use tracing_subscriber::fmt::format::FmtSpan;
 
 pub mod env;
