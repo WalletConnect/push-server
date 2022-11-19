@@ -1,3 +1,4 @@
+use crate::error::Error::IncludedTenantIdWhenNotNeeded;
 use crate::error::Result;
 use crate::middleware::validate_signature::RequireValidSignature;
 use crate::state::{AppState, State};
@@ -6,7 +7,6 @@ use axum::extract::{Json, Path, State as StateExtractor};
 use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use crate::error::Error::IncludedTenantIdWhenNotNeeded;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct MessagePayload {
@@ -26,7 +26,7 @@ pub async fn handler(
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<Response> {
     if state.config.default_tenant_id != tenant_id && !state.is_multitenant() {
-        return Err(IncludedTenantIdWhenNotNeeded)
+        return Err(IncludedTenantIdWhenNotNeeded);
     }
 
     let client = state.client_store.get_client(&tenant_id, &id).await?;
