@@ -2,6 +2,7 @@ use axum::{
     routing::{delete, get, post},
     Router,
 };
+use env::Config;
 use opentelemetry::sdk::metrics::selectors;
 use opentelemetry::sdk::{
     trace::{self, IdGenerator, Sampler},
@@ -16,7 +17,6 @@ use std::time::Duration;
 use tower::ServiceBuilder;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer};
 use tracing::{warn, Level};
-use dotenv::dotenv;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 use sqlx::ConnectOptions;
 use std::str::FromStr;
@@ -34,11 +34,7 @@ pub mod relay;
 pub mod state;
 pub mod stores;
 
-pub async fn bootstap() -> error::Result<()> {
-    dotenv().ok();
-    let config = env::get_config()
-        .expect("Failed to load config, please ensure all env vars are defined.");
-
+pub async fn bootstap(config: Config) -> error::Result<()> {
     // Check config is valid and then throw the error if its not
     config.is_valid()?;
 
