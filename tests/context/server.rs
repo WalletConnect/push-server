@@ -50,9 +50,7 @@ impl EchoServer {
 
         let err_msg = format!("failed to start server at {}", public_addr);
 
-        wait_for_server_to_start(public_port)
-            .await
-            .expect(&err_msg);
+        wait_for_server_to_start(public_port).await.expect(&err_msg);
 
         Self {
             public_addr,

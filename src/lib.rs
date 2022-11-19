@@ -40,7 +40,6 @@ pub mod stores;
 
 pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> error::Result<()> {
     // Check config is valid and then throw the error if its not
-    info!("Starting server");
     config.is_valid()?;
 
     let pg_options = PgConnectOptions::from_str(&config.database_url)?
