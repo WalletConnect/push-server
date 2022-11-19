@@ -17,9 +17,10 @@ use std::net::SocketAddr;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
+use tokio::{select, sync::broadcast};
 use tower::ServiceBuilder;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer};
-use tracing::log::LevelFilter;
+use tracing::{info, log::LevelFilter};
 use tracing::{warn, Level};
 
 use crate::{
@@ -37,11 +38,13 @@ pub mod relay;
 pub mod state;
 pub mod stores;
 
-pub async fn bootstap(config: Config) -> error::Result<()> {
+pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> error::Result<()> {
     // Check config is valid and then throw the error if its not
+    info!("Starting server");
     config.is_valid()?;
 
     let pg_options = PgConnectOptions::from_str(&config.database_url)?
+        .username("postgres".into())
         .log_statements(LevelFilter::Debug)
         .log_slow_statements(LevelFilter::Info, Duration::from_millis(250))
         .clone();
@@ -252,10 +255,11 @@ providers: [{}]
     println!("{}", header);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+
+    select! {
+        _ = axum::Server::bind(&addr).serve(app.into_make_service()) => info!("Server terminating"),
+        _ = shutdown.recv() => info!("Shutdown signal received, killing servers"),
+    }
 
     Ok(())
 }

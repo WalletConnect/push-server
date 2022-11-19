@@ -52,6 +52,9 @@ chrono = "0.4"
 
 [dev-dependencies]
 serial_test = "0.9"
+test-context = "0.1"
+anyhow = "1"
+futures-util = "0.3"
 
 [build-dependencies]
 build-info-build = "0.0"
