@@ -12,5 +12,5 @@ pub enum TestError {
     Elapsed(#[from] tokio::time::error::Elapsed),
 
     #[error(transparent)]
-    EchoServer(#[from] echo_server::error::Error)
+    EchoServer(#[from] echo_server::error::Error),
 }
