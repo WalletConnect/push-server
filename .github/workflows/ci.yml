@@ -30,6 +30,11 @@ jobs:
     name: "[${{ matrix.os }}/rust-${{matrix.rust}}] ${{ matrix.cargo.name }}"
     runs-on:
       group: ubuntu-runners
+    services:
+      postgres:
+        image: postgres
+        ports:
+          - 5432:5432
     strategy:
       fail-fast: false
       matrix:
@@ -105,11 +110,6 @@ jobs:
         run: |
           sccache --stop-server || true
           sccache --start-server
-
-      - name: "Run postgres"
-        if: ${{ matrix.cargo.cmd == 'test' }}
-        run: |
-          docker run -p 5432:5432 -e POSTGRES_HOST_AUTH_METHOD=trust -d postgres
 
       - name: "Task ${{ matrix.cargo.name }}"
         uses: actions-rs/cargo@v1
