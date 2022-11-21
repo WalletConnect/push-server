@@ -17,8 +17,7 @@ pub struct EchoServer {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
-}
+pub enum Error {}
 
 impl EchoServer {
     pub async fn start() -> Self {
@@ -101,7 +100,11 @@ async fn wait_for_server_to_shutdown(port: u16) -> error::Result<()> {
     };
 
     tokio::time::timeout(Duration::from_secs(3), poll_fut)
-        .map_err(|_| echo_server::error::Error::ServerShutdownTimeout("Server didn't shut down within timeout".into()))
+        .map_err(|_| {
+            echo_server::error::Error::ServerShutdownTimeout(
+                "Server didn't shut down within timeout".into(),
+            )
+        })
         .await
 }
 
@@ -112,8 +115,11 @@ async fn wait_for_server_to_start(port: u16) -> error::Result<()> {
         }
     };
 
-
     tokio::time::timeout(Duration::from_secs(5), poll_fut)
-        .map_err(|_| echo_server::error::Error::ServerBootTimeout("Server didn't start within timeout".into()))
+        .map_err(|_| {
+            echo_server::error::Error::ServerBootTimeout(
+                "Server didn't start within timeout".into(),
+            )
+        })
         .await
 }
