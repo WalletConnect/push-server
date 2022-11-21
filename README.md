@@ -34,6 +34,17 @@ Echo Server supports multi-tenancy. However, the management of tenants is delega
 To enable multi-tenancy you need to specify a `TENANT_DATABASE_URL` which will then disable the single-tenant
 endpoints in favour of endpoints with a `/:tenant_id` prefix e.g. `/:tenant_id/client/:id`
 
+## Running locally
+
+```
+# Run a postgres db for functional tests
+# This will be removed in future revisions
+# such that you can run functional tests without
+# any prerequisites
+docker run -p 5432:5432 --name some-postgres2 -e POSTGRES_HOST_AUTH_METHOD=trust -d postgres
+cargo test
+```
+
 ## Contact
 If you wish to integrate Push functionality into your Wallet (only available on v2), please contact us.
 
