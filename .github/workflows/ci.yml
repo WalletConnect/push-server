@@ -118,6 +118,8 @@ jobs:
 
       - name: "Task ${{ matrix.cargo.name }}"
         uses: actions-rs/cargo@v1
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
         with:
           command: ${{ matrix.cargo.cmd }}
           args: ${{ matrix.cargo.args }}
