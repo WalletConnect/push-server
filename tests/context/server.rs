@@ -1,7 +1,6 @@
-use echo_server::{env::Config, error};
+use echo_server::env::Config;
 
 use {
-    futures_util::TryFutureExt,
     std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4, TcpListener},
     tokio::{
         runtime::Handle,
@@ -99,7 +98,7 @@ async fn wait_for_server_to_shutdown(port: u16) -> crate::ErrorResult<()> {
         }
     };
 
-    Ok(tokio::time::timeout(Duration::from_secs(3), poll_fut)?.await?)
+    Ok(tokio::time::timeout(Duration::from_secs(3), poll_fut).await?)
 }
 
 async fn wait_for_server_to_start(port: u16) -> crate::ErrorResult<()> {
