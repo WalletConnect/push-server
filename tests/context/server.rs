@@ -33,7 +33,7 @@ impl EchoServer {
                     port: public_port,
                     log_level: "INFO".into(),
                     relay_url: "https://relay.walletconnect.com".into(),
-                    database_url: "postgres://postgres@localhost:5432/postgres".into(),
+                    database_url: "postgres://postgres:postgres@localhost:5432/postgres".into(),
                     tenant_database_url: None,
                     default_tenant_id: "https://relay.walletconnect.com".into(),
                     telemetry_enabled: None,
