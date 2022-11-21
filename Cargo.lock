@@ -552,7 +552,6 @@ name = "echo-server"
 version = "0.6.0"
 dependencies = [
  "a2",
- "anyhow",
  "async-trait",
  "axum",
  "base64",

@@ -43,7 +43,6 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
     config.is_valid()?;
 
     let pg_options = PgConnectOptions::from_str(&config.database_url)?
-        .username("postgres".into())
         .log_statements(LevelFilter::Debug)
         .log_slow_statements(LevelFilter::Info, Duration::from_millis(250))
         .clone();

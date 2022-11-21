@@ -1,7 +1,6 @@
-use echo_server::env::Config;
+use echo_server::{env::Config, error};
 
 use {
-    anyhow::anyhow,
     futures_util::TryFutureExt,
     std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4, TcpListener},
     tokio::{
@@ -15,6 +14,10 @@ pub struct EchoServer {
     pub public_addr: SocketAddr,
     shutdown_signal: tokio::sync::broadcast::Sender<()>,
     is_shutdown: bool,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
 }
 
 impl EchoServer {
@@ -31,7 +34,7 @@ impl EchoServer {
                     port: public_port,
                     log_level: "INFO".into(),
                     relay_url: "https://relay.walletconnect.com".into(),
-                    database_url: "postgres://localhost:5432/postgres".into(),
+                    database_url: "postgres://postgres@localhost:5432/postgres".into(),
                     tenant_database_url: None,
                     default_tenant_id: "https://relay.walletconnect.com".into(),
                     telemetry_enabled: None,
@@ -90,7 +93,7 @@ fn is_port_available(port: u16) -> bool {
     TcpListener::bind(SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, port)).is_ok()
 }
 
-async fn wait_for_server_to_shutdown(port: u16) -> anyhow::Result<()> {
+async fn wait_for_server_to_shutdown(port: u16) -> error::Result<()> {
     let poll_fut = async {
         while !is_port_available(port) {
             sleep(Duration::from_millis(10)).await;
@@ -98,18 +101,19 @@ async fn wait_for_server_to_shutdown(port: u16) -> anyhow::Result<()> {
     };
 
     tokio::time::timeout(Duration::from_secs(3), poll_fut)
-        .map_err(|_| anyhow!("Server didn't shut down within timeout"))
+        .map_err(|_| echo_server::error::Error::ServerShutdownTimeout("Server didn't shut down within timeout".into()))
         .await
 }
 
-async fn wait_for_server_to_start(port: u16) -> anyhow::Result<()> {
+async fn wait_for_server_to_start(port: u16) -> error::Result<()> {
     let poll_fut = async {
         while is_port_available(port) {
             sleep(Duration::from_millis(10)).await;
         }
     };
 
+
     tokio::time::timeout(Duration::from_secs(5), poll_fut)
-        .map_err(|_| anyhow!("Server didn't start within timeout"))
+        .map_err(|_| echo_server::error::Error::ServerBootTimeout("Server didn't start within timeout".into()))
         .await
 }

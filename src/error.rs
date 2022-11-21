@@ -88,6 +88,12 @@ pub enum Error {
 
     #[error("invalid tenant id: {0}")]
     InvalidTenantId(String),
+
+    #[error("server didn't boot within timeout")]
+    ServerBootTimeout(String),
+
+    #[error("server didn't shut down within timeout")]
+    ServerShutdownTimeout(String),
 }
 
 impl IntoResponse for Error {
