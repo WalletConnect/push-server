@@ -46,7 +46,8 @@ jobs:
           echo "version=$version" >> $GITHUB_OUTPUT
 
   build-container:
-    runs-on: ubuntu-latest
+    runs-on:
+      group: ubuntu-runners
     needs:
       - get-version
     steps:
