@@ -28,7 +28,8 @@ concurrency:
 jobs:
   tasks:
     name: "[${{ matrix.os }}/rust-${{matrix.rust}}] ${{ matrix.cargo.name }}"
-    runs-on: "${{ matrix.os }}"
+    runs-on:
+      group: ubuntu-runners
     strategy:
       fail-fast: false
       matrix:
