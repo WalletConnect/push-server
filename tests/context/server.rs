@@ -50,9 +50,9 @@ impl EchoServer {
             .unwrap();
         });
 
-        let err_msg = format!("failed to start server at {}", public_addr);
-
-        wait_for_server_to_start(public_port).await.expect(&err_msg);
+        if let Err(e) = wait_for_server_to_start(public_port).await {
+            panic!("Failed to start server with error: {:?}", e)
+        }
 
         Self {
             public_addr,
@@ -92,34 +92,24 @@ fn is_port_available(port: u16) -> bool {
     TcpListener::bind(SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, port)).is_ok()
 }
 
-async fn wait_for_server_to_shutdown(port: u16) -> error::Result<()> {
+async fn wait_for_server_to_shutdown(port: u16) -> crate::ErrorResult<()> {
     let poll_fut = async {
         while !is_port_available(port) {
             sleep(Duration::from_millis(10)).await;
         }
     };
 
-    tokio::time::timeout(Duration::from_secs(3), poll_fut)
-        .map_err(|_| {
-            echo_server::error::Error::ServerShutdownTimeout(
-                "Server didn't shut down within timeout".into(),
-            )
-        })
-        .await
+    Ok(tokio::time::timeout(Duration::from_secs(3), poll_fut)?
+        .await?)
 }
 
-async fn wait_for_server_to_start(port: u16) -> error::Result<()> {
+async fn wait_for_server_to_start(port: u16) -> crate::ErrorResult<()> {
     let poll_fut = async {
         while is_port_available(port) {
             sleep(Duration::from_millis(10)).await;
         }
     };
 
-    tokio::time::timeout(Duration::from_secs(5), poll_fut)
-        .map_err(|_| {
-            echo_server::error::Error::ServerBootTimeout(
-                "Server didn't start within timeout".into(),
-            )
-        })
-        .await
+    Ok(tokio::time::timeout(Duration::from_secs(5), poll_fut)
+        .await?)
 }
