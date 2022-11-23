@@ -197,14 +197,13 @@ dependencies = [
 
 [[package]]
 name = "build-info"
-version = "0.0.27"
+version = "0.0.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ffbdd72be39a511fbc2b58408f01716edf1183296c0b3b5ce61df0c041b4120c"
+checksum = "b3bf06a3b4e5e41d1b016947db0c6511dbff1c223781eba90ad641389a861756"
 dependencies = [
- "build-info-common",
+ "build-info-common 0.0.28",
  "build-info-proc",
- "lazy_static",
- "proc-macro-hack",
+ "once_cell",
 ]
 
 [[package]]
@@ -216,7 +215,7 @@ dependencies = [
  "anyhow",
  "base64",
  "bincode",
- "build-info-common",
+ "build-info-common 0.0.27",
  "cargo_metadata",
  "chrono",
  "git2",
@@ -241,20 +240,31 @@ dependencies = [
 ]
 
 [[package]]
-name = "build-info-proc"
-version = "0.0.27"
+name = "build-info-common"
+version = "0.0.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "726d98512f105b7fe09d33fa3f6c41b78afa040e351c24308d0c8963f3e3bf9f"
+checksum = "7cad3b1f4d64cc596ffcb198d651ccdab0e182b55af86a6849cb0ab69f72e681"
+dependencies = [
+ "chrono",
+ "derive_more",
+ "semver",
+ "serde",
+]
+
+[[package]]
+name = "build-info-proc"
+version = "0.0.28"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "33ad667c0029e6482c7f2a74e456392b9a442ea8d85b16a945d24569bdc0e2cd"
 dependencies = [
  "anyhow",
  "base64",
  "bincode",
- "build-info-common",
+ "build-info-common 0.0.28",
  "chrono",
  "num-bigint",
  "num-traits",
  "proc-macro-error",
- "proc-macro-hack",
  "proc-macro2",
  "quote",
  "serde_json",
@@ -1576,12 +1586,6 @@ dependencies = [
  "quote",
  "version_check",
 ]
-
-[[package]]
-name = "proc-macro-hack"
-version = "0.5.19"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dbf0c48bc1d91375ae5c3cd81e3722dff1abcf81a30960240640d223f59fe0e5"
 
 [[package]]
 name = "proc-macro2"
