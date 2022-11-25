@@ -203,7 +203,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             ),
     );
 
-    let app = Router::with_state(state_arc)
+    let app = Router::new()
         .route("/health", get(handlers::health::handler))
         .route(
             "/clients",
@@ -229,7 +229,8 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             "/:tenant_id/clients/:id",
             post(handlers::push_message::handler),
         )
-        .layer(global_middleware);
+        .layer(global_middleware)
+        .with_state(state_arc);
 
     let header = format!(
         "

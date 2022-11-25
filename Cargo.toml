@@ -9,7 +9,7 @@ build = "build.rs"
 
 [dependencies]
 tokio = { version = "1", features = ["full"] }
-axum = { version = "0.6.0-rc.2", features = ["json"] }
+axum = { version = "0.6", features = ["json"] }
 tower = "0.4"
 tower-http = { version = "0.3", features = ["trace"] }
 hyper = "0.14"
