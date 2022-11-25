@@ -1,16 +1,23 @@
-use crate::env::Config;
-use crate::error::Error::{InvalidTenantId, ProviderNotAvailable};
-use crate::error::Result;
-use crate::providers::apns::ApnsProvider;
-use crate::providers::fcm::FcmProvider;
-use crate::providers::noop::NoopProvider;
-use crate::providers::Provider::{Apns, Fcm, Noop};
-use crate::providers::{Provider, ProviderKind};
-use async_trait::async_trait;
-use chrono::{DateTime, Utc};
-use sqlx::PgPool;
-use std::io::BufReader;
-use std::sync::Arc;
+use {
+    crate::{
+        env::Config,
+        error::{
+            Error::{InvalidTenantId, ProviderNotAvailable},
+            Result,
+        },
+        providers::{
+            apns::ApnsProvider,
+            fcm::FcmProvider,
+            noop::NoopProvider,
+            Provider::{self, Apns, Fcm, Noop},
+            ProviderKind,
+        },
+    },
+    async_trait::async_trait,
+    chrono::{DateTime, Utc},
+    sqlx::PgPool,
+    std::{io::BufReader, sync::Arc},
+};
 
 #[derive(sqlx::FromRow, Debug, Eq, PartialEq, Clone)]
 pub struct Tenant {

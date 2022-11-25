@@ -1,14 +1,22 @@
-use crate::error::Error::{
-    ClientAlreadyRegistered, EmptyField, IncludedTenantIdWhenNotNeeded, ProviderNotAvailable,
+use {
+    crate::{
+        error::{
+            Error::{
+                ClientAlreadyRegistered,
+                EmptyField,
+                IncludedTenantIdWhenNotNeeded,
+                ProviderNotAvailable,
+            },
+            Result,
+        },
+        handlers::Response,
+        state::{AppState, State},
+        stores::{client::Client, StoreError},
+    },
+    axum::extract::{Json, Path, State as StateExtractor},
+    serde::Deserialize,
+    std::sync::Arc,
 };
-use crate::error::Result;
-use crate::handlers::Response;
-use crate::state::{AppState, State};
-use crate::stores::client::Client;
-use crate::stores::StoreError;
-use axum::extract::{Json, Path, State as StateExtractor};
-use serde::Deserialize;
-use std::sync::Arc;
 
 #[derive(Deserialize)]
 pub struct RegisterBody {
@@ -58,14 +66,10 @@ pub async fn handler(
 
     state
         .client_store
-        .create_client(
-            &tenant_id,
-            &body.client_id,
-            Client {
-                push_type,
-                token: body.token,
-            },
-        )
+        .create_client(&tenant_id, &body.client_id, Client {
+            push_type,
+            token: body.token,
+        })
         .await?;
 
     if let Some(metrics) = &state.metrics {

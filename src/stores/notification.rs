@@ -1,10 +1,12 @@
-use crate::handlers::push_message::MessagePayload;
-use crate::stores;
-use crate::stores::StoreError::NotFound;
-use async_trait::async_trait;
-use chrono::{DateTime, Utc};
-use sqlx::types::Json;
-use sqlx::Executor;
+use {
+    crate::{
+        handlers::push_message::MessagePayload,
+        stores::{self, StoreError::NotFound},
+    },
+    async_trait::async_trait,
+    chrono::{DateTime, Utc},
+    sqlx::{types::Json, Executor},
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, sqlx::FromRow)]
 pub struct Notification {

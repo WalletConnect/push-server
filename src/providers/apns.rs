@@ -1,9 +1,10 @@
-use crate::handlers::push_message::MessagePayload;
-use crate::providers::PushProvider;
-use a2::NotificationBuilder;
-use async_trait::async_trait;
-use std::io::Read;
-use tracing::span;
+use {
+    crate::{handlers::push_message::MessagePayload, providers::PushProvider},
+    a2::NotificationBuilder,
+    async_trait::async_trait,
+    std::io::Read,
+    tracing::span,
+};
 
 #[derive(Debug, Clone)]
 pub struct ApnsProvider {

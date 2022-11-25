@@ -1,7 +1,8 @@
-use crate::error::Error::InvalidConfiguration;
-use crate::{error, providers::ProviderKind};
-use serde::Deserialize;
-use std::str::FromStr;
+use {
+    crate::{error, error::Error::InvalidConfiguration, providers::ProviderKind},
+    serde::Deserialize,
+    std::str::FromStr,
+};
 
 #[derive(Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct Config {
@@ -21,7 +22,8 @@ pub struct Config {
     pub telemetry_grpc_url: Option<String>,
 
     // APNS
-    /// This defaults to false and should be changed if sandbox mode is required.
+    /// This defaults to false and should be changed if sandbox mode is
+    /// required.
     #[serde(default = "default_apns_sandbox_mode")]
     pub apns_sandbox: bool,
     pub apns_certificate: Option<String>,

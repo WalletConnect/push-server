@@ -1,10 +1,9 @@
-use crate::handlers::push_message::MessagePayload;
-#[cfg(any(debug_assertions, test))]
-use crate::providers::PushProvider;
 #[cfg(any(debug_assertions, test))]
 use async_trait::async_trait;
-use std::collections::HashMap;
-use tracing::span;
+use {crate::handlers::push_message::MessagePayload, std::collections::HashMap, tracing::span};
+
+#[cfg(any(debug_assertions, test))]
+use crate::providers::PushProvider;
 
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
 pub struct NoopProvider {

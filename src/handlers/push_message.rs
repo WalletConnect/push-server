@@ -1,12 +1,18 @@
-use crate::error::Error::IncludedTenantIdWhenNotNeeded;
-use crate::error::Result;
-use crate::middleware::validate_signature::RequireValidSignature;
-use crate::state::{AppState, State};
-use crate::{handlers::Response, providers::PushProvider};
-use axum::extract::{Json, Path, State as StateExtractor};
-use axum::http::StatusCode;
-use serde::{Deserialize, Serialize};
-use std::sync::Arc;
+use {
+    crate::{
+        error::{Error::IncludedTenantIdWhenNotNeeded, Result},
+        handlers::Response,
+        middleware::validate_signature::RequireValidSignature,
+        providers::PushProvider,
+        state::{AppState, State},
+    },
+    axum::{
+        extract::{Json, Path, State as StateExtractor},
+        http::StatusCode,
+    },
+    serde::{Deserialize, Serialize},
+    std::sync::Arc,
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct MessagePayload {

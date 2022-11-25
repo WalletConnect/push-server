@@ -1,6 +1,4 @@
-use self::server::EchoServer;
-
-use {async_trait::async_trait, test_context::AsyncTestContext};
+use {self::server::EchoServer, async_trait::async_trait, test_context::AsyncTestContext};
 
 mod server;
 

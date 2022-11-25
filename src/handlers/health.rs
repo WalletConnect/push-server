@@ -1,8 +1,8 @@
-use crate::state::AppState;
-use axum::extract::State;
-use axum::http::StatusCode;
-use axum::response::IntoResponse;
-use std::sync::Arc;
+use {
+    crate::state::AppState,
+    axum::{extract::State, http::StatusCode, response::IntoResponse},
+    std::sync::Arc,
+};
 
 pub async fn handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     (

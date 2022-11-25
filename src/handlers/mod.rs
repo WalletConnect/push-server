@@ -1,7 +1,8 @@
-use axum::response::IntoResponse;
-use axum::Json;
-use hyper::StatusCode;
-use serde_json::{json, Value};
+use {
+    axum::{response::IntoResponse, Json},
+    hyper::StatusCode,
+    serde_json::{json, Value},
+};
 
 pub mod delete_client;
 pub mod health;
@@ -14,7 +15,7 @@ pub mod single_tenant_wrappers;
 pub enum ErrorLocation {
     Body,
     // Note (Harry): Spec supports this but it currently isn't used
-    //Query,
+    // Query,
     Header,
     Path,
 }

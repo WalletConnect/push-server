@@ -1,33 +1,34 @@
-use axum::{
-    routing::{delete, get, post},
-    Router,
+use {
+    crate::{
+        state::{Metrics, TenantStoreArc},
+        stores::tenant::DefaultTenantStore,
+    },
+    axum::{
+        routing::{delete, get, post},
+        Router,
+    },
+    env::Config,
+    opentelemetry::{
+        sdk::{
+            metrics::selectors,
+            trace::{self, IdGenerator, Sampler},
+            Resource,
+        },
+        util::tokio_interval_stream,
+        KeyValue,
+    },
+    opentelemetry_otlp::{Protocol, WithExportConfig},
+    sqlx::{
+        postgres::{PgConnectOptions, PgPoolOptions},
+        ConnectOptions,
+    },
+    std::{net::SocketAddr, str::FromStr, sync::Arc, time::Duration},
+    tokio::{select, sync::broadcast},
+    tower::ServiceBuilder,
+    tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
+    tracing::{info, log::LevelFilter, warn, Level},
+    tracing_subscriber::fmt::format::FmtSpan,
 };
-use env::Config;
-use opentelemetry::sdk::metrics::selectors;
-use opentelemetry::sdk::{
-    trace::{self, IdGenerator, Sampler},
-    Resource,
-};
-use opentelemetry::util::tokio_interval_stream;
-use opentelemetry::KeyValue;
-use opentelemetry_otlp::{Protocol, WithExportConfig};
-use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
-use sqlx::ConnectOptions;
-use std::net::SocketAddr;
-use std::str::FromStr;
-use std::sync::Arc;
-use std::time::Duration;
-use tokio::{select, sync::broadcast};
-use tower::ServiceBuilder;
-use tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer};
-use tracing::{info, log::LevelFilter};
-use tracing::{warn, Level};
-
-use crate::{
-    state::{Metrics, TenantStoreArc},
-    stores::tenant::DefaultTenantStore,
-};
-use tracing_subscriber::fmt::format::FmtSpan;
 
 pub mod env;
 pub mod error;
@@ -52,8 +53,8 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         .connect_with(pg_options)
         .await?;
 
-    // Run database migrations. `./migrations` is the path to migrations, relative to the root dir (the directory
-    // containing `Cargo.toml`).
+    // Run database migrations. `./migrations` is the path to migrations, relative
+    // to the root dir (the directory containing `Cargo.toml`).
     sqlx::migrate!("./migrations").run(&store).await?;
 
     let mut tenant_store: TenantStoreArc =
@@ -69,8 +70,8 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             .connect_with(tenant_pg_options)
             .await?;
 
-        // Run database migrations. `./tenant_migrations` is the path to migrations, relative to the root dir (the directory
-        // containing `Cargo.toml`).
+        // Run database migrations. `./tenant_migrations` is the path to migrations,
+        // relative to the root dir (the directory containing `Cargo.toml`).
         sqlx::migrate!("./tenant_migrations")
             .run(&tenant_database)
             .await?;
@@ -162,13 +163,10 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             .with_description("The number of notification received")
             .init();
 
-        state.set_telemetry(
-            tracer,
-            Metrics {
-                registered_webhooks: hooks_counter,
-                received_notifications: notification_counter,
-            },
-        )
+        state.set_telemetry(tracer, Metrics {
+            registered_webhooks: hooks_counter,
+            received_notifications: notification_counter,
+        })
     } else {
         // Only log to console if telemetry disabled
         tracing_subscriber::fmt()

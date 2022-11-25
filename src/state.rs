@@ -1,13 +1,17 @@
-use crate::env::Config;
-use crate::relay::RelayClient;
-use crate::stores::client::ClientStore;
-use crate::stores::notification::NotificationStore;
-use crate::stores::tenant::TenantStore;
-use build_info::BuildInfo;
-use opentelemetry::metrics::{Counter, UpDownCounter};
-use opentelemetry::sdk::trace::Tracer;
-use std::sync::Arc;
-use tracing_subscriber::prelude::*;
+use {
+    crate::{
+        env::Config,
+        relay::RelayClient,
+        stores::{client::ClientStore, notification::NotificationStore, tenant::TenantStore},
+    },
+    build_info::BuildInfo,
+    opentelemetry::{
+        metrics::{Counter, UpDownCounter},
+        sdk::trace::Tracer,
+    },
+    std::sync::Arc,
+    tracing_subscriber::prelude::*,
+};
 
 pub type ClientStoreArc = Arc<dyn ClientStore + Send + Sync + 'static>;
 pub type NotificationStoreArc = Arc<dyn NotificationStore + Send + Sync + 'static>;

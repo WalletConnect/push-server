@@ -1,6 +1,5 @@
-use echo_server::env::Config;
-
 use {
+    echo_server::env::Config,
     std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4, TcpListener},
     tokio::{
         runtime::Handle,

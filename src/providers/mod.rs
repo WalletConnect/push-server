@@ -2,13 +2,18 @@ pub mod apns;
 pub mod fcm;
 pub mod noop;
 
-use crate::handlers::push_message::MessagePayload;
-use crate::providers::apns::ApnsProvider;
+use {
+    crate::{
+        error,
+        handlers::push_message::MessagePayload,
+        providers::{apns::ApnsProvider, fcm::FcmProvider},
+    },
+    async_trait::async_trait,
+    tracing::span,
+};
+
 #[cfg(any(debug_assertions, test))]
 use crate::providers::noop::NoopProvider;
-use crate::{error, providers::fcm::FcmProvider};
-use async_trait::async_trait;
-use tracing::span;
 
 #[async_trait]
 pub trait PushProvider {

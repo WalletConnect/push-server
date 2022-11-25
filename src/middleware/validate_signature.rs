@@ -1,14 +1,19 @@
-use crate::error::Error::{
-    FromRequestError, MissingAllSignatureHeader, MissingSignatureHeader, MissingTimestampHeader,
-    ToBytesError,
+use {
+    crate::{
+        error::Error::{
+            FromRequestError,
+            MissingAllSignatureHeader,
+            MissingSignatureHeader,
+            MissingTimestampHeader,
+            ToBytesError,
+        },
+        state::State,
+    },
+    async_trait::async_trait,
+    axum::{body, extract::FromRequest, http::Request},
+    ed25519_dalek::{PublicKey, Signature, Verifier},
+    tracing::span,
 };
-use crate::state::State;
-use async_trait::async_trait;
-use axum::body;
-use axum::extract::FromRequest;
-use axum::http::Request;
-use ed25519_dalek::{PublicKey, Signature, Verifier};
-use tracing::span;
 
 pub const SIGNATURE_HEADER_NAME: &str = "X-Ed25519-Signature";
 pub const TIMESTAMP_HEADER_NAME: &str = "X-Ed25519-Timestamp";
@@ -18,7 +23,8 @@ pub struct RequireValidSignature<T>(pub T);
 #[async_trait]
 impl<S, B, T> FromRequest<S, B> for RequireValidSignature<T>
 where
-    // these bounds are required by `async_trait`
+    // these bounds are required by
+    // `async_trait`
     B: Send + 'static + body::HttpBody + From<hyper::body::Bytes>,
     B::Data: Send,
     S: Send + Sync + State,

@@ -1,8 +1,12 @@
-use crate::handlers::{ErrorField, ErrorLocation, ResponseError};
-use crate::middleware::validate_signature::{SIGNATURE_HEADER_NAME, TIMESTAMP_HEADER_NAME};
-use crate::stores::StoreError;
-use axum::response::{IntoResponse, Response};
-use hyper::StatusCode;
+use {
+    crate::{
+        handlers::{ErrorField, ErrorLocation, ResponseError},
+        middleware::validate_signature::{SIGNATURE_HEADER_NAME, TIMESTAMP_HEADER_NAME},
+        stores::StoreError,
+    },
+    axum::response::{IntoResponse, Response},
+    hyper::StatusCode,
+};
 
 pub type Result<T> = std::result::Result<T, Error>;
 

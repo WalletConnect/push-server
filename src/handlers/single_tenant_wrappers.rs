@@ -1,13 +1,16 @@
-use crate::error::Error::MissingTenantId;
-use crate::error::Result;
-use crate::handlers::push_message::PushMessageBody;
-use crate::handlers::register_client::RegisterBody;
-use crate::handlers::Response;
-use crate::middleware::validate_signature::RequireValidSignature;
-use crate::state::{AppState, State};
-use axum::extract::{Path, State as StateExtractor};
-use axum::Json;
-use std::sync::Arc;
+use {
+    crate::{
+        error::{Error::MissingTenantId, Result},
+        handlers::{push_message::PushMessageBody, register_client::RegisterBody, Response},
+        middleware::validate_signature::RequireValidSignature,
+        state::{AppState, State},
+    },
+    axum::{
+        extract::{Path, State as StateExtractor},
+        Json,
+    },
+    std::sync::Arc,
+};
 
 pub async fn delete_handler(
     Path(id): Path<String>,

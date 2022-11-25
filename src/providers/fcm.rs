@@ -1,9 +1,10 @@
-use crate::handlers::push_message::MessagePayload;
-use crate::providers::PushProvider;
-use async_trait::async_trait;
-use fcm::{MessageBuilder, NotificationBuilder};
-use std::fmt::{Debug, Formatter};
-use tracing::span;
+use {
+    crate::{handlers::push_message::MessagePayload, providers::PushProvider},
+    async_trait::async_trait,
+    fcm::{MessageBuilder, NotificationBuilder},
+    std::fmt::{Debug, Formatter},
+    tracing::span,
+};
 
 pub struct FcmProvider {
     api_key: String,
@@ -44,7 +45,8 @@ impl PushProvider for FcmProvider {
     }
 }
 
-// Manual Impl Because `fcm::Client` does not derive anything and doesn't need to be accounted for
+// Manual Impl Because `fcm::Client` does not derive anything and doesn't need
+// to be accounted for
 
 impl Clone for FcmProvider {
     fn clone(&self) -> Self {

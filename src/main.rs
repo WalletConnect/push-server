@@ -1,6 +1,4 @@
-use dotenv::dotenv;
-use echo_server::env;
-use tokio::sync::broadcast;
+use {dotenv::dotenv, echo_server::env, tokio::sync::broadcast};
 
 #[tokio::main]
 async fn main() -> echo_server::error::Result<()> {

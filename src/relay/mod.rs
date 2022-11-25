@@ -1,6 +1,8 @@
-use chrono::{DateTime, Duration, Utc};
-use ed25519_dalek::PublicKey;
-use std::ops::Add;
+use {
+    chrono::{DateTime, Duration, Utc},
+    ed25519_dalek::PublicKey,
+    std::ops::Add,
+};
 
 const PUBLIC_KEY_TTL_HOURS: i64 = 6;
 

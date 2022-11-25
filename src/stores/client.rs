@@ -1,8 +1,11 @@
-use crate::providers::ProviderKind;
-use crate::stores;
-use crate::stores::StoreError::NotFound;
-use async_trait::async_trait;
-use sqlx::Executor;
+use {
+    crate::{
+        providers::ProviderKind,
+        stores::{self, StoreError::NotFound},
+    },
+    async_trait::async_trait,
+    sqlx::Executor,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, sqlx::FromRow)]
 pub struct Client {
