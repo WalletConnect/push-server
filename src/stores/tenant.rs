@@ -1,3 +1,4 @@
+use sqlx::Executor;
 use {
     crate::{
         env::Config,
@@ -32,6 +33,19 @@ pub struct Tenant {
 
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub struct TenantUpdateParams {
+    /// Optional ID to override generated UUID, used for vanity IDs e.g. swift-sdk
+    id: Option<String>,
+
+    fcm_api_key: Option<String>,
+
+    apns_sandbox: bool,
+    apns_topic: Option<String>,
+    apns_certificate: Option<String>,
+    apns_certificate_password: Option<String>,
 }
 
 impl Tenant {
@@ -101,6 +115,10 @@ impl Tenant {
 #[async_trait]
 pub trait TenantStore {
     async fn get_tenant(&self, id: &str) -> Result<Tenant>;
+    async fn delete_tenant(&self, id: &str) -> Result<()>;
+
+    async fn create_tenant(&self, params: TenantUpdateParams) -> Result<Tenant>;
+    async fn update_tenant(&self, params: TenantUpdateParams) -> Result<Tenant>;
 }
 
 #[async_trait]
@@ -118,6 +136,25 @@ impl TenantStore for PgPool {
             Err(e) => Err(e.into()),
             Ok(row) => Ok(row),
         }
+    }
+
+    async fn delete_tenant(&self, id: &str) -> Result<()> {
+        let mut query_builder =
+            sqlx::QueryBuilder::new("DELETE FROM public.tenants WHERE id = ");
+        query_builder.push_bind(id);
+        let query = query_builder.build();
+
+        self.execute(query).await?;
+
+        Ok(())
+    }
+
+    async fn create_tenant(&self, params: TenantUpdateParams) -> Result<Tenant> {
+        todo!()
+    }
+
+    async fn update_tenant(&self, params: TenantUpdateParams) -> Result<Tenant> {
+        todo!()
     }
 }
 
