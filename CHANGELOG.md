@@ -2,6 +2,24 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.7.0 - 2022-11-26
+#### Bug Fixes
+- All APNS Config required - (9e518f9) - Harry Bairstow
+- tests not compiling - (b75d1db) - Derek
+- fmt - (a3dbe3d) - Derek
+- Upload both Cargo files from `release` action - (d2a9c68) - Harry Bairstow
+- CI/CD (#45) - (a7b364e) - Harry Bairstow
+#### Features
+- **(ci)** use larger runners in CI (#51) - (5929f5c) - Derek
+- **(tests)** implement initial functional test (#50) - (c1c3653) - Derek
+- Bump Axum out of `rc` - (f1a6395) - Harry Bairstow
+- refactor for functional test (#49) - (75a4cc1) - Derek
+#### Miscellaneous Chores
+- **(cargo)** Bump `build-info` - (9842abb) - Harry Bairstow
+- **(cargo)** Remove minor versions - (7c95434) - Harry Bairstow
+- **(fmt)** `rustfmt` config and run formatter - (0cc04b6) - Harry Bairstow
+- - -
+
 ## v0.6.0 - 2022-11-08
 #### Features
 - Initial Multi-Tenant Work (#40) - (cb66818) - Harry Bairstow
