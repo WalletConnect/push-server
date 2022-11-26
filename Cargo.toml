@@ -7,6 +7,10 @@ authors = [
 ]
 build = "build.rs"
 
+[features]
+default = []
+tenant_write = []
+
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 axum = { version = "0.6", features = ["json"] }

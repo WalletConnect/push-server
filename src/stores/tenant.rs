@@ -36,6 +36,7 @@ pub struct Tenant {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
+#[cfg(feature = "tenant_write")]
 pub struct TenantUpdateParams {
     /// Optional ID to override generated UUID, used for vanity IDs e.g. swift-sdk
     id: Option<String>,
@@ -115,6 +116,11 @@ impl Tenant {
 #[async_trait]
 pub trait TenantStore {
     async fn get_tenant(&self, id: &str) -> Result<Tenant>;
+}
+
+#[async_trait]
+#[cfg(feature = "tenant_write")]
+pub trait TenantWriteStore {
     async fn delete_tenant(&self, id: &str) -> Result<()>;
 
     async fn create_tenant(&self, params: TenantUpdateParams) -> Result<Tenant>;
@@ -137,7 +143,10 @@ impl TenantStore for PgPool {
             Ok(row) => Ok(row),
         }
     }
+}
 
+#[cfg(feature = "tenant_write")]
+impl TenantWriteStore for PgPool {
     async fn delete_tenant(&self, id: &str) -> Result<()> {
         let mut query_builder =
             sqlx::QueryBuilder::new("DELETE FROM public.tenants WHERE id = ");
