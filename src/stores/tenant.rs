@@ -1,5 +1,3 @@
-#[cfg(feature = "tenant_write")]
-use sqlx::Executor;
 use {
     crate::{
         env::Config,
@@ -19,8 +17,9 @@ use {
     chrono::{DateTime, Utc},
     sqlx::PgPool,
     std::{io::BufReader, sync::Arc},
-    uuid::Uuid,
 };
+#[cfg(feature = "tenant_write")]
+use {sqlx::Executor, uuid::Uuid};
 
 #[derive(sqlx::FromRow, Debug, Eq, PartialEq, Clone)]
 pub struct Tenant {
