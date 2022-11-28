@@ -149,6 +149,7 @@ impl TenantStore for PgPool {
 }
 
 #[cfg(feature = "tenant_write")]
+#[async_trait]
 impl TenantWriteStore for PgPool {
     async fn delete_tenant(&self, id: &str) -> Result<()> {
         let mut query_builder = sqlx::QueryBuilder::new("DELETE FROM public.tenants WHERE id = ");
