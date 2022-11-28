@@ -1,3 +1,4 @@
+#[cfg(feature = "tenant_write")]
 use sqlx::Executor;
 use {
     crate::{
@@ -18,6 +19,7 @@ use {
     chrono::{DateTime, Utc},
     sqlx::PgPool,
     std::{io::BufReader, sync::Arc},
+    uuid::Uuid,
 };
 
 #[derive(sqlx::FromRow, Debug, Eq, PartialEq, Clone)]
@@ -38,7 +40,8 @@ pub struct Tenant {
 #[derive(Debug, Eq, PartialEq, Clone)]
 #[cfg(feature = "tenant_write")]
 pub struct TenantUpdateParams {
-    /// Optional ID to override generated UUID, used for vanity IDs e.g. swift-sdk
+    /// Optional ID to override generated UUID, used for vanity IDs e.g.
+    /// swift-sdk
     id: Option<String>,
 
     fcm_api_key: Option<String>,
@@ -148,8 +151,7 @@ impl TenantStore for PgPool {
 #[cfg(feature = "tenant_write")]
 impl TenantWriteStore for PgPool {
     async fn delete_tenant(&self, id: &str) -> Result<()> {
-        let mut query_builder =
-            sqlx::QueryBuilder::new("DELETE FROM public.tenants WHERE id = ");
+        let mut query_builder = sqlx::QueryBuilder::new("DELETE FROM public.tenants WHERE id = ");
         query_builder.push_bind(id);
         let query = query_builder.build();
 
@@ -159,11 +161,39 @@ impl TenantWriteStore for PgPool {
     }
 
     async fn create_tenant(&self, params: TenantUpdateParams) -> Result<Tenant> {
-        todo!()
+        let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
+            "INSERT INTO public.tenants (id, fcm_api_key, apns_sandbox, apns_topic, \
+             apns_certificate, apns_certificate_password) VALUES ($1, $2, $3, $4, $5, $6) \
+             RETURNING *;",
+        )
+        .bind(params.id.unwrap_or(Uuid::new_v4().to_string()))
+        .bind(params.fcm_api_key)
+        .bind(params.apns_sandbox)
+        .bind(params.apns_topic)
+        .bind(params.apns_certificate)
+        .bind(params.apns_certificate_password)
+        .fetch_one(self)
+        .await?;
+
+        Ok(res)
     }
 
     async fn update_tenant(&self, params: TenantUpdateParams) -> Result<Tenant> {
-        todo!()
+        let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
+            "UPDATE public.tenants SET fcm_api_key = $2 AND apns_sandbox = $3 AND apns_topic = $4 \
+             AND apns_certificate = $5 AND apns_certificate_password = $6 WHERE id = $1 RETURNING \
+             *;",
+        )
+        .bind(params.id.unwrap_or(Uuid::new_v4().to_string()))
+        .bind(params.fcm_api_key)
+        .bind(params.apns_sandbox)
+        .bind(params.apns_topic)
+        .bind(params.apns_certificate)
+        .bind(params.apns_certificate_password)
+        .fetch_one(self)
+        .await?;
+
+        Ok(res)
     }
 }
 

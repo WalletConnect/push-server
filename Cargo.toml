@@ -53,6 +53,7 @@ thiserror = "1.0"
 hex = "0.4"
 base64 = "0.13"
 chrono = "0.4"
+uuid = { version = "1.2", features = ["v4"] }
 
 [dev-dependencies]
 serial_test = "0.9"
