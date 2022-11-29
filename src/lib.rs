@@ -167,7 +167,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             registered_webhooks: hooks_counter,
             received_notifications: notification_counter,
         })
-    } else {
+    } else if !state.config.is_test {
         // Only log to console if telemetry disabled
         tracing_subscriber::fmt()
             .with_max_level(state.config.log_level())
