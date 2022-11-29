@@ -23,17 +23,17 @@ use {sqlx::Executor, uuid::Uuid};
 
 #[derive(sqlx::FromRow, Debug, Eq, PartialEq, Clone)]
 pub struct Tenant {
-    id: String,
+    pub id: String,
 
-    fcm_api_key: Option<String>,
+    pub fcm_api_key: Option<String>,
 
-    apns_sandbox: bool,
-    apns_topic: Option<String>,
-    apns_certificate: Option<String>,
-    apns_certificate_password: Option<String>,
+    pub apns_sandbox: bool,
+    pub apns_topic: Option<String>,
+    pub apns_certificate: Option<String>,
+    pub apns_certificate_password: Option<String>,
 
-    created_at: DateTime<Utc>,
-    updated_at: DateTime<Utc>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -41,14 +41,14 @@ pub struct Tenant {
 pub struct TenantUpdateParams {
     /// Optional ID to override generated UUID, used for vanity IDs e.g.
     /// swift-sdk
-    id: Option<String>,
+    pub id: Option<String>,
 
-    fcm_api_key: Option<String>,
+    pub fcm_api_key: Option<String>,
 
-    apns_sandbox: bool,
-    apns_topic: Option<String>,
-    apns_certificate: Option<String>,
-    apns_certificate_password: Option<String>,
+    pub apns_sandbox: bool,
+    pub apns_topic: Option<String>,
+    pub apns_certificate: Option<String>,
+    pub apns_certificate_password: Option<String>,
 }
 
 impl Tenant {
