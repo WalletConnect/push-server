@@ -1,5 +1,7 @@
 use {crate::context::ServerContext, test_context::test_context};
 
+mod registration;
+
 #[test_context(ServerContext)]
 #[tokio::test]
 async fn test_health(ctx: &mut ServerContext) {

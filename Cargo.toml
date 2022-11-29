@@ -59,6 +59,7 @@ uuid = { version = "1.2", features = ["v4"] }
 serial_test = "0.9"
 test-context = "0.1"
 futures-util = "0.3"
+random-string = "1.0"
 
 [build-dependencies]
 build-info-build = "0.0"

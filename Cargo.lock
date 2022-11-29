@@ -550,7 +550,7 @@ dependencies = [
 
 [[package]]
 name = "echo-server"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "a2",
  "async-trait",
@@ -568,6 +568,7 @@ dependencies = [
  "hyper",
  "opentelemetry",
  "opentelemetry-otlp",
+ "random-string",
  "reqwest",
  "serde",
  "serde_json",
@@ -1719,6 +1720,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca3129af7b92a17112d59ad498c6f81eaf463253766b90396d39ea7a39d6613c"
 dependencies = [
  "rand_core 0.5.1",
+]
+
+[[package]]
+name = "random-string"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cf4e63111ec5292d8af9c220f06fe3bb87991cc78b6f1f7e291d1ae6b8a60817"
+dependencies = [
+ "fastrand",
 ]
 
 [[package]]

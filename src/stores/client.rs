@@ -63,7 +63,7 @@ impl ClientStore for sqlx::PgPool {
         let mut notification_query_builder =
             sqlx::QueryBuilder::new("DELETE FROM public.notifications WHERE client_id = ");
         notification_query_builder.push_bind(id);
-        notification_query_builder.push("and tenant_id = ");
+        notification_query_builder.push(" and tenant_id = ");
         notification_query_builder.push_bind(tenant_id);
         let notification_query = notification_query_builder.build();
 
@@ -71,7 +71,7 @@ impl ClientStore for sqlx::PgPool {
 
         let mut query_builder = sqlx::QueryBuilder::new("DELETE FROM public.clients WHERE id = ");
         query_builder.push_bind(id);
-        query_builder.push("and tenant_id = ");
+        query_builder.push(" and tenant_id = ");
         query_builder.push_bind(tenant_id);
         let query = query_builder.build();
 
