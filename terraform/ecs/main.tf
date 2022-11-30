@@ -32,8 +32,11 @@ resource "aws_ecs_task_definition" "app_task_definition" {
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
   container_definitions = jsonencode([
     {
-      name      = var.app_name,
-      image     = var.image,
+      name  = var.app_name,
+      image = var.image,
+      repositoryCredentials = {
+        credentialsParameter = var.ghcr_credentials_arn
+      },
       cpu       = var.cpu    #- 128, # Remove sidecar memory/cpu so rest is assigned to primary container
       memory    = var.memory #- 128,
       essential = true,
@@ -206,6 +209,32 @@ data "aws_iam_policy_document" "assume_role_policy" {
       identifiers = ["ecs-tasks.amazonaws.com"]
     }
   }
+}
+
+data "aws_caller_identity" "current" {}
+data "aws_iam_policy_document" "fetch_ghcr_secret" {
+  statement {
+    actions = [
+      "kms:Decrypt",
+      "ssm:GetParameters",
+      "secretsmanager:GetSecretValue"
+    ]
+
+    resources = [
+      var.ghcr_credentials_arn,
+      "arn:aws:kms:${var.region}:${data.aws_caller_identity.current.account_id}:key/key_id"
+    ]
+  }
+}
+resource "aws_iam_policy" "fetch_ghcr_secret" {
+  name   = "${var.app_name}-fetch-ghcr-secret"
+  path   = "/"
+  policy = data.aws_iam_policy_document.fetch_ghcr_secret.json
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_execution_fetch_ghcr_secret_policy" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = aws_iam_policy.fetch_ghcr_secret.arn
 }
 
 resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
