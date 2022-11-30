@@ -110,7 +110,7 @@ jobs:
       - id: deploy-staging
         uses: WalletConnect/actions/actions/deploy-terraform/@master
         env:
-          TF_VAR_image_version: ${{ needs.get-version.outputs.version }}
+          TF_VAR_tenant_database_url: ${{ secrets.TENANT_DATABASE_URL }}
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -144,7 +144,7 @@ jobs:
       - id: deploy-staging
         uses: WalletConnect/actions/actions/deploy-terraform/@master
         env:
-          TF_VAR_image_version: ${{ needs.get-version.outputs.version }}
+          TF_VAR_tenant_database_url: ${{ secrets.TENANT_DATABASE_URL }}
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
