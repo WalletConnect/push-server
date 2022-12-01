@@ -16,7 +16,7 @@ pub struct Config {
     pub tenant_database_url: Option<String>,
     #[serde(default = "default_tenant_id")]
     pub default_tenant_id: String,
-    #[serde(default = "default_is_test")]
+    #[serde(default = "default_is_test", skip)]
     pub is_test: bool,
 
     // TELEMETRY
