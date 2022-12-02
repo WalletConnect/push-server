@@ -16,6 +16,9 @@ pub struct Config {
     pub tenant_database_url: Option<String>,
     #[serde(default = "default_tenant_id")]
     pub default_tenant_id: String,
+    #[serde(default = "default_is_test", skip)]
+    /// This is an internal flag to disable logging, cannot be defined by user
+    pub is_test: bool,
 
     // TELEMETRY
     pub telemetry_enabled: Option<bool>,
@@ -98,6 +101,10 @@ fn default_relay_url() -> String {
 
 fn default_tenant_id() -> String {
     "0000-0000-0000-0000".to_string()
+}
+
+fn default_is_test() -> bool {
+    false
 }
 
 pub fn get_config() -> error::Result<Config> {

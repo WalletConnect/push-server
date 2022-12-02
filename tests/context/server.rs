@@ -41,6 +41,7 @@ impl EchoServer {
                     apns_certificate_password: None,
                     apns_topic: None,
                     fcm_api_key: None,
+                    is_test: true,
                 };
 
                 echo_server::bootstap(shutdown, config).await

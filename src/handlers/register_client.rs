@@ -14,11 +14,11 @@ use {
         stores::{client::Client, StoreError},
     },
     axum::extract::{Json, Path, State as StateExtractor},
-    serde::Deserialize,
+    serde::{Deserialize, Serialize},
     std::sync::Arc,
 };
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct RegisterBody {
     pub client_id: String,
     #[serde(rename = "type")]
