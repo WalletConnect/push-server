@@ -35,19 +35,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      # Get latest release for image version
-      - id: latest_release
-        uses: pozetroninc/github-action-get-latest-release@master
-        if: github.event_name != 'release'
-        with:
-          repository: ${{ github.repository }}
-          excludes: draft
       - name: Run Terraform Plan
         id: plan
         uses: WalletConnect/actions/actions/plan-terraform/@master
         env:
-          TF_VAR_onepassword_vault_id: ${{ secrets.ONEPASSWORD_VAULT_ID }}
-          TF_VAR_image_version: ${{ steps.latest_release.outputs.release }}
+          TF_VAR_tenant_database_url: ${{ secrets.TENANT_DATABASE_URL }}
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

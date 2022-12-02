@@ -17,15 +17,17 @@ variable "grafana_endpoint" {
   type = string
 }
 
-variable "onepassword_endpoint" {
-  type = string
-}
-
-variable "onepassword_vault_id" {
-  type = string
+variable "image_url" {
+  type    = string
+  default = "ghcr.io/walletconnect/echo-server"
 }
 
 variable "image_version" {
   type    = string
-  default = "latest"
+  default = ""
+}
+
+variable "tenant_database_url" {
+  type      = string
+  sensitive = true
 }

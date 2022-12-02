@@ -1,1 +1,0 @@
-onepassword_endpoint = "pass.walletconnect.com"
