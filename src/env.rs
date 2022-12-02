@@ -17,6 +17,7 @@ pub struct Config {
     #[serde(default = "default_tenant_id")]
     pub default_tenant_id: String,
     #[serde(default = "default_is_test", skip)]
+    /// This is an internal flag to disable logging, cannot be defined by user
     pub is_test: bool,
 
     // TELEMETRY
