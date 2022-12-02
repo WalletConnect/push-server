@@ -2,6 +2,16 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.8.0 - 2022-12-02
+#### Features
+- cover registration logic (#53) - (df88052) - Derek
+- Improve Terraform (#46) - (3f91f09) - Harry Bairstow
+- Tenant CRUD (#54) - (e0b33bb) - Harry Bairstow
+#### Miscellaneous Chores
+- add `cog.toml` - (87f9926) - Harry Bairstow
+- Make Properties Public - (f01a7b6) - Harry Bairstow
+- - -
+
 ## v0.7.0 - 2022-11-26
 #### Bug Fixes
 - All APNS Config required - (9e518f9) - Harry Bairstow
