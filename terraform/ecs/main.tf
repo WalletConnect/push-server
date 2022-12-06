@@ -32,13 +32,10 @@ resource "aws_ecs_task_definition" "app_task_definition" {
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
   container_definitions = jsonencode([
     {
-      name  = var.app_name,
-      image = var.image,
-      repositoryCredentials = {
-        credentialsParameter = var.ghcr_credentials_arn
-      },
-      cpu       = var.cpu    #- 128, # Remove sidecar memory/cpu so rest is assigned to primary container
-      memory    = var.memory #- 128,
+      name      = var.app_name,
+      image     = var.image,
+      cpu       = var.cpu - 128, # Remove sidecar memory/cpu so rest is assigned to primary container
+      memory    = var.memory - 128,
       essential = true,
       portMappings = [
         {
@@ -51,8 +48,11 @@ resource "aws_ecs_task_definition" "app_task_definition" {
         { name = "LOG_LEVEL", value = "INFO" },
         { name = "DATABASE_URL", value = var.database_url },
         { name = "TENANT_DATABASE_URL", value = var.tenant_database_url },
-        { name = "TELEMETRY_ENABLED", value = "false" },
+        { name = "TELEMETRY_ENABLED", value = "true" },
         { name = "TELEMETRY_GRPC_URL", value = "http://localhost:4317" }
+      ],
+      dependsOn = [
+        { containerName = "aws-otel-collector", condition = "START" }
       ],
       logConfiguration = {
         logDriver = "awslogs",
@@ -63,29 +63,29 @@ resource "aws_ecs_task_definition" "app_task_definition" {
         }
       }
     },
-    #    {
-    #      name   = "aws-otel-collector",
-    #      image  = "public.ecr.aws/aws-observability/aws-otel-collector:latest",
-    #      cpu    = 128,
-    #      memory = 128,
-    #      environment = [
-    #        { name = "AWS_PROMETHEUS_ENDPOINT", value = "${var.prometheus_endpoint}api/v1/remote_write" },
-    #        { name = "AWS_REGION", value = "eu-central-1" }
-    #      ],
-    #      essential = true,
-    #      command = [
-    #        "--config=/etc/ecs/ecs-amp.yaml"
-    #      ],
-    #      logConfiguration = {
-    #        logDriver = "awslogs",
-    #        options = {
-    #          awslogs-create-group  = "True",
-    #          awslogs-group         = "/ecs/${var.app_name}-ecs-aws-otel-sidecar-collector",
-    #          awslogs-region        = var.region,
-    #          awslogs-stream-prefix = "ecs"
-    #        }
-    #      }
-    #    }
+    {
+      name   = "aws-otel-collector",
+      image  = "public.ecr.aws/aws-observability/aws-otel-collector:latest",
+      cpu    = 128,
+      memory = 128,
+      environment = [
+        { name = "AWS_PROMETHEUS_ENDPOINT", value = "${var.prometheus_endpoint}api/v1/remote_write" },
+        { name = "AWS_REGION", value = "eu-central-1" }
+      ],
+      essential = true,
+      command = [
+        "--config=/etc/ecs/ecs-amp-xray-prometheus.yaml"
+      ],
+      logConfiguration = {
+        logDriver = "awslogs",
+        options = {
+          awslogs-create-group  = "True",
+          awslogs-group         = "/ecs/${var.app_name}-ecs-aws-otel-sidecar-collector",
+          awslogs-region        = var.region,
+          awslogs-stream-prefix = "ecs"
+        }
+      }
+    }
   ])
 
   runtime_platform {
@@ -211,32 +211,6 @@ data "aws_iam_policy_document" "assume_role_policy" {
   }
 }
 
-data "aws_caller_identity" "current" {}
-data "aws_iam_policy_document" "fetch_ghcr_secret" {
-  statement {
-    actions = [
-      "kms:Decrypt",
-      "ssm:GetParameters",
-      "secretsmanager:GetSecretValue"
-    ]
-
-    resources = [
-      var.ghcr_credentials_arn,
-      "arn:aws:kms:${var.region}:${data.aws_caller_identity.current.account_id}:key/key_id"
-    ]
-  }
-}
-resource "aws_iam_policy" "fetch_ghcr_secret" {
-  name   = "${var.app_name}-fetch-ghcr-secret"
-  path   = "/"
-  policy = data.aws_iam_policy_document.fetch_ghcr_secret.json
-}
-
-resource "aws_iam_role_policy_attachment" "ecs_task_execution_fetch_ghcr_secret_policy" {
-  role       = aws_iam_role.ecs_task_execution_role.name
-  policy_arn = aws_iam_policy.fetch_ghcr_secret.arn
-}
-
 resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
@@ -252,9 +226,44 @@ resource "aws_iam_role_policy_attachment" "cloudwatch_write_policy" {
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
 }
 
+resource "aws_iam_role_policy_attachment" "ssm_read_only_policy" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
+}
+
 resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_xray_policy" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
+}
+
+data "aws_iam_policy_document" "otel" {
+  statement {
+    actions = [
+      "logs:PutLogEvents",
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:DescribeLogStreams",
+      "logs:DescribeLogGroups",
+      "xray:PutTraceSegments",
+      "xray:PutTelemetryRecords",
+      "xray:GetSamplingRules",
+      "xray:GetSamplingTargets",
+      "xray:GetSamplingStatisticSummaries",
+      "ssm:GetParameters",
+    ]
+    resources = [
+      "*"
+    ]
+  }
+}
+resource "aws_iam_policy" "otel" {
+  name   = "${var.app_name}-otel"
+  path   = "/"
+  policy = data.aws_iam_policy_document.otel.json
+}
+resource "aws_iam_role_policy_attachment" "ecs_task_execution_fetch_ghcr_secret_policy" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = aws_iam_policy.otel.arn
 }
 
 # Security Groups
