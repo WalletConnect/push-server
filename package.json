@@ -1,5 +1,5 @@
 {
-  "name": "echo-server-integraiton-tests",
+  "name": "echo-server-integration-tests",
   "version": "1.0.0",
   "description": "Integration tests for echo server",
   "scripts": {
