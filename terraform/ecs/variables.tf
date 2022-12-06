@@ -59,8 +59,3 @@ variable "cpu" {
 variable "memory" {
   type = number
 }
-
-variable "ghcr_credentials_arn" {
-  type      = string
-  sensitive = true
-}

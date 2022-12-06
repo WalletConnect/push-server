@@ -87,26 +87,25 @@ module "database_cluster" {
 module "ecs" {
   source = "./ecs"
 
-  app_name             = "${terraform.workspace}-${local.app_name}"
-  prometheus_endpoint  = aws_prometheus_workspace.prometheus.prometheus_endpoint
-  database_url         = "postgres://${module.database_cluster.cluster_master_username}:${module.database_cluster.cluster_master_password}@${module.database_cluster.cluster_endpoint}:${module.database_cluster.cluster_port}/postgres"
-  tenant_database_url  = var.tenant_database_url
-  image                = "${var.image_url}:${local.version}"
-  acm_certificate_arn  = module.dns.certificate_arn
-  cpu                  = 512
-  fqdn                 = local.fqdn
-  memory               = 1024
-  private_subnets      = module.vpc.private_subnets
-  public_subnets       = module.vpc.public_subnets
-  region               = var.region
-  route53_zone_id      = module.dns.zone_id
-  vpc_cidr             = module.vpc.vpc_cidr_block
-  vpc_id               = module.vpc.vpc_id
-  ghcr_credentials_arn = aws_secretsmanager_secret.ghcr_authentication.arn
+  app_name            = "${terraform.workspace}-${local.app_name}"
+  prometheus_endpoint = aws_prometheus_workspace.prometheus.prometheus_endpoint
+  database_url        = "postgres://${module.database_cluster.cluster_master_username}:${module.database_cluster.cluster_master_password}@${module.database_cluster.cluster_endpoint}:${module.database_cluster.cluster_port}/postgres"
+  tenant_database_url = var.tenant_database_url
+  image               = "${data.aws_ecr_repository.repository.repository_url}:${local.version}"
+  acm_certificate_arn = module.dns.certificate_arn
+  cpu                 = 512
+  fqdn                = local.fqdn
+  memory              = 1024
+  private_subnets     = module.vpc.private_subnets
+  public_subnets      = module.vpc.public_subnets
+  region              = var.region
+  route53_zone_id     = module.dns.zone_id
+  vpc_cidr            = module.vpc.vpc_cidr_block
+  vpc_id              = module.vpc.vpc_id
 }
 
-resource "aws_secretsmanager_secret" "ghcr_authentication" {
-  name = "${terraform.workspace}-${local.app_name}-ghcr-auth"
+data "aws_ecr_repository" "repository" {
+  name = "echo-server"
 }
 
 resource "aws_prometheus_workspace" "prometheus" {
