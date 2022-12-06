@@ -5,8 +5,8 @@
   "scripts": {
     "integration:staging": "JEST_ENV=staging jest --config jestconfig.integration.json --verbose",
     "integration:dev": "JEST_ENV=dev jest --config jestconfig.integration.json --verbose",
-    "format": "prettier --write '*.{json,js}' 'integration/**/*.{js,ts}' '.github/**/*.{yml,yaml}'",
-    "lint": "eslint --max-warnings=0 integration && prettier --check '*.{json,js}' 'integration/**/*.{js,ts}'"
+    "format": "prettier --config integration/.prettierrc --write '*.{json,js}' 'integration/**/*.{js,ts}' '.github/**/*.{yml,yaml}'",
+    "lint": "eslint --max-warnings=0 integration && prettier --config integration/.prettierrc --check '*.{json,js}' 'integration/**/*.{js,ts}'"
   },
   "author": "WalletConnect, Inc. <walletconnect.com>",
   "license": "Apache-2.0",
