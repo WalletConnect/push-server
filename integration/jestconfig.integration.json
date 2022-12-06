@@ -3,6 +3,6 @@
   "transform": {
     "^.+\\.(t|j)sx?$": "ts-jest"
   },
-  "testRegex": "/integration/.*\\.test\\.ts$",
+  "testRegex": "./.*\\.test\\.ts$",
   "collectCoverageFrom": ["src/**/*.{ts,js}"]
 }
