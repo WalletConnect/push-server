@@ -30,6 +30,7 @@ resource "aws_ecs_task_definition" "app_task_definition" {
   ]
   network_mode       = "awsvpc" # Required because of fargate
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_execution_role.arn
   container_definitions = jsonencode([
     {
       name      = var.app_name,
@@ -48,12 +49,13 @@ resource "aws_ecs_task_definition" "app_task_definition" {
         { name = "LOG_LEVEL", value = "INFO" },
         { name = "DATABASE_URL", value = var.database_url },
         { name = "TENANT_DATABASE_URL", value = var.tenant_database_url },
-        { name = "TELEMETRY_ENABLED", value = "true" },
+        { name = "TELEMETRY_ENABLED", value = "false" },
         { name = "TELEMETRY_GRPC_URL", value = "http://localhost:4317" }
       ],
-      dependsOn = [
-        { containerName = "aws-otel-collector", condition = "START" }
-      ],
+#      TODO un-comment after telemetry re-enabled
+#      dependsOn = [
+#        { containerName = "aws-otel-collector", condition = "START" }
+#      ],
       logConfiguration = {
         logDriver = "awslogs",
         options = {
