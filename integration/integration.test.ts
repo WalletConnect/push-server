@@ -11,7 +11,7 @@ const BASE_URLS = new Map<string, string>([
   ['dev', 'http://localhost:3000'],
 ])
 
-const BASE_URL = BASE_URLS.get(process.env.JEST_ENV)!
+const BASE_URL = BASE_URLS.get(process.env.JEST_ENV)
 
 describe('Echo Server', () => {
   describe('Health', () => {

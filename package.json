@@ -4,7 +4,9 @@
   "description": "Integration tests for echo server",
   "scripts": {
     "integration:staging": "JEST_ENV=staging jest --config jestconfig.integration.json --verbose",
-    "integration:dev": "JEST_ENV=dev jest --config jestconfig.integration.json --verbose"
+    "integration:dev": "JEST_ENV=dev jest --config jestconfig.integration.json --verbose",
+    "format": "prettier --write '*.{json,js}' 'integration/**/*.{js,ts}' '.github/**/*.{yml,yaml}'",
+    "lint": "eslint --max-warnings=0 integration && prettier --check '*.{json,js}' 'integration/**/*.{js,ts}'"
   },
   "author": "WalletConnect, Inc. <walletconnect.com>",
   "license": "Apache-2.0",
@@ -29,6 +31,5 @@
     "ts-loader": "^9.2.2",
     "typescript": "^4.3.2"
   },
-  "dependencies": {
-  }
+  "dependencies": {}
 }
