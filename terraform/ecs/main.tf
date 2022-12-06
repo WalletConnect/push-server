@@ -52,10 +52,9 @@ resource "aws_ecs_task_definition" "app_task_definition" {
         { name = "TELEMETRY_ENABLED", value = "false" },
         { name = "TELEMETRY_GRPC_URL", value = "http://localhost:4317" }
       ],
-#      TODO un-comment after telemetry re-enabled
-#      dependsOn = [
-#        { containerName = "aws-otel-collector", condition = "START" }
-#      ],
+     dependsOn = [
+       { containerName = "aws-otel-collector", condition = "START" }
+     ],
       logConfiguration = {
         logDriver = "awslogs",
         options = {
@@ -76,7 +75,7 @@ resource "aws_ecs_task_definition" "app_task_definition" {
       ],
       essential = true,
       command = [
-        "--config=/etc/ecs/ecs-amp-xray-prometheus.yaml"
+        "--config=/etc/ecs/ecs-amp-prometheus.yaml"
       ],
       logConfiguration = {
         logDriver = "awslogs",
@@ -101,7 +100,10 @@ resource "aws_ecs_service" "app_service" {
   cluster         = aws_ecs_cluster.app_cluster.id
   task_definition = aws_ecs_task_definition.app_task_definition.arn
   launch_type     = "FARGATE"
-  desired_count   = 1
+  desired_count   = 2
+
+  # Wait for the service deployment to succeed
+  wait_for_steady_state = true
 
   # Allow external changes without Terraform plan difference
   lifecycle {
