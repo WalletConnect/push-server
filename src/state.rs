@@ -7,7 +7,6 @@ use {
     },
     build_info::BuildInfo,
     opentelemetry::{
-        metrics::{Counter, UpDownCounter},
         sdk::trace::Tracer,
     },
     std::sync::Arc,

@@ -1,6 +1,6 @@
 use {
     crate::{
-        state::{Metrics, TenantStoreArc},
+        state::{TenantStoreArc},
         stores::tenant::DefaultTenantStore,
     },
     axum::{
@@ -10,11 +10,9 @@ use {
     env::Config,
     opentelemetry::{
         sdk::{
-            metrics::selectors,
             trace::{self, IdGenerator, Sampler},
             Resource,
         },
-        util::tokio_interval_stream,
         KeyValue,
     },
     opentelemetry_otlp::{Protocol, WithExportConfig},
@@ -27,8 +25,8 @@ use {
     tower::ServiceBuilder,
     tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
     tracing::{info, log::LevelFilter, warn, Level},
-    tracing_subscriber::fmt::format::FmtSpan,
 };
+use crate::metrics::Metrics;
 
 pub mod env;
 pub mod error;
@@ -139,7 +137,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             )
             .install_batch(opentelemetry::runtime::Tokio)?;
 
-        let metrics = Metrics::new(resource);
+        let metrics = Metrics::new(resource)?;
 
         state.set_telemetry(tracer, metrics)
     } else if !state.config.is_test && !state.config.telemetry_enabled.unwrap_or(false) {
@@ -206,7 +204,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         .with_state(state_arc.clone());
 
     let private_app = Router::new()
-        .get("/metrics", get(handlers::metrics::handler))
+        .route("/metrics", get(handlers::metrics::handler))
         .with_state(state_arc);
 
     let header = format!(

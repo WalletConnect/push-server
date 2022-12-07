@@ -19,6 +19,9 @@ pub enum Error {
     Trace(#[from] opentelemetry::trace::TraceError),
 
     #[error(transparent)]
+    Metrics(#[from] opentelemetry::metrics::MetricsError),
+
+    #[error(transparent)]
     Prometheus(#[from] prometheus::Error),
 
     #[error(transparent)]

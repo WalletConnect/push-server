@@ -1,13 +1,13 @@
 use prometheus::TextEncoder;
 use {
     opentelemetry::{
-        metrics::{Counter, Meter, UpDownCounter},
+        metrics::{Counter, UpDownCounter},
         sdk::Resource,
     },
     opentelemetry_prometheus::{PrometheusExporter},
 };
-use crate::error;
 use crate::error::Error;
+use crate::error::Result;
 
 #[derive(Clone)]
 pub struct Metrics {
@@ -17,12 +17,14 @@ pub struct Metrics {
 }
 
 impl Metrics {
-    pub fn new(resource: Resource) -> Self {
+    pub fn new(resource: Resource) -> Result<Self> {
         let exporter = opentelemetry_prometheus::exporter()
             .with_resource(resource)
             .init();
 
-        opentelemetry::global::set_meter_provider(exporter.provider());
+        let provider = exporter.provider()?;
+
+        opentelemetry::global::set_meter_provider(provider);
 
         let meter = opentelemetry::global::meter("echo-server");
         let hooks_counter = meter
@@ -35,14 +37,14 @@ impl Metrics {
             .with_description("The number of notification received")
             .init();
 
-        Metrics {
+        Ok(Metrics {
             prometheus_exporter: exporter,
             registered_webhooks: hooks_counter,
             received_notifications: notification_counter,
-        }
+        })
     }
 
-    pub fn export(&self) -> Result<String, Error> {
+    pub fn export(&self) -> Result<String> {
         let data = self.prometheus_exporter.registry().gather();
         TextEncoder::new().encode_to_string(&data).map_err(|e| Error::Prometheus(e))
     }
