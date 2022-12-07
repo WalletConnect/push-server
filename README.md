@@ -45,6 +45,13 @@ docker run -p 5432:5432 --name some-postgres2 -e POSTGRES_HOST_AUTH_METHOD=trust
 cargo test
 ```
 
+## Running tests locally
+
+```
+yarn install
+yarn integration:dev # or yarn integration:staging
+```
+
 ## Contact
 If you wish to integrate Push functionality into your Wallet (only available on v2), please contact us.
 
