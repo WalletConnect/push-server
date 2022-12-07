@@ -142,11 +142,10 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         let metrics = Metrics::new(resource);
 
         state.set_telemetry(tracer, metrics)
-    } else if !state.config.is_test {
-        // Only log to console if telemetry disabled
+    } else if !state.config.is_test && !state.config.telemetry_enabled.unwrap_or(false) {
+        // Only log to console if telemetry disabled and its not in tests
         tracing_subscriber::fmt()
             .with_max_level(state.config.log_level())
-            .with_span_events(FmtSpan::CLOSE)
             .init();
     }
 
