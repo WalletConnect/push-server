@@ -46,9 +46,7 @@ impl NotificationStore for sqlx::PgPool {
             "INSERT INTO public.notifications (id, tenant_id, client_id, last_payload)
 VALUES ($1, $2, $3, $4)
 ON CONFLICT (id)
-    DO UPDATE SET last_payload      = $3,
-                  previous_payloads = array_append(excluded.previous_payloads, $3),
-                  last_received_at  = now()
+    DO UPDATE SET last_received_at  = now()
 RETURNING *;",
         )
         .bind(id)
