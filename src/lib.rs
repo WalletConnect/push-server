@@ -150,6 +150,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
     }
 
     let port = state.config.port;
+    let private_port = state.config.telemetry_prometheus_port;
     let build_version = state.build_info.crate_info.version.clone();
     let build_commit = state
         .build_info
@@ -202,6 +203,10 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             post(handlers::push_message::handler),
         )
         .layer(global_middleware)
+        .with_state(state_arc.clone());
+
+    let private_app = Router::new()
+        .get("/metrics", get(handlers::metrics::handler))
         .with_state(state_arc);
 
     let header = format!(
@@ -226,9 +231,11 @@ providers: [{}]
     println!("{}", header);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
+    let private_addr = SocketAddr::from(([0, 0, 0, 0], private_port));
 
     select! {
         _ = axum::Server::bind(&addr).serve(app.into_make_service()) => info!("Server terminating"),
+        _ = axum::Server::bind(&private_addr).serve(private_app.into_make_service()) => info!("Internal Server terminating"),
         _ = shutdown.recv() => info!("Shutdown signal received, killing servers"),
     }
 

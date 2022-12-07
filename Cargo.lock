@@ -569,6 +569,7 @@ dependencies = [
  "opentelemetry",
  "opentelemetry-otlp",
  "opentelemetry-prometheus",
+ "prometheus",
  "random-string",
  "reqwest",
  "serde",
