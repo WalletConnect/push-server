@@ -42,6 +42,10 @@ resource "aws_ecs_task_definition" "app_task_definition" {
         {
           containerPort = 8080,
           hostPort      = 8080
+        },
+        {
+          containerPort = 8081,
+          hostPort      = 8081
         }
       ],
       environment = [
@@ -49,8 +53,9 @@ resource "aws_ecs_task_definition" "app_task_definition" {
         { name = "LOG_LEVEL", value = "INFO" },
         { name = "DATABASE_URL", value = var.database_url },
         { name = "TENANT_DATABASE_URL", value = var.tenant_database_url },
-        { name = "TELEMETRY_ENABLED", value = "false" },
-        { name = "TELEMETRY_GRPC_URL", value = "http://localhost:4317" }
+        { name = "TELEMETRY_ENABLED", value = "true" },
+        { name = "TELEMETRY_GRPC_URL", value = "http://localhost:4317" },
+        { name = "TELEMETRY_PROMETHEUS_PORT", value = "8081" }
       ],
       dependsOn = [
         { containerName = "aws-otel-collector", condition = "START" }
@@ -70,6 +75,7 @@ resource "aws_ecs_task_definition" "app_task_definition" {
       cpu    = 128,
       memory = 128,
       environment = [
+        { "name" : "AWS_PROMETHEUS_SCRAPING_ENDPOINT", "value" : "0.0.0.0:8081/metrics" },
         { name = "AWS_PROMETHEUS_ENDPOINT", value = "${var.prometheus_endpoint}api/v1/remote_write" },
         { name = "AWS_REGION", value = "eu-central-1" }
       ],
