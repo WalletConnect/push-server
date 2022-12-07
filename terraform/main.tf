@@ -107,7 +107,7 @@ module "ecs" {
 module "monitoring" {
   source = "./monitoring"
 
-  app_name = "${terraform.workspace}-${local.app_name}"
+  app_name                = "${terraform.workspace}-${local.app_name}"
   prometheus_workspace_id = aws_prometheus_workspace.prometheus.id
 }
 
