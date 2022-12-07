@@ -2,7 +2,6 @@ use {
     crate::{
         error::{
             Error::{
-                ClientAlreadyRegistered,
                 EmptyField,
                 IncludedTenantIdWhenNotNeeded,
                 ProviderNotAvailable,
@@ -61,7 +60,15 @@ pub async fn handler(
     };
 
     if exists {
-        return Err(ClientAlreadyRegistered);
+        state
+        .client_store
+        .update_client(&tenant_id, &body.client_id, Client {
+            push_type,
+            token: body.token,
+        })
+        .await?;
+
+        return Ok(Response::default());
     }
 
     state

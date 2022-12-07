@@ -17,6 +17,7 @@ pub struct Client {
 #[async_trait]
 pub trait ClientStore {
     async fn create_client(&self, tenant_id: &str, id: &str, client: Client) -> stores::Result<()>;
+    async fn update_client(&self, tenant_id: &str, id: &str, client: Client) -> stores::Result<()>;
     async fn get_client(&self, tenant_id: &str, id: &str) -> stores::Result<Client>;
     async fn delete_client(&self, tenant_id: &str, id: &str) -> stores::Result<()>;
 }
@@ -41,6 +42,23 @@ impl ClientStore for sqlx::PgPool {
         self.execute(query).await?;
 
         Ok(())
+    }
+
+    async fn update_client(&self, tenant_id: &str, client_id: &str, client: Client) -> stores::Result<()> {
+        let mut query_builder = sqlx::QueryBuilder::new("UPDATE public.clients SET device_token = ");
+        query_builder.push_bind(client.token);
+        query_builder.push(" WHERE id = ");
+        query_builder.push_bind(client_id);
+        query_builder.push(" AND tenant_id = ");
+        query_builder.push_bind(tenant_id);
+        let query = query_builder.build();
+
+        match self.execute(query).await {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                Err(e.into())
+            },
+        }
     }
 
     async fn get_client(&self, tenant_id: &str, id: &str) -> stores::Result<Client> {
