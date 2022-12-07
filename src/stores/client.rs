@@ -17,7 +17,6 @@ pub struct Client {
 #[async_trait]
 pub trait ClientStore {
     async fn create_client(&self, tenant_id: &str, id: &str, client: Client) -> stores::Result<()>;
-    async fn update_client(&self, tenant_id: &str, id: &str, client: Client) -> stores::Result<()>;
     async fn get_client(&self, tenant_id: &str, id: &str) -> stores::Result<Client>;
     async fn delete_client(&self, tenant_id: &str, id: &str) -> stores::Result<()>;
 }
@@ -26,10 +25,10 @@ pub trait ClientStore {
 impl ClientStore for sqlx::PgPool {
     async fn create_client(&self, tenant_id: &str, id: &str, client: Client) -> stores::Result<()> {
         let mut query_builder = sqlx::QueryBuilder::new(
-            "INSERT INTO public.clients (id, tenant_id, push_type, device_token) ",
+            "INSERT INTO public.clients (id, tenant_id, push_type, device_token)",
         );
         query_builder.push_values(
-            vec![(id, tenant_id, client.push_type, client.token)],
+            vec![(id, tenant_id, client.push_type, client.clone().token)],
             |mut b, client| {
                 b.push_bind(client.0)
                     .push_bind(client.1)
@@ -37,28 +36,12 @@ impl ClientStore for sqlx::PgPool {
                     .push_bind(client.3);
             },
         );
+        query_builder.push(" ON CONFLICT (id) DO UPDATE SET device_token = EXCLUDED.device_token");
         let query = query_builder.build();
 
         self.execute(query).await?;
 
         Ok(())
-    }
-
-    async fn update_client(&self, tenant_id: &str, client_id: &str, client: Client) -> stores::Result<()> {
-        let mut query_builder = sqlx::QueryBuilder::new("UPDATE public.clients SET device_token = ");
-        query_builder.push_bind(client.token);
-        query_builder.push(" WHERE id = ");
-        query_builder.push_bind(client_id);
-        query_builder.push(" AND tenant_id = ");
-        query_builder.push_bind(tenant_id);
-        let query = query_builder.build();
-
-        match self.execute(query).await {
-            Ok(_) => Ok(()),
-            Err(e) => {
-                Err(e.into())
-            },
-        }
     }
 
     async fn get_client(&self, tenant_id: &str, id: &str) -> stores::Result<Client> {
