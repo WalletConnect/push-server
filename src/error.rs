@@ -22,6 +22,9 @@ pub enum Error {
     Metrics(#[from] opentelemetry::metrics::MetricsError),
 
     #[error(transparent)]
+    Prometheus(#[from] prometheus::Error),
+
+    #[error(transparent)]
     Apns(#[from] a2::Error),
 
     #[error(transparent)]

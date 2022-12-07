@@ -1,8 +1,5 @@
 use {
-    crate::{
-        state::{Metrics, TenantStoreArc},
-        stores::tenant::DefaultTenantStore,
-    },
+    crate::{metrics::Metrics, state::TenantStoreArc, stores::tenant::DefaultTenantStore},
     axum::{
         routing::{delete, get, post},
         Router,
@@ -10,11 +7,9 @@ use {
     env::Config,
     opentelemetry::{
         sdk::{
-            metrics::selectors,
             trace::{self, IdGenerator, Sampler},
             Resource,
         },
-        util::tokio_interval_stream,
         KeyValue,
     },
     opentelemetry_otlp::{Protocol, WithExportConfig},
@@ -27,12 +22,12 @@ use {
     tower::ServiceBuilder,
     tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
     tracing::{info, log::LevelFilter, warn, Level},
-    tracing_subscriber::fmt::format::FmtSpan,
 };
 
 pub mod env;
 pub mod error;
 pub mod handlers;
+pub mod metrics;
 pub mod middleware;
 pub mod providers;
 pub mod relay;
@@ -116,6 +111,14 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             .with_timeout(Duration::from_secs(5))
             .with_protocol(Protocol::Grpc);
 
+        let resource = Resource::new(vec![
+            KeyValue::new("service.name", "echo-server"),
+            KeyValue::new(
+                "service.version",
+                state.build_info.crate_info.version.clone().to_string(),
+            ),
+        ]);
+
         let tracer = opentelemetry_otlp::new_pipeline()
             .tracing()
             .with_exporter(tracing_exporter)
@@ -126,56 +129,22 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
                     .with_max_events_per_span(64)
                     .with_max_attributes_per_span(16)
                     .with_max_events_per_span(16)
-                    .with_resource(Resource::new(vec![
-                        KeyValue::new("service.name", "echo-server"),
-                        KeyValue::new(
-                            "service.version",
-                            state.build_info.crate_info.version.clone().to_string(),
-                        ),
-                    ])),
+                    .with_resource(resource.clone()),
             )
             .install_batch(opentelemetry::runtime::Tokio)?;
 
-        let metrics_exporter = opentelemetry_otlp::new_exporter()
-            .tonic()
-            .with_endpoint(grpc_url)
-            .with_timeout(Duration::from_secs(5))
-            .with_protocol(Protocol::Grpc);
+        let metrics = Metrics::new(resource)?;
 
-        let meter_provider = opentelemetry_otlp::new_pipeline()
-            .metrics(tokio::spawn, tokio_interval_stream)
-            .with_exporter(metrics_exporter)
-            .with_period(Duration::from_secs(3))
-            .with_timeout(Duration::from_secs(10))
-            .with_aggregator_selector(selectors::simple::Selector::Exact)
-            .build()?;
-
-        opentelemetry::global::set_meter_provider(meter_provider.provider());
-
-        let meter = opentelemetry::global::meter("echo-server");
-        let hooks_counter = meter
-            .i64_up_down_counter("registered_webhooks")
-            .with_description("The number of currently registered webhooks")
-            .init();
-
-        let notification_counter = meter
-            .u64_counter("received_notifications")
-            .with_description("The number of notification received")
-            .init();
-
-        state.set_telemetry(tracer, Metrics {
-            registered_webhooks: hooks_counter,
-            received_notifications: notification_counter,
-        })
-    } else if !state.config.is_test {
-        // Only log to console if telemetry disabled
+        state.set_telemetry(tracer, metrics)
+    } else if !state.config.is_test && !state.config.telemetry_enabled.unwrap_or(false) {
+        // Only log to console if telemetry disabled and its not in tests
         tracing_subscriber::fmt()
             .with_max_level(state.config.log_level())
-            .with_span_events(FmtSpan::CLOSE)
             .init();
     }
 
     let port = state.config.port;
+    let private_port = state.config.telemetry_prometheus_port;
     let build_version = state.build_info.crate_info.version.clone();
     let build_commit = state
         .build_info
@@ -228,6 +197,10 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             post(handlers::push_message::handler),
         )
         .layer(global_middleware)
+        .with_state(state_arc.clone());
+
+    let private_app = Router::new()
+        .route("/metrics", get(handlers::metrics::handler))
         .with_state(state_arc);
 
     let header = format!(
@@ -252,9 +225,11 @@ providers: [{}]
     println!("{}", header);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
+    let private_addr = SocketAddr::from(([0, 0, 0, 0], private_port));
 
     select! {
         _ = axum::Server::bind(&addr).serve(app.into_make_service()) => info!("Server terminating"),
+        _ = axum::Server::bind(&private_addr).serve(private_app.into_make_service()) => info!("Internal Server terminating"),
         _ = shutdown.recv() => info!("Shutdown signal received, killing servers"),
     }
 

@@ -23,6 +23,8 @@ pub struct Config {
     // TELEMETRY
     pub telemetry_enabled: Option<bool>,
     pub telemetry_grpc_url: Option<String>,
+    #[serde(default = "default_telemetry_prometheus_port")]
+    pub telemetry_prometheus_port: u16,
 
     // APNS
     /// This defaults to false and should be changed if sandbox mode is
@@ -85,6 +87,10 @@ impl Config {
 
 fn default_port() -> u16 {
     3000
+}
+
+fn default_telemetry_prometheus_port() -> u16 {
+    3001
 }
 
 fn default_log_level() -> String {

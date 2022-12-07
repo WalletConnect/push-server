@@ -1,14 +1,12 @@
 use {
     crate::{
         env::Config,
+        metrics::Metrics,
         relay::RelayClient,
         stores::{client::ClientStore, notification::NotificationStore, tenant::TenantStore},
     },
     build_info::BuildInfo,
-    opentelemetry::{
-        metrics::{Counter, UpDownCounter},
-        sdk::trace::Tracer,
-    },
+    opentelemetry::sdk::trace::Tracer,
     std::sync::Arc,
     tracing_subscriber::prelude::*,
 };
@@ -16,12 +14,6 @@ use {
 pub type ClientStoreArc = Arc<dyn ClientStore + Send + Sync + 'static>;
 pub type NotificationStoreArc = Arc<dyn NotificationStore + Send + Sync + 'static>;
 pub type TenantStoreArc = Arc<dyn TenantStore + Send + Sync + 'static>;
-
-#[derive(Clone)]
-pub struct Metrics {
-    pub registered_webhooks: UpDownCounter<i64>,
-    pub received_notifications: Counter<u64>,
-}
 
 pub trait State {
     fn config(&self) -> Config;

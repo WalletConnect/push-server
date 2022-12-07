@@ -34,7 +34,9 @@ build-info = "0.0"
 
 # Tracing and Telemetry
 opentelemetry = { version = "0.17", features = ["trace", "metrics", "rt-tokio"] }
-opentelemetry-otlp = { version = "0.10", features = ["metrics", "trace"] }
+opentelemetry-otlp = { version = "0.10", features = ["trace"] }
+opentelemetry-prometheus = "0.10"
+prometheus = "0.13"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 tracing-opentelemetry = "0.17"
