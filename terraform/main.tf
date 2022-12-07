@@ -104,6 +104,13 @@ module "ecs" {
   vpc_id              = module.vpc.vpc_id
 }
 
+module "monitoring" {
+  source = "./monitoring"
+
+  app_name                = "${terraform.workspace}-${local.app_name}"
+  prometheus_workspace_id = aws_prometheus_workspace.prometheus.id
+}
+
 data "aws_ecr_repository" "repository" {
   name = "echo-server"
 }
