@@ -75,7 +75,7 @@ resource "aws_ecs_task_definition" "app_task_definition" {
       ],
       essential = true,
       command = [
-        "--config=/etc/ecs/ecs-amp-prometheus.yaml"
+        "--config=/etc/ecs/ecs-amp-xray-prometheus.yaml"
       ],
       logConfiguration = {
         logDriver = "awslogs",
