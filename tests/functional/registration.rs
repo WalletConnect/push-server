@@ -1,7 +1,9 @@
-use echo_server::handlers::register_client::RegisterBody;
-use random_string::generate;
-
-use {crate::context::ServerContext, test_context::test_context};
+use {
+    crate::context::ServerContext,
+    echo_server::handlers::register_client::RegisterBody,
+    random_string::generate,
+    test_context::test_context,
+};
 
 #[test_context(ServerContext)]
 #[tokio::test]
@@ -9,12 +11,31 @@ async fn test_registration(ctx: &mut ServerContext) {
     let charset = "1234567890";
     let random_client_id = generate(12, charset);
     let payload = RegisterBody {
-        client_id: random_client_id,
+        client_id: random_client_id.clone(),
         push_type: "noop".to_string(),
         token: "test".to_string(),
     };
 
+    // Register client
     let client = reqwest::Client::new();
+    let response = client
+        .post(format!("http://{}/clients", ctx.server.public_addr))
+        .json(&payload)
+        .send()
+        .await
+        .expect("Call failed");
+
+    assert!(
+        response.status().is_success(),
+        "Response was not successful"
+    );
+
+    // Update token
+    let payload = RegisterBody {
+        client_id: random_client_id,
+        push_type: "noop".to_string(),
+        token: "new_token".to_string(),
+    };
     let response = client
         .post(format!("http://{}/clients", ctx.server.public_addr))
         .json(&payload)

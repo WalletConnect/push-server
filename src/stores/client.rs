@@ -25,7 +25,7 @@ pub trait ClientStore {
 impl ClientStore for sqlx::PgPool {
     async fn create_client(&self, tenant_id: &str, id: &str, client: Client) -> stores::Result<()> {
         let mut query_builder = sqlx::QueryBuilder::new(
-            "INSERT INTO public.clients (id, tenant_id, push_type, device_token) ",
+            "INSERT INTO public.clients (id, tenant_id, push_type, device_token)",
         );
         query_builder.push_values(
             vec![(id, tenant_id, client.push_type, client.token)],
@@ -36,6 +36,7 @@ impl ClientStore for sqlx::PgPool {
                     .push_bind(client.3);
             },
         );
+        query_builder.push(" ON CONFLICT (id) DO UPDATE SET device_token = EXCLUDED.device_token");
         let query = query_builder.build();
 
         self.execute(query).await?;

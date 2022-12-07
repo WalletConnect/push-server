@@ -60,9 +60,6 @@ pub enum Error {
     #[error("the `{0}` field must not be empty")]
     EmptyField(String),
 
-    #[error("a client is already registered with the provided identifier")]
-    ClientAlreadyRegistered,
-
     #[error("a required environment variable cannot be found")]
     RequiredEnvNotFound,
 
@@ -139,17 +136,6 @@ impl IntoResponse for Error {
                     message: e.to_string(),
                 }
             ], vec![]),
-            Error::ClientAlreadyRegistered => crate::handlers::Response::new_failure(
-                StatusCode::BAD_REQUEST,
-                vec![],
-                vec![
-                    ErrorField {
-                        field: "client_id".to_string(),
-                        description: "Client already registered with the provided identifier".to_string(),
-                        location: ErrorLocation::Body,
-                    }
-                ],
-            ),
             Error::Store(e) => match e {
                 StoreError::Database(e) => crate::handlers::Response::new_failure(
                     StatusCode::INTERNAL_SERVER_ERROR,

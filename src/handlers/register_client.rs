@@ -1,17 +1,12 @@
 use {
     crate::{
         error::{
-            Error::{
-                ClientAlreadyRegistered,
-                EmptyField,
-                IncludedTenantIdWhenNotNeeded,
-                ProviderNotAvailable,
-            },
+            Error::{EmptyField, IncludedTenantIdWhenNotNeeded, ProviderNotAvailable},
             Result,
         },
         handlers::Response,
         state::{AppState, State},
-        stores::{client::Client, StoreError},
+        stores::client::Client,
     },
     axum::extract::{Json, Path, State as StateExtractor},
     serde::{Deserialize, Serialize},
@@ -44,24 +39,6 @@ pub async fn handler(
 
     if body.token.is_empty() {
         return Err(EmptyField("token".to_string()));
-    }
-
-    let exists = match state
-        .client_store
-        .get_client(&tenant_id, &body.client_id)
-        .await
-    {
-        Ok(_) => true,
-        Err(e) => match e {
-            StoreError::Database(db_error) => {
-                return Err(db_error.into());
-            }
-            StoreError::NotFound(_, _) => false,
-        },
-    };
-
-    if exists {
-        return Err(ClientAlreadyRegistered);
     }
 
     state
