@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.10.2 - 2022-12-07
+#### Bug Fixes
+- Missing upserts for clients store - (a75f955) - Harry Bairstow
+- - -
+
 ## v0.10.1 - 2022-12-07
 #### Bug Fixes
 - Query error - (4be9363) - Harry Bairstow
