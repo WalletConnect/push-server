@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.10.0 - 2022-12-07
+#### Features
+- Metrics (#58) - (9b3781b) - Harry Bairstow
+- - -
+
 ## v0.9.0 - 2022-12-07
 #### Bug Fixes
 - cannot register clients (#56) - (f2ff6ad) - Harry Bairstow
