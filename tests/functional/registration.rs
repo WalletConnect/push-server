@@ -1,7 +1,9 @@
-use echo_server::handlers::register_client::RegisterBody;
-use random_string::generate;
-
-use {crate::context::ServerContext, test_context::test_context};
+use {
+    crate::context::ServerContext,
+    echo_server::handlers::register_client::RegisterBody,
+    random_string::generate,
+    test_context::test_context,
+};
 
 #[test_context(ServerContext)]
 #[tokio::test]

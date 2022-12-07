@@ -55,7 +55,10 @@ impl Tenant {
     pub fn providers(&self) -> Vec<ProviderKind> {
         let mut supported = vec![];
 
-        if self.apns_certificate.is_some() && self.apns_certificate_password.is_some() && self.apns_topic.is_some() {
+        if self.apns_certificate.is_some()
+            && self.apns_certificate_password.is_some()
+            && self.apns_topic.is_some()
+        {
             supported.push(ProviderKind::Apns);
         }
 

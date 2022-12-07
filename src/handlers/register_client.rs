@@ -1,11 +1,7 @@
 use {
     crate::{
         error::{
-            Error::{
-                EmptyField,
-                IncludedTenantIdWhenNotNeeded,
-                ProviderNotAvailable,
-            },
+            Error::{EmptyField, IncludedTenantIdWhenNotNeeded, ProviderNotAvailable},
             Result,
         },
         handlers::Response,
