@@ -75,7 +75,7 @@ resource "aws_ecs_task_definition" "app_task_definition" {
       cpu    = 128,
       memory = 128,
       environment = [
-        { "name" : "AWS_PROMETHEUS_SCRAPING_ENDPOINT", "value" : "0.0.0.0:8081/metrics" },
+        { "name" : "AWS_PROMETHEUS_SCRAPING_ENDPOINT", "value" : "0.0.0.0:8081" },
         { name = "AWS_PROMETHEUS_ENDPOINT", value = "${var.prometheus_endpoint}api/v1/remote_write" },
         { name = "AWS_REGION", value = "eu-central-1" }
       ],
