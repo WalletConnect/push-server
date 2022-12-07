@@ -36,7 +36,7 @@ impl ClientStore for sqlx::PgPool {
                     .push_bind(client.3);
             },
         );
-        query_builder.push(" ON CONFLICT (id) DO UPDATE SET device_token = EXCLUDED.device_token");
+        query_builder.push(" ON CONFLICT (id) DO UPDATE SET device_token = EXCLUDED.device_token, tenant_id = EXCLUDED.tenant_id, push_type = EXCLUDED.push_type");
         let query = query_builder.build();
 
         self.execute(query).await?;
