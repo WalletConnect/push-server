@@ -1,8 +1,5 @@
 use {
-    crate::{
-        state::{TenantStoreArc},
-        stores::tenant::DefaultTenantStore,
-    },
+    crate::{metrics::Metrics, state::TenantStoreArc, stores::tenant::DefaultTenantStore},
     axum::{
         routing::{delete, get, post},
         Router,
@@ -26,7 +23,6 @@ use {
     tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
     tracing::{info, log::LevelFilter, warn, Level},
 };
-use crate::metrics::Metrics;
 
 pub mod env;
 pub mod error;

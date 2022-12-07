@@ -6,10 +6,10 @@ use {
 
 pub mod delete_client;
 pub mod health;
+pub mod metrics;
 pub mod push_message;
 pub mod register_client;
 pub mod single_tenant_wrappers;
-pub mod metrics;
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "lowercase")]

@@ -1,13 +1,12 @@
-use prometheus::TextEncoder;
 use {
+    crate::error::{Error, Result},
     opentelemetry::{
         metrics::{Counter, UpDownCounter},
         sdk::Resource,
     },
-    opentelemetry_prometheus::{PrometheusExporter},
+    opentelemetry_prometheus::PrometheusExporter,
+    prometheus::TextEncoder,
 };
-use crate::error::Error;
-use crate::error::Result;
 
 #[derive(Clone)]
 pub struct Metrics {
@@ -46,6 +45,8 @@ impl Metrics {
 
     pub fn export(&self) -> Result<String> {
         let data = self.prometheus_exporter.registry().gather();
-        TextEncoder::new().encode_to_string(&data).map_err(|e| Error::Prometheus(e))
+        TextEncoder::new()
+            .encode_to_string(&data)
+            .map_err(|e| Error::Prometheus(e))
     }
 }

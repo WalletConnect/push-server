@@ -6,9 +6,7 @@ use {
         stores::{client::ClientStore, notification::NotificationStore, tenant::TenantStore},
     },
     build_info::BuildInfo,
-    opentelemetry::{
-        sdk::trace::Tracer,
-    },
+    opentelemetry::sdk::trace::Tracer,
     std::sync::Arc,
     tracing_subscriber::prelude::*,
 };
