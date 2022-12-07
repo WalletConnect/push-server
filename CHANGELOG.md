@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.9.0 - 2022-12-07
+#### Bug Fixes
+- cannot register clients (#56) - (f2ff6ad) - Harry Bairstow
+#### Features
+- allow updating device token (#35) - (dbadfe1) - Derek
+- implement integration tests (#55) - (c4e4a37) - Derek
+- - -
+
 ## v0.8.0 - 2022-12-02
 #### Features
 - cover registration logic (#53) - (df88052) - Derek
