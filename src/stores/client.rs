@@ -28,7 +28,7 @@ impl ClientStore for sqlx::PgPool {
             "INSERT INTO public.clients (id, tenant_id, push_type, device_token)",
         );
         query_builder.push_values(
-            vec![(id, tenant_id, client.push_type, client.clone().token)],
+            vec![(id, tenant_id, client.push_type, client.token)],
             |mut b, client| {
                 b.push_bind(client.0)
                     .push_bind(client.1)
