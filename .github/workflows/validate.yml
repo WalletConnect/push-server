@@ -34,9 +34,6 @@ jobs:
           cache-dependency-path: "**/yarn.lock"
       - name: install
         run: yarn install
-      - uses: actions/download-artifact@v3
-        with:
-          name: build-artifacts
       - run: yarn integration:$ENVIRONMENT
         env:
           ENVIRONMENT: ${{ inputs.environment || 'staging' }}
