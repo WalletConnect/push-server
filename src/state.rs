@@ -47,8 +47,8 @@ pub fn new_state(
 ) -> crate::error::Result<AppState> {
     let build_info: &BuildInfo = build_info();
 
-    let is_multitenant = config.tenant_database_url.clone().is_some();
-    let relay_url = config.relay_url.clone().to_string();
+    let is_multitenant = config.tenant_database_url.is_some();
+    let relay_url = config.relay_url.to_string();
 
     Ok(AppState {
         config,

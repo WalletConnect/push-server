@@ -107,7 +107,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
 
         let tracing_exporter = opentelemetry_otlp::new_exporter()
             .tonic()
-            .with_endpoint(grpc_url.clone())
+            .with_endpoint(grpc_url)
             .with_timeout(Duration::from_secs(5))
             .with_protocol(Protocol::Grpc);
 

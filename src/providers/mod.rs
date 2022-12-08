@@ -50,15 +50,15 @@ impl ProviderKind {
     }
 }
 
-impl Into<String> for ProviderKind {
-    fn into(self) -> String {
-        self.as_str().to_string()
+impl From<&ProviderKind> for String {
+    fn from(val: &ProviderKind) -> Self {
+        val.as_str().to_string()
     }
 }
 
-impl Into<String> for &ProviderKind {
-    fn into(self) -> String {
-        self.as_str().to_string()
+impl From<ProviderKind> for String {
+    fn from(val: ProviderKind) -> Self {
+        val.as_str().to_string()
     }
 }
 

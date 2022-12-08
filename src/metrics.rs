@@ -47,6 +47,6 @@ impl Metrics {
         let data = self.prometheus_exporter.registry().gather();
         TextEncoder::new()
             .encode_to_string(&data)
-            .map_err(|e| Error::Prometheus(e))
+            .map_err(Error::Prometheus)
     }
 }

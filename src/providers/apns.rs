@@ -1,3 +1,4 @@
+use a2::NotificationOptions;
 use {
     crate::{handlers::push_message::MessagePayload, providers::PushProvider},
     a2::NotificationBuilder,
@@ -39,8 +40,13 @@ impl PushProvider for ApnsProvider {
         let s = span!(tracing::Level::DEBUG, "send_apns_notification");
         let _ = s.enter();
 
-        let mut opt = a2::NotificationOptions::default();
-        opt.apns_topic = Some(&self.topic);
+        let opt = NotificationOptions {
+            apns_id: None,
+            apns_expiration: None,
+            apns_priority: None,
+            apns_topic: Some(&self.topic),
+            apns_collapse_id: None
+        };
 
         // TODO set title
         let notification =
