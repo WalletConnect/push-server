@@ -36,6 +36,7 @@ impl EchoServer {
                     default_tenant_id: "https://relay.walletconnect.com".into(),
                     telemetry_enabled: None,
                     telemetry_grpc_url: None,
+                    telemetry_prometheus_port: get_random_port(),
                     apns_sandbox: true,
                     apns_certificate: None,
                     apns_certificate_password: None,
