@@ -11,7 +11,11 @@ on:
         description: 'the environment to validate'
         required: true
         default: 'staging'
-        type: string
+        type: choice
+        options:
+        - prod
+        - staging
+        - dev
   workflow_call:
     inputs:
       environment:
@@ -37,3 +41,4 @@ jobs:
       - run: yarn integration:$ENVIRONMENT
         env:
           ENVIRONMENT: ${{ inputs.environment || 'staging' }}
+          TEST_TENANT_ID_APNS: ${{ secrets.TEST_TENANT_ID_APNS }}
