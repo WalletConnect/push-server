@@ -76,16 +76,16 @@ impl Response {
 
 impl IntoResponse for Response {
     fn into_response(self) -> axum::response::Response {
-        let status = self.status_code.clone();
+        let status = self.status_code;
         let json: Json<Value> = self.into();
 
         (status, json).into_response()
     }
 }
 
-impl Into<Json<Value>> for Response {
-    fn into(self) -> Json<Value> {
-        Json(json!(self))
+impl From<Response> for Json<Value> {
+    fn from(value: Response) -> Self {
+        Json(json!(value))
     }
 }
 
