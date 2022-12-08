@@ -27,7 +27,7 @@ concurrency:
 
 jobs:
   tasks:
-    name: "[${{ matrix.os }}/rust-${{matrix.rust}}] ${{ matrix.cargo.name }}"
+    name: "[${{ matrix.os }}/rust-${{matrix.cargo.rustc}}] ${{ matrix.cargo.name }}"
     runs-on:
       group: ubuntu-runners
     services:
@@ -47,22 +47,22 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-        rust:
-          - stable
-          - nightly
         cargo:
           - name: "Clippy"
             cmd: clippy
             args: -- -D clippy::all
             cache: {}
+            rustc: stable
           - name: "Formatting"
             cmd: fmt
             args: -- --check
             cache: {}
+            rustc: nightly
           - name: "Unit Tests"
             cmd: test
             args: --all-features
             cache: { sharedKey: "tests" }
+            rustc: stable
         include:
           - os: ubuntu-latest
             sccache-path: /home/runner/.cache/sccache
@@ -92,7 +92,7 @@ jobs:
       - name: "Install Rust ${{ matrix.rust }}"
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: ${{ matrix.rust }}
+          toolchain: ${{ matrix.cargo.rustc }}
           profile: minimal
           override: true
           components: rustfmt, clippy
