@@ -8,7 +8,10 @@ permissions:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on:
+      group: ubuntu-runners
+    outputs:
+      version: ${{ steps.release.outputs.version }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -59,3 +62,61 @@ jobs:
           body_path: GITHUB_CHANGELOG.md
           tag_name: ${{ steps.release.outputs.version }}
           token: ${{ secrets.PAT }}
+
+  build-container:
+    runs-on:
+      group: ubuntu-runners
+    needs:
+      - release
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      # Authenticate with ECR
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Login to GHCR
+        id: login-ghcr
+        run: |
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u USERNAME --password-stdin
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        if: github.event_name == 'release'
+        with:
+          images: |
+            ${{ steps.login-ecr.outputs.registry }}/echo-server
+            ghcr.io/walletconnect/echo-server
+            walletconnect/echo-server,enable=false
+          flavor: |
+            latest=auto
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=${{ needs.release.outputs.version }}
+      # Setup Buildkit
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        if: github.event_name == 'release'
+
+      - name: Build, tag, and push image to Amazon ECR
+        uses: docker/build-push-action@v3
+        if: github.event_name == 'release'
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
