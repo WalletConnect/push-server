@@ -1,7 +1,6 @@
-use a2::NotificationOptions;
 use {
     crate::{handlers::push_message::MessagePayload, providers::PushProvider},
-    a2::NotificationBuilder,
+    a2::{NotificationBuilder, NotificationOptions},
     async_trait::async_trait,
     std::io::Read,
     tracing::span,
@@ -45,7 +44,7 @@ impl PushProvider for ApnsProvider {
             apns_expiration: None,
             apns_priority: None,
             apns_topic: Some(&self.topic),
-            apns_collapse_id: None
+            apns_collapse_id: None,
         };
 
         // TODO set title
