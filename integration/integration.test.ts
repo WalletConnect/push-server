@@ -7,6 +7,7 @@ declare let process: {
 }
 
 const BASE_URLS = new Map<string, string>([
+  ['prod', 'https://echo.walletconnect.com'],
   ['staging', 'https://staging.echo.walletconnect.com'],
   ['dev', 'http://localhost:3000'],
 ])

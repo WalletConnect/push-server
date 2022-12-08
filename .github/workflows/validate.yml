@@ -1,0 +1,42 @@
+name: validate
+
+on:
+  push:
+    branches:
+      - feat/validate
+
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'the environment to validate'
+        required: true
+        default: 'staging'
+        type: string
+  workflow_call:
+    inputs:
+      environment:
+        description: 'the environment to validate'
+        required: true
+        default: 'staging'
+        type: string
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: setup-node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
+      - name: install
+        run: yarn install
+      - uses: actions/download-artifact@v3
+        with:
+          name: build-artifacts
+      - run: yarn integration:$ENVIRONMENT
+        env:
+          ENVIRONMENT: ${{ inputs.environment || 'staging' }}

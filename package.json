@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Integration tests for echo server",
   "scripts": {
+    "integration:prod": "JEST_ENV=prod jest --config jestconfig.integration.json --verbose",
     "integration:staging": "JEST_ENV=staging jest --config jestconfig.integration.json --verbose",
     "integration:dev": "JEST_ENV=dev jest --config jestconfig.integration.json --verbose",
     "format": "prettier --config integration/.prettierrc --write '*.{json,js}' 'integration/**/*.{js,ts}' '.github/**/*.{yml,yaml}'",
