@@ -61,15 +61,13 @@ jobs:
           onepassword-api-key: ${{ secrets.OP_CONNECT_TOKEN }}
           app-name: ${{ github.event.repository.name }}
 
-  # TODO: Run integration test suite here
-
-  check-staging-health:
-    needs:
-      - deploy-infra-staging
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check Staging Up
-        run: curl --fail --connect-timeout 15 --retry 5 --retry-delay 5 https://staging.echo.walletconnect.com/health
+  validate_staging:
+    needs: [deploy-infra-staging]
+    uses: ./.github/workflows/validate.yml
+    with:
+      environment: 'staging'
+      secrets:
+        TEST_TENANT_ID_APNS: ${{ secrets.TEST_TENANT_ID_APNS }}
 
   deploy-infra-prod:
     runs-on: ubuntu-latest
@@ -78,7 +76,7 @@ jobs:
       url: https://echo.walletconnect.com/health
     needs:
       - get-version
-      - check-staging-health
+      - validate_staging
     steps:
       - name: Checkout
         uses: actions/checkout@v3

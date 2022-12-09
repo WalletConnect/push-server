@@ -1,0 +1,40 @@
+name: validate
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'the environment to validate'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - prod
+        - staging
+        - dev
+  workflow_call:
+    inputs:
+      environment:
+        description: 'the environment to validate'
+        required: true
+        default: 'staging'
+        type: string
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: setup-node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+          cache: "yarn"
+          cache-dependency-path: "**/yarn.lock"
+      - name: install
+        run: yarn install
+      - run: yarn integration:$ENVIRONMENT
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          TEST_TENANT_ID_APNS: ${{ secrets.TEST_TENANT_ID_APNS }}

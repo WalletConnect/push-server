@@ -2,16 +2,18 @@ import axios from 'axios'
 
 declare let process: {
   env: {
-    JEST_ENV: string
+    JEST_ENV: string,
+    TEST_TENANT_ID_APNS: string,
   }
 }
 
 const BASE_URLS = new Map<string, string>([
+  ['prod', 'https://echo.walletconnect.com'],
   ['staging', 'https://staging.echo.walletconnect.com'],
   ['dev', 'http://localhost:3000'],
 ])
 
-const TEST_TENANT = 'f1e0fcb9-75f8-49b5-a05b-00c35ac8418f'
+const TEST_TENANT = process.env.TEST_TENANT_ID_APNS
 
 const BASE_URL = BASE_URLS.get(process.env.JEST_ENV)
 
