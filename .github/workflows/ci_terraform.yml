@@ -30,7 +30,7 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     environment:
-      name: infra/staging
+      name: staging
       url: https://staging.relay.walletconnect.com/health
     steps:
       - name: Checkout

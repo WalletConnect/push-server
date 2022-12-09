@@ -36,5 +36,5 @@ jobs:
         run: yarn install
       - run: yarn integration:$ENVIRONMENT
         env:
-          ENVIRONMENT: ${{ inputs.environment || 'staging' }}
+          ENVIRONMENT: ${{ inputs.environment }}
           TEST_TENANT_ID_APNS: ${{ secrets.TEST_TENANT_ID_APNS }}
