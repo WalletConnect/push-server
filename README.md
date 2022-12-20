@@ -24,8 +24,6 @@ When using the hosted platform or self-hosting this implementation you have to p
 you FCM API Key or APNS certificates and then - following the FCM/APNS docs - add support for that within your
 wallet.
 
-> **Warning** e2e encrypted notifications will be coming soon which will change your implementations!
-
 You also have to register the device with the instance of Echo Server once when the client_id is initially
 generated. By sending a POST request to `<INSTANCE_URL>/clients` as per the [spec](./spec/spec.md).
 
