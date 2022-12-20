@@ -13,7 +13,7 @@ pub struct FcmProvider {
 
 impl FcmProvider {
     pub fn new(api_key: String) -> Self {
-        FcmProvider {
+        Self {
             api_key,
             client: fcm::Client::new(),
         }
@@ -50,7 +50,7 @@ impl PushProvider for FcmProvider {
 
 impl Clone for FcmProvider {
     fn clone(&self) -> Self {
-        FcmProvider {
+        Self {
             api_key: self.api_key.clone(),
             client: fcm::Client::new(),
         }

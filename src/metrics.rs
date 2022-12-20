@@ -36,7 +36,7 @@ impl Metrics {
             .with_description("The number of notification received")
             .init();
 
-        Ok(Metrics {
+        Ok(Self {
             prometheus_exporter: exporter,
             registered_webhooks: hooks_counter,
             received_notifications: notification_counter,

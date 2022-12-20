@@ -22,7 +22,7 @@ impl ApnsProvider {
     where
         R: Read,
     {
-        Ok(ApnsProvider {
+        Ok(Self {
             client: a2::Client::certificate(cert, password.as_str(), endpoint)?,
             topic,
         })

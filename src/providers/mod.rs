@@ -100,10 +100,10 @@ impl PushProvider for Provider {
         let s = span!(tracing::Level::INFO, "send_notification");
         let _ = s.enter();
         match self {
-            Provider::Fcm(p) => p.send_notification(token, payload).await,
-            Provider::Apns(p) => p.send_notification(token, payload).await,
+            Self::Fcm(p) => p.send_notification(token, payload).await,
+            Self::Apns(p) => p.send_notification(token, payload).await,
             #[cfg(any(debug_assertions, test))]
-            Provider::Noop(p) => p.send_notification(token, payload).await,
+            Self::Noop(p) => p.send_notification(token, payload).await,
         }
     }
 }

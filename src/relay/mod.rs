@@ -15,8 +15,8 @@ pub struct RelayClient {
 }
 
 impl RelayClient {
-    pub fn new(base_url: String) -> RelayClient {
-        RelayClient {
+    pub fn new(base_url: String) -> Self {
+        Self {
             http_client: reqwest::Client::new(),
             base_url,
             public_key: None,

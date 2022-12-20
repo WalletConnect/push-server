@@ -97,49 +97,49 @@ pub enum Error {
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
         match self {
-            Error::Apns(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
+            Self::Apns(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
                 ResponseError {
                     name: "apns".to_string(),
                     message: e.to_string(),
                 }
             ], vec![]),
-            Error::Fcm(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
+            Self::Fcm(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
                 ResponseError {
                     name: "fcm".to_string(),
                     message: e.to_string(),
                 }
             ], vec![]),
-            Error::Database(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
+            Self::Database(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
                 ResponseError {
                     name: "sqlx".to_string(),
                     message: e.to_string(),
                 }
             ], vec![]),
-            Error::Hex(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
+            Self::Hex(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
                 ResponseError {
                     name: "from_hex".to_string(),
                     message: e.to_string(),
                 }
             ], vec![]),
-            Error::Ed25519(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
+            Self::Ed25519(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
                 ResponseError {
                     name: "ed25519".to_string(),
                     message: e.to_string(),
                 }
             ], vec![]),
-            Error::HttpRequest(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
+            Self::HttpRequest(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
                 ResponseError {
                     name: "http_request".to_string(),
                     message: e.to_string(),
                 }
             ], vec![]),
-            Error::Base64Decode(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
+            Self::Base64Decode(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
                 ResponseError {
                     name: "base64_decode".to_string(),
                     message: e.to_string(),
                 }
             ], vec![]),
-            Error::Store(e) => match e {
+            Self::Store(e) => match e {
                 StoreError::Database(e) => crate::handlers::Response::new_failure(
                     StatusCode::INTERNAL_SERVER_ERROR,
                     vec![ResponseError {
@@ -158,7 +158,7 @@ impl IntoResponse for Error {
                     }],
                 ),
             },
-            Error::ProviderNotFound(p) => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
+            Self::ProviderNotFound(p) => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
                 ResponseError {
                     name: "provider_not_available".to_string(),
                     message: format!("The requested provider ({}) is not a valid provider", &p),
@@ -170,7 +170,7 @@ impl IntoResponse for Error {
                     location: ErrorLocation::Body
                 }
             ]),
-            Error::ProviderNotAvailable(p) => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
+            Self::ProviderNotAvailable(p) => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
                 ResponseError {
                     name: "provider_not_available".to_string(),
                     message: format!("The requested provider ({}) is not currently available", &p),
@@ -182,7 +182,7 @@ impl IntoResponse for Error {
                     location: ErrorLocation::Body
                 }
             ]),
-            Error::MissingAllSignatureHeader => crate::handlers::Response::new_failure(StatusCode::UNAUTHORIZED, vec![
+            Self::MissingAllSignatureHeader => crate::handlers::Response::new_failure(StatusCode::UNAUTHORIZED, vec![
                 ResponseError {
                     name: "webhook_validation_failed".to_string(),
                     message: "Failed to validate webhook, please ensure that all required headers are provided.".to_string(),
@@ -199,7 +199,7 @@ impl IntoResponse for Error {
                     location: ErrorLocation::Header
                 }
             ]),
-            Error::MissingSignatureHeader => crate::handlers::Response::new_failure(StatusCode::UNAUTHORIZED, vec![
+            Self::MissingSignatureHeader => crate::handlers::Response::new_failure(StatusCode::UNAUTHORIZED, vec![
                 ResponseError {
                     name: "webhook_validation_failed".to_string(),
                     message: "Failed to validate webhook, please ensure that all required headers are provided.".to_string(),
@@ -211,7 +211,7 @@ impl IntoResponse for Error {
                     location: ErrorLocation::Header
                 }
             ]),
-            Error::MissingTimestampHeader => crate::handlers::Response::new_failure(StatusCode::UNAUTHORIZED, vec![
+            Self::MissingTimestampHeader => crate::handlers::Response::new_failure(StatusCode::UNAUTHORIZED, vec![
                 ResponseError {
                     name: "webhook_validation_failed".to_string(),
                     message: "Failed to validate webhook, please ensure that all required headers are provided.".to_string(),
@@ -223,7 +223,7 @@ impl IntoResponse for Error {
                     location: ErrorLocation::Header
                 }
             ]),
-            Error::InvalidTenantId(id) => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
+            Self::InvalidTenantId(id) => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
                 ResponseError {
                     name: "tenant".to_string(),
                     message: format!("The provided Tenant ID, {}, is invalid. Please ensure it's valid and the url is in the format /:tenant_id/...path", &id),
@@ -235,7 +235,7 @@ impl IntoResponse for Error {
                     location: ErrorLocation::Path
                 }
             ]),
-            Error::MissingTenantId => crate::handlers::Response::new_failure(
+            Self::MissingTenantId => crate::handlers::Response::new_failure(
                 StatusCode::BAD_REQUEST,
                 vec![ResponseError {
                     name: "tenancy-mode".to_string(),
@@ -243,7 +243,7 @@ impl IntoResponse for Error {
                 }],
                 vec![],
             ),
-            Error::IncludedTenantIdWhenNotNeeded => crate::handlers::Response::new_failure(
+            Self::IncludedTenantIdWhenNotNeeded => crate::handlers::Response::new_failure(
                 StatusCode::BAD_REQUEST,
                 vec![ResponseError {
                     name: "tenancy-mode".to_string(),

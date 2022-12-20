@@ -203,8 +203,8 @@ impl TenantWriteStore for PgPool {
 pub struct DefaultTenantStore(Tenant);
 
 impl DefaultTenantStore {
-    pub fn new(config: Arc<Config>) -> Result<DefaultTenantStore> {
-        Ok(DefaultTenantStore(Tenant {
+    pub fn new(config: Arc<Config>) -> Result<Self> {
+        Ok(Self(Tenant {
             id: config.default_tenant_id.clone(),
             fcm_api_key: config.fcm_api_key.clone(),
             apns_sandbox: config.apns_sandbox,

@@ -52,7 +52,7 @@ pub struct Response {
 
 impl Response {
     pub fn new_success(status: StatusCode) -> Self {
-        Response {
+        Self {
             status: ResponseStatus::Success,
             status_code: status,
             errors: None,
@@ -65,7 +65,7 @@ impl Response {
         errors: Vec<ResponseError>,
         fields: Vec<ErrorField>,
     ) -> Self {
-        Response {
+        Self {
             status: ResponseStatus::Failure,
             status_code: status,
             errors: Some(errors),
@@ -85,12 +85,12 @@ impl IntoResponse for Response {
 
 impl From<Response> for Json<Value> {
     fn from(value: Response) -> Self {
-        Json(json!(value))
+        Self(json!(value))
     }
 }
 
 impl Default for Response {
     fn default() -> Self {
-        Response::new_success(StatusCode::OK)
+        Self::new_success(StatusCode::OK)
     }
 }
