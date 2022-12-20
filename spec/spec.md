@@ -84,8 +84,11 @@ DELETE <ECHO_SERVER_URL>/clients/<CLIENT_ID>
 POST <ECHO_SERVER_URL>/clients/<CLIENT_ID>
 {
     "id": "0000-0000-0000-0000"
-    "payload": "<topic>:<flags>:<blob>"
-}
+    "payload": {
+      "topic": "<topic>",
+      "flags": <flags>,
+      "blob": "<blob>"
+    }
 ```
 
 - `CLIENT_ID`: This is used to map to the device token
