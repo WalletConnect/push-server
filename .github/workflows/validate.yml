@@ -19,6 +19,9 @@ on:
         required: true
         default: 'staging'
         type: string
+    secrets:
+      TEST_TENANT_ID_APNS:
+        required: true
 
 jobs:
   validate:
