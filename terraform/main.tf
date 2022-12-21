@@ -109,6 +109,8 @@ module "monitoring" {
 
   app_name                = "${terraform.workspace}-${local.app_name}"
   prometheus_workspace_id = aws_prometheus_workspace.prometheus.id
+  load_balancer_arn       = module.ecs.load_balancer_arn
+  environment             = terraform.workspace
 }
 
 data "aws_ecr_repository" "repository" {
