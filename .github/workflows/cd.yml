@@ -66,8 +66,8 @@ jobs:
     uses: ./.github/workflows/validate.yml
     with:
       environment: 'staging'
-      secrets:
-        TEST_TENANT_ID_APNS: ${{ secrets.TEST_TENANT_ID_APNS }}
+    secrets:
+      TEST_TENANT_ID_APNS: ${{ secrets.TEST_TENANT_ID_APNS }}
 
   deploy-infra-prod:
     runs-on: ubuntu-latest
