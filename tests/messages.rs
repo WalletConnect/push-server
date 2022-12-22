@@ -1,5 +1,7 @@
-use echo_server::blob::{DecryptedPayloadBlob, ENCRYPTED_FLAG};
-use echo_server::handlers::push_message::{MessagePayload};
+use echo_server::{
+    blob::{DecryptedPayloadBlob, ENCRYPTED_FLAG},
+    handlers::push_message::MessagePayload,
+};
 
 const EXAMPLE_TOPIC: &str = "example-topic";
 
@@ -9,7 +11,9 @@ const EXAMPLE_CLEARTEXT_ENCODED_BLOB: &str = "eyJ0aXRsZSI6IllvdSBoYXZlIGEgc2lnbi
 // json string
 const EXAMPLE_CLEARTEXT_BLOB_TITLE: &str = "You have a sign request";
 const EXAMPLE_CLEARTEXT_BLOB_BODY: &str = "example-dapp has sent you a request to sign a message";
-const EXAMPLE_CLEARTEXT_BLOB: &str = "{\"title\":\"You have a sign request\",\"body\":\"example-dapp has sent you a request to sign a message\"}";
+const EXAMPLE_CLEARTEXT_BLOB: &str = "{\"title\":\"You have a sign \
+                                      request\",\"body\":\"example-dapp has sent you a request to \
+                                      sign a message\"}";
 
 // This can be any text as echo-server doesn't mutate or read it
 const EXAMPLE_ENCRYPTED_BLOB: &str = "encrypted-blob";
@@ -44,7 +48,8 @@ pub fn parse_blob_from_payload() {
         blob: EXAMPLE_CLEARTEXT_ENCODED_BLOB.to_string(),
     };
 
-    let blob = DecryptedPayloadBlob::from_base64_encoded(payload.blob).expect("Failed to parse payload's blob");
+    let blob = DecryptedPayloadBlob::from_base64_encoded(payload.blob)
+        .expect("Failed to parse payload's blob");
 
     assert_eq!(blob, DecryptedPayloadBlob {
         title: EXAMPLE_CLEARTEXT_BLOB_TITLE.to_string(),
@@ -56,7 +61,9 @@ pub fn parse_blob_from_payload() {
 
 #[test]
 pub fn parse_encoded_blob() {
-    let blob = DecryptedPayloadBlob::from_base64_encoded(EXAMPLE_CLEARTEXT_ENCODED_BLOB.to_string()).expect("Failed to parse encoded blob");
+    let blob =
+        DecryptedPayloadBlob::from_base64_encoded(EXAMPLE_CLEARTEXT_ENCODED_BLOB.to_string())
+            .expect("Failed to parse encoded blob");
 
     assert_eq!(blob, DecryptedPayloadBlob {
         title: EXAMPLE_CLEARTEXT_BLOB_TITLE.to_string(),
@@ -68,7 +75,8 @@ pub fn parse_encoded_blob() {
 
 #[test]
 pub fn parse_blob() {
-    let blob = DecryptedPayloadBlob::from_json_string(EXAMPLE_CLEARTEXT_BLOB.to_string()).expect("Failed to parse blob");
+    let blob = DecryptedPayloadBlob::from_json_string(EXAMPLE_CLEARTEXT_BLOB.to_string())
+        .expect("Failed to parse blob");
 
     assert_eq!(blob, DecryptedPayloadBlob {
         title: EXAMPLE_CLEARTEXT_BLOB_TITLE.to_string(),

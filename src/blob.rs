@@ -1,5 +1,7 @@
-use crate::error::Result;
-use serde::{Serialize, Deserialize};
+use {
+    crate::error::Result,
+    serde::{Deserialize, Serialize},
+};
 
 pub type Flag = u32;
 pub const ENCRYPTED_FLAG: Flag = 1 << 0;
