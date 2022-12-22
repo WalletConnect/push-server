@@ -2,6 +2,21 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.11.0 - 2022-12-22
+#### Bug Fixes
+- **(cd)** cannot invoke validate from CD - (4943390) - Derek
+- **(cd)** syntax error in workflow - (e797cc7) - Derek
+- Pipelines (#60) - (01589cf) - Harry Bairstow
+#### Features
+- **(o11y)** add http metrics - (d4037ce) - Derek
+- E2EE (#72) - (05f70a1) - Harry Bairstow
+- allow to manually kick off CD - (e690245) - Derek
+- add basic dashboard (#67) - (22851b8) - Derek
+- Migrate to E2EE webhooks (#70) - (611f14c) - Harry Bairstow
+- add validate workflow (#62) - (87870fa) - Derek
+- Monitoring (#59) - (59ce744) - Harry Bairstow
+- - -
+
 ## v0.10.2 - 2022-12-07
 #### Bug Fixes
 - Missing upserts for clients store - (a75f955) - Harry Bairstow
