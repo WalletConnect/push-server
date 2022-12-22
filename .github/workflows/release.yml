@@ -5,6 +5,7 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   release:
@@ -91,6 +92,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+          logout: false
 
       - name: Docker meta
         id: meta
@@ -98,7 +100,7 @@ jobs:
         with:
           images: |
             ${{ steps.login-ecr.outputs.registry }}/echo-server
-            ghcr.io/walletconnect/echo-server
+            ghcr.io/${{ github.repository }}
             walletconnect/echo-server,enable=false
           flavor: |
             latest=auto
