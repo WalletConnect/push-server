@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.11.2 - 2022-12-22
+#### Bug Fixes
+- publish container to ghcr - (f8110e6) - Harry Bairstow
+- - -
+
 ## v0.11.1 - 2022-12-22
 #### Bug Fixes
 - Doesn't build containers - (f769ac6) - Harry Bairstow
