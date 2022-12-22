@@ -61,7 +61,8 @@ impl PushProvider for ApnsProvider {
 
             let _ = self.client.send(notification_payload).await?;
         } else {
-            let blob: DecryptedPayloadBlob = serde_json::from_str(&payload.blob)?;
+            let blob_decoded = base64::decode(&payload.blob)?;
+            let blob: DecryptedPayloadBlob = serde_json::from_slice(&blob_decoded)?;
 
             let notification_payload = a2::DefaultNotificationBuilder::new()
                 .set_title(&blob.title)

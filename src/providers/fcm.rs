@@ -42,7 +42,8 @@ impl PushProvider for FcmProvider {
 
             let _ = self.client.send(fcm_message).await?;
         } else {
-            let blob: DecryptedPayloadBlob = serde_json::from_str(&payload.blob)?;
+            let blob_decoded = base64::decode(&payload.blob)?;
+            let blob: DecryptedPayloadBlob = serde_json::from_slice(&blob_decoded)?;
 
             let mut notification_builder = NotificationBuilder::new();
             notification_builder.title(blob.title.as_str());
