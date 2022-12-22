@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.11.1 - 2022-12-22
+#### Bug Fixes
+- Doesn't build containers - (f769ac6) - Harry Bairstow
+- - -
+
 ## v0.11.0 - 2022-12-22
 #### Bug Fixes
 - **(cd)** cannot invoke validate from CD - (4943390) - Derek
