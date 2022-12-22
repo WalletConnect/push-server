@@ -1,5 +1,9 @@
 use {
-    crate::{handlers::push_message::MessagePayload, providers::PushProvider},
+    crate::{
+        blob::DecryptedPayloadBlob,
+        handlers::push_message::MessagePayload,
+        providers::PushProvider,
+    },
     a2::{NotificationBuilder, NotificationOptions},
     async_trait::async_trait,
     std::io::Read,
@@ -47,11 +51,26 @@ impl PushProvider for ApnsProvider {
             apns_collapse_id: None,
         };
 
-        // TODO set title
-        let notification =
-            a2::PlainNotificationBuilder::new(&payload.description).build(token.as_str(), opt);
+        // TODO tidy after https://github.com/WalletConnect/a2/issues/67 is closed
+        if payload.is_encrypted() {
+            let mut notification_payload = a2::DefaultNotificationBuilder::new()
+                .set_content_available()
+                .set_mutable_content()
+                .build(token.as_str(), opt);
 
-        let _ = self.client.send(notification).await?;
+            notification_payload.add_custom_data("encrypted_payload", &payload)?;
+
+            let _ = self.client.send(notification_payload).await?;
+        } else {
+            let blob = DecryptedPayloadBlob::from_base64_encoded(payload.blob)?;
+
+            let notification_payload = a2::DefaultNotificationBuilder::new()
+                .set_title(&blob.title)
+                .set_body(&blob.body)
+                .build(token.as_str(), opt);
+
+            let _ = self.client.send(notification_payload).await?;
+        }
 
         Ok(())
     }

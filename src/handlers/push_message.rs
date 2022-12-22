@@ -1,5 +1,6 @@
 use {
     crate::{
+        blob::ENCRYPTED_FLAG,
         error::{Error::IncludedTenantIdWhenNotNeeded, Result},
         handlers::Response,
         middleware::validate_signature::RequireValidSignature,
@@ -16,8 +17,15 @@ use {
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct MessagePayload {
-    pub title: String,
-    pub description: String,
+    pub topic: String,
+    pub flags: u32,
+    pub blob: String,
+}
+
+impl MessagePayload {
+    pub fn is_encrypted(&self) -> bool {
+        (self.flags & ENCRYPTED_FLAG) == ENCRYPTED_FLAG
+    }
 }
 
 #[derive(Serialize, Deserialize)]

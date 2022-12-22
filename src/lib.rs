@@ -24,6 +24,7 @@ use {
     tracing::{info, log::LevelFilter, warn, Level},
 };
 
+pub mod blob;
 pub mod env;
 pub mod error;
 pub mod handlers;
