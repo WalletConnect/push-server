@@ -1,6 +1,7 @@
 use {
     crate::{
-        handlers::push_message::{DecryptedPayloadBlob, MessagePayload},
+        blob::DecryptedPayloadBlob,
+        handlers::push_message::MessagePayload,
         providers::PushProvider,
     },
     async_trait::async_trait,
@@ -42,8 +43,7 @@ impl PushProvider for FcmProvider {
 
             let _ = self.client.send(fcm_message).await?;
         } else {
-            let blob_decoded = base64::decode(&payload.blob)?;
-            let blob: DecryptedPayloadBlob = serde_json::from_slice(&blob_decoded)?;
+            let blob = DecryptedPayloadBlob::from_base64_encoded(payload.blob)?;
 
             let mut notification_builder = NotificationBuilder::new();
             notification_builder.title(blob.title.as_str());

@@ -3,6 +3,7 @@
 // mod store; // Comment this out for now
 mod context;
 mod functional;
+mod messages;
 
 pub type ErrorResult<T> = Result<T, TestError>;
 

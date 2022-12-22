@@ -1,6 +1,7 @@
 use {
     crate::{
-        handlers::push_message::{DecryptedPayloadBlob, MessagePayload},
+        blob::DecryptedPayloadBlob,
+        handlers::push_message::MessagePayload,
         providers::PushProvider,
     },
     a2::{NotificationBuilder, NotificationOptions},
@@ -61,8 +62,7 @@ impl PushProvider for ApnsProvider {
 
             let _ = self.client.send(notification_payload).await?;
         } else {
-            let blob_decoded = base64::decode(&payload.blob)?;
-            let blob: DecryptedPayloadBlob = serde_json::from_slice(&blob_decoded)?;
+            let blob = DecryptedPayloadBlob::from_base64_encoded(payload.blob)?;
 
             let notification_payload = a2::DefaultNotificationBuilder::new()
                 .set_title(&blob.title)
