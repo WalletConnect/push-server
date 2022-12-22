@@ -49,6 +49,9 @@ pub enum Error {
     Base64Decode(#[from] base64::DecodeError),
 
     #[error(transparent)]
+    Json(#[from] serde_json::Error),
+
+    #[error(transparent)]
     Store(#[from] StoreError),
 
     #[error("database migration failed: {0}")]

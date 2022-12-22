@@ -14,10 +14,32 @@ use {
     std::sync::Arc,
 };
 
+pub type Flag = u32;
+const ENCRYPTED_FLAG: Flag = 1 << 0;
+const SIGN_FLAG: Flag = 1 << 1;
+const AUTH_FLAG: Flag = 1 << 2;
+const CHAT_FLAG: Flag = 1 << 3;
+const PUSH_FLAG: Flag = 1 << 4;
+
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct MessagePayload {
+    pub topic: String,
+    pub flags: u32,
+    pub blob: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
+pub struct DecryptedPayloadBlob {
     pub title: String,
-    pub description: String,
+    pub body: String,
+    pub image: String,
+    pub url: String,
+}
+
+impl MessagePayload {
+    pub fn is_encrypted(&self) -> bool {
+        (self.flags & ENCRYPTED_FLAG) == ENCRYPTED_FLAG
+    }
 }
 
 #[derive(Serialize, Deserialize)]

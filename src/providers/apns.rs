@@ -1,5 +1,8 @@
 use {
-    crate::{handlers::push_message::MessagePayload, providers::PushProvider},
+    crate::{
+        handlers::push_message::{DecryptedPayloadBlob, MessagePayload},
+        providers::PushProvider,
+    },
     a2::{NotificationBuilder, NotificationOptions},
     async_trait::async_trait,
     std::io::Read,
@@ -47,11 +50,22 @@ impl PushProvider for ApnsProvider {
             apns_collapse_id: None,
         };
 
-        // TODO set title
-        let notification =
-            a2::PlainNotificationBuilder::new(&payload.description).build(token.as_str(), opt);
+        let mut notification = a2::DefaultNotificationBuilder::new();
 
-        let _ = self.client.send(notification).await?;
+        if payload.is_encrypted() {
+            notification = notification.set_content_available().set_mutable_content();
+        } else {
+            let blob: DecryptedPayloadBlob = serde_json::from_str(&payload.blob)?;
+            notification = notification.set_title(&blob.title).set_body(&blob.body);
+        }
+
+        let mut notification_payload = notification.build(token.as_str(), opt);
+
+        if payload.is_encrypted() {
+            notification_payload.add_custom_data("encrypted_payload", &payload)?;
+        }
+
+        let _ = self.client.send(notification_payload).await?;
 
         Ok(())
     }
