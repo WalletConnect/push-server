@@ -50,22 +50,26 @@ impl PushProvider for ApnsProvider {
             apns_collapse_id: None,
         };
 
-        let mut notification = a2::DefaultNotificationBuilder::new();
-
+        // TODO tidy after https://github.com/WalletConnect/a2/issues/67 is closed
         if payload.is_encrypted() {
-            notification = notification.set_content_available().set_mutable_content();
+            let mut notification_payload = a2::DefaultNotificationBuilder::new()
+                .set_content_available()
+                .set_mutable_content()
+                .build(token.as_str(), opt);
+
+            notification_payload.add_custom_data("encrypted_payload", &payload)?;
+
+            let _ = self.client.send(notification_payload).await?;
         } else {
             let blob: DecryptedPayloadBlob = serde_json::from_str(&payload.blob)?;
-            notification = notification.set_title(&blob.title).set_body(&blob.body);
+
+            let notification_payload = a2::DefaultNotificationBuilder::new()
+                .set_title(&blob.title)
+                .set_body(&blob.body)
+                .build(token.as_str(), opt);
+
+            let _ = self.client.send(notification_payload).await?;
         }
-
-        let mut notification_payload = notification.build(token.as_str(), opt);
-
-        if payload.is_encrypted() {
-            notification_payload.add_custom_data("encrypted_payload", &payload)?;
-        }
-
-        let _ = self.client.send(notification_payload).await?;
 
         Ok(())
     }
