@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.11.4 - 2022-12-22
+#### Bug Fixes
+- ghcr `403`'s - (ea61d2f) - Harry Bairstow
+- - -
+
 ## v0.11.3 - 2022-12-22
 #### Bug Fixes
 - ghcr auth in actions - (13b8aa1) - Harry Bairstow
