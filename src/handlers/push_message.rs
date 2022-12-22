@@ -16,10 +16,10 @@ use {
 
 pub type Flag = u32;
 const ENCRYPTED_FLAG: Flag = 1 << 0;
-const SIGN_FLAG: Flag = 1 << 1;
-const AUTH_FLAG: Flag = 1 << 2;
-const CHAT_FLAG: Flag = 1 << 3;
-const PUSH_FLAG: Flag = 1 << 4;
+//const SIGN_FLAG: Flag = 1 << 1;
+//const AUTH_FLAG: Flag = 1 << 2;
+//const CHAT_FLAG: Flag = 1 << 3;
+//const PUSH_FLAG: Flag = 1 << 4;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct MessagePayload {
