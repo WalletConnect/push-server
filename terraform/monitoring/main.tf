@@ -2,7 +2,7 @@ locals {
   # Turns the arn into the format expected by
   # the Grafana provider e.g.
   # net/prod-relay-load-balancer/e9a51c46020a0f85
-  load_balancer = join("/", slice(split("/", var.load_balancer_arn), 1, 4))
+  load_balancer                 = join("/", slice(split("/", var.load_balancer_arn), 1, 4))
   opsgenie_notification_channel = "l_iaPw6nk"
   notifications = (
     var.environment == "prod" ?
@@ -64,307 +64,307 @@ resource "grafana_dashboard" "at_a_glance" {
     liveNow : false,
     panels : [
       {
-        "datasource": {
-          "type": "cloudwatch",
-          "uid": grafana_data_source.cloudwatch.uid
+        "datasource" : {
+          "type" : "cloudwatch",
+          "uid" : grafana_data_source.cloudwatch.uid
         },
-        "fieldConfig": {
-          "defaults": {
-            "color": {
-              "mode": "palette-classic"
+        "fieldConfig" : {
+          "defaults" : {
+            "color" : {
+              "mode" : "palette-classic"
             },
-            "custom": {
-              "axisLabel": "",
-              "axisPlacement": "auto",
-              "barAlignment": 0,
-              "drawStyle": "line",
-              "fillOpacity": 0,
-              "gradientMode": "none",
-              "hideFrom": {
-                "legend": false,
-                "tooltip": false,
-                "viz": false
+            "custom" : {
+              "axisLabel" : "",
+              "axisPlacement" : "auto",
+              "barAlignment" : 0,
+              "drawStyle" : "line",
+              "fillOpacity" : 0,
+              "gradientMode" : "none",
+              "hideFrom" : {
+                "legend" : false,
+                "tooltip" : false,
+                "viz" : false
               },
-              "lineInterpolation": "linear",
-              "lineWidth": 1,
-              "pointSize": 5,
-              "scaleDistribution": {
-                "type": "linear"
+              "lineInterpolation" : "linear",
+              "lineWidth" : 1,
+              "pointSize" : 5,
+              "scaleDistribution" : {
+                "type" : "linear"
               },
-              "showPoints": "auto",
-              "spanNulls": false,
-              "stacking": {
-                "group": "A",
-                "mode": "none"
+              "showPoints" : "auto",
+              "spanNulls" : false,
+              "stacking" : {
+                "group" : "A",
+                "mode" : "none"
               },
-              "thresholdsStyle": {
-                "mode": "off"
+              "thresholdsStyle" : {
+                "mode" : "off"
               }
             },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
+            "mappings" : [],
+            "thresholds" : {
+              "mode" : "absolute",
+              "steps" : [
                 {
-                  "color": "green",
-                  "value": null
+                  "color" : "green",
+                  "value" : null
                 },
                 {
-                  "color": "red",
-                  "value": 80
+                  "color" : "red",
+                  "value" : 80
                 }
               ]
             }
           },
-          "overrides": []
+          "overrides" : []
         },
-        "gridPos": {
-          "h": 9,
-          "w": 7,
-          "x": 0,
-          "y": 0
+        "gridPos" : {
+          "h" : 9,
+          "w" : 7,
+          "x" : 0,
+          "y" : 0
         },
-        "id": 2,
-        "options": {
-          "legend": {
-            "calcs": [],
-            "displayMode": "list",
-            "placement": "bottom"
+        "id" : 2,
+        "options" : {
+          "legend" : {
+            "calcs" : [],
+            "displayMode" : "list",
+            "placement" : "bottom"
           },
-          "tooltip": {
-            "mode": "single",
-            "sort": "none"
+          "tooltip" : {
+            "mode" : "single",
+            "sort" : "none"
           }
         },
-        "targets": [
+        "targets" : [
           {
-            "alias": "",
-            "datasource": {
-              "type": "cloudwatch",
-              "uid": grafana_data_source.cloudwatch.uid
+            "alias" : "",
+            "datasource" : {
+              "type" : "cloudwatch",
+              "uid" : grafana_data_source.cloudwatch.uid
             },
-            "dimensions": {
-              "LoadBalancer": local.load_balancer
+            "dimensions" : {
+              "LoadBalancer" : local.load_balancer
             },
-            "expression": "",
-            "id": "",
-            "matchExact": true,
-            "metricEditorMode": 0,
-            "metricName": "RequestCount",
-            "metricQueryType": 0,
-            "namespace": "AWS/ApplicationELB",
-            "period": "",
-            "queryMode": "Metrics",
-            "refId": "A",
-            "region": "default",
-            "sqlExpression": "",
-            "statistic": "Sum"
+            "expression" : "",
+            "id" : "",
+            "matchExact" : true,
+            "metricEditorMode" : 0,
+            "metricName" : "RequestCount",
+            "metricQueryType" : 0,
+            "namespace" : "AWS/ApplicationELB",
+            "period" : "",
+            "queryMode" : "Metrics",
+            "refId" : "A",
+            "region" : "default",
+            "sqlExpression" : "",
+            "statistic" : "Sum"
           }
         ],
-        "title": "Requests",
-        "type": "timeseries"
+        "title" : "Requests",
+        "type" : "timeseries"
       },
       {
-        "datasource": {
-          "type": "cloudwatch",
-          "uid": grafana_data_source.cloudwatch.uid
+        "datasource" : {
+          "type" : "cloudwatch",
+          "uid" : grafana_data_source.cloudwatch.uid
         },
-        "fieldConfig": {
-          "defaults": {
-            "color": {
-              "mode": "palette-classic"
+        "fieldConfig" : {
+          "defaults" : {
+            "color" : {
+              "mode" : "palette-classic"
             },
-            "custom": {
-              "axisLabel": "",
-              "axisPlacement": "auto",
-              "barAlignment": 0,
-              "drawStyle": "line",
-              "fillOpacity": 0,
-              "gradientMode": "none",
-              "hideFrom": {
-                "legend": false,
-                "tooltip": false,
-                "viz": false
+            "custom" : {
+              "axisLabel" : "",
+              "axisPlacement" : "auto",
+              "barAlignment" : 0,
+              "drawStyle" : "line",
+              "fillOpacity" : 0,
+              "gradientMode" : "none",
+              "hideFrom" : {
+                "legend" : false,
+                "tooltip" : false,
+                "viz" : false
               },
-              "lineInterpolation": "linear",
-              "lineWidth": 1,
-              "pointSize": 5,
-              "scaleDistribution": {
-                "type": "linear"
+              "lineInterpolation" : "linear",
+              "lineWidth" : 1,
+              "pointSize" : 5,
+              "scaleDistribution" : {
+                "type" : "linear"
               },
-              "showPoints": "auto",
-              "spanNulls": false,
-              "stacking": {
-                "group": "A",
-                "mode": "none"
+              "showPoints" : "auto",
+              "spanNulls" : false,
+              "stacking" : {
+                "group" : "A",
+                "mode" : "none"
               },
-              "thresholdsStyle": {
-                "mode": "off"
+              "thresholdsStyle" : {
+                "mode" : "off"
               }
             },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
+            "mappings" : [],
+            "thresholds" : {
+              "mode" : "absolute",
+              "steps" : [
                 {
-                  "color": "green",
-                  "value": null
+                  "color" : "green",
+                  "value" : null
                 },
                 {
-                  "color": "red",
-                  "value": 80
+                  "color" : "red",
+                  "value" : 80
                 }
               ]
             }
           },
-          "overrides": []
+          "overrides" : []
         },
-        "gridPos": {
-          "h": 9,
-          "w": 7,
-          "x": 7,
-          "y": 0
+        "gridPos" : {
+          "h" : 9,
+          "w" : 7,
+          "x" : 7,
+          "y" : 0
         },
-        "id": 3,
-        "options": {
-          "legend": {
-            "calcs": [],
-            "displayMode": "list",
-            "placement": "bottom"
+        "id" : 3,
+        "options" : {
+          "legend" : {
+            "calcs" : [],
+            "displayMode" : "list",
+            "placement" : "bottom"
           },
-          "tooltip": {
-            "mode": "single",
-            "sort": "none"
+          "tooltip" : {
+            "mode" : "single",
+            "sort" : "none"
           }
         },
-        "targets": [
+        "targets" : [
           {
-            "alias": "",
-            "datasource": {
-              "type": "cloudwatch",
-              "uid": grafana_data_source.cloudwatch.uid
+            "alias" : "",
+            "datasource" : {
+              "type" : "cloudwatch",
+              "uid" : grafana_data_source.cloudwatch.uid
             },
-            "dimensions": {
-              "LoadBalancer": local.load_balancer
+            "dimensions" : {
+              "LoadBalancer" : local.load_balancer
             },
-            "expression": "",
-            "id": "",
-            "matchExact": true,
-            "metricEditorMode": 0,
-            "metricName": "HTTPCode_ELB_5XX_Count",
-            "metricQueryType": 0,
-            "namespace": "AWS/ApplicationELB",
-            "period": "",
-            "queryMode": "Metrics",
-            "refId": "A",
-            "region": "default",
-            "sqlExpression": "",
-            "statistic": "Sum"
+            "expression" : "",
+            "id" : "",
+            "matchExact" : true,
+            "metricEditorMode" : 0,
+            "metricName" : "HTTPCode_ELB_5XX_Count",
+            "metricQueryType" : 0,
+            "namespace" : "AWS/ApplicationELB",
+            "period" : "",
+            "queryMode" : "Metrics",
+            "refId" : "A",
+            "region" : "default",
+            "sqlExpression" : "",
+            "statistic" : "Sum"
           }
         ],
-        "title": "5XX",
-        "type": "timeseries"
+        "title" : "5XX",
+        "type" : "timeseries"
       },
       {
-        "datasource": {
-          "type": "cloudwatch",
-          "uid": grafana_data_source.cloudwatch.uid
+        "datasource" : {
+          "type" : "cloudwatch",
+          "uid" : grafana_data_source.cloudwatch.uid
         },
-        "fieldConfig": {
-          "defaults": {
-            "color": {
-              "mode": "palette-classic"
+        "fieldConfig" : {
+          "defaults" : {
+            "color" : {
+              "mode" : "palette-classic"
             },
-            "custom": {
-              "axisLabel": "",
-              "axisPlacement": "auto",
-              "barAlignment": 0,
-              "drawStyle": "line",
-              "fillOpacity": 0,
-              "gradientMode": "none",
-              "hideFrom": {
-                "legend": false,
-                "tooltip": false,
-                "viz": false
+            "custom" : {
+              "axisLabel" : "",
+              "axisPlacement" : "auto",
+              "barAlignment" : 0,
+              "drawStyle" : "line",
+              "fillOpacity" : 0,
+              "gradientMode" : "none",
+              "hideFrom" : {
+                "legend" : false,
+                "tooltip" : false,
+                "viz" : false
               },
-              "lineInterpolation": "linear",
-              "lineWidth": 1,
-              "pointSize": 5,
-              "scaleDistribution": {
-                "type": "linear"
+              "lineInterpolation" : "linear",
+              "lineWidth" : 1,
+              "pointSize" : 5,
+              "scaleDistribution" : {
+                "type" : "linear"
               },
-              "showPoints": "auto",
-              "spanNulls": false,
-              "stacking": {
-                "group": "A",
-                "mode": "none"
+              "showPoints" : "auto",
+              "spanNulls" : false,
+              "stacking" : {
+                "group" : "A",
+                "mode" : "none"
               },
-              "thresholdsStyle": {
-                "mode": "off"
+              "thresholdsStyle" : {
+                "mode" : "off"
               }
             },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
+            "mappings" : [],
+            "thresholds" : {
+              "mode" : "absolute",
+              "steps" : [
                 {
-                  "color": "green",
-                  "value": null
+                  "color" : "green",
+                  "value" : null
                 },
                 {
-                  "color": "red",
-                  "value": 80
+                  "color" : "red",
+                  "value" : 80
                 }
               ]
             }
           },
-          "overrides": []
+          "overrides" : []
         },
-        "gridPos": {
-          "h": 9,
-          "w": 7,
-          "x": 14,
-          "y": 0
+        "gridPos" : {
+          "h" : 9,
+          "w" : 7,
+          "x" : 14,
+          "y" : 0
         },
-        "id": 4,
-        "options": {
-          "legend": {
-            "calcs": [],
-            "displayMode": "list",
-            "placement": "bottom"
+        "id" : 4,
+        "options" : {
+          "legend" : {
+            "calcs" : [],
+            "displayMode" : "list",
+            "placement" : "bottom"
           },
-          "tooltip": {
-            "mode": "single",
-            "sort": "none"
+          "tooltip" : {
+            "mode" : "single",
+            "sort" : "none"
           }
         },
-        "targets": [
+        "targets" : [
           {
-            "alias": "",
-            "datasource": {
-              "type": "cloudwatch",
-              "uid": grafana_data_source.cloudwatch.uid
+            "alias" : "",
+            "datasource" : {
+              "type" : "cloudwatch",
+              "uid" : grafana_data_source.cloudwatch.uid
             },
-            "dimensions": {
-              "LoadBalancer": local.load_balancer
+            "dimensions" : {
+              "LoadBalancer" : local.load_balancer
             },
-            "expression": "",
-            "id": "",
-            "matchExact": true,
-            "metricEditorMode": 0,
-            "metricName": "HTTPCode_ELB_4XX_Count",
-            "metricQueryType": 0,
-            "namespace": "AWS/ApplicationELB",
-            "period": "",
-            "queryMode": "Metrics",
-            "refId": "A",
-            "region": "default",
-            "sqlExpression": "",
-            "statistic": "Sum"
+            "expression" : "",
+            "id" : "",
+            "matchExact" : true,
+            "metricEditorMode" : 0,
+            "metricName" : "HTTPCode_ELB_4XX_Count",
+            "metricQueryType" : 0,
+            "namespace" : "AWS/ApplicationELB",
+            "period" : "",
+            "queryMode" : "Metrics",
+            "refId" : "A",
+            "region" : "default",
+            "sqlExpression" : "",
+            "statistic" : "Sum"
           }
         ],
-        "title": "4XX",
-        "type": "timeseries"
+        "title" : "4XX",
+        "type" : "timeseries"
       }
     ],
     schemaVersion : 36,
