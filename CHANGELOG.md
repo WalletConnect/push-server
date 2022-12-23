@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.11.5 - 2022-12-23
+#### Bug Fixes
+- Incorrect version used for container - (da338b0) - Harry Bairstow
+- - -
+
 ## v0.11.4 - 2022-12-22
 #### Bug Fixes
 - ghcr `403`'s - (ea61d2f) - Harry Bairstow
