@@ -1,3 +1,8 @@
+locals {
+  file_descriptor_soft_limit = pow(2, 18)
+  file_descriptor_hard_limit = local.file_descriptor_soft_limit * 2
+}
+
 # Log Group for our App
 resource "aws_cloudwatch_log_group" "cluster_logs" {
   name              = "${var.app_name}_logs"
@@ -33,9 +38,14 @@ resource "aws_ecs_task_definition" "app_task_definition" {
   task_role_arn      = aws_iam_role.ecs_task_execution_role.arn
   container_definitions = jsonencode([
     {
-      name      = var.app_name,
-      image     = var.image,
-      cpu       = var.cpu - 128, # Remove sidecar memory/cpu so rest is assigned to primary container
+      name  = var.app_name,
+      image = var.image,
+      cpu   = var.cpu - 128, # Remove sidecar memory/cpu so rest is assigned to primary container
+      ulimits = [{
+        name : "nofile",
+        softLimit : local.file_descriptor_soft_limit,
+        hardLimit : local.file_descriptor_hard_limit
+      }],
       memory    = var.memory - 128,
       essential = true,
       portMappings = [
