@@ -43,6 +43,12 @@ FROM                chef AS build
 ARG                 release
 ENV                 RELEASE=${release:+--release}
 
+# This is a build requirement of `opentelemetry-otlp`. Once the new version
+# is rolled out, which no longer requires the `protoc`, we'll be able to
+# get rid of this.
+RUN                 apt-get update \
+  && apt-get install -y --no-install-recommends protobuf-compiler
+
 WORKDIR             /app
 # Cache dependancies
 COPY --from=plan    /app/recipe.json recipe.json

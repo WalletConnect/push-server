@@ -6,9 +6,7 @@ use {
         stores::{client::ClientStore, notification::NotificationStore, tenant::TenantStore},
     },
     build_info::BuildInfo,
-    opentelemetry::sdk::trace::Tracer,
     std::sync::Arc,
-    tracing_subscriber::prelude::*,
 };
 
 pub type ClientStoreArc = Arc<dyn ClientStore + Send + Sync + 'static>;
@@ -63,13 +61,7 @@ pub fn new_state(
 }
 
 impl AppState {
-    pub fn set_telemetry(&mut self, tracer: Tracer, metrics: Metrics) {
-        let otel_tracing_layer = tracing_opentelemetry::layer().with_tracer(tracer);
-
-        tracing_subscriber::registry()
-            .with(otel_tracing_layer)
-            .init();
-
+    pub fn set_metrics(&mut self, metrics: Metrics) {
         self.metrics = Some(metrics);
     }
 }

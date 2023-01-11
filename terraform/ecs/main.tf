@@ -1,6 +1,8 @@
 locals {
   file_descriptor_soft_limit = pow(2, 18)
   file_descriptor_hard_limit = local.file_descriptor_soft_limit * 2
+
+  prometheus_port = "8081"
 }
 
 # Log Group for our App
@@ -65,7 +67,7 @@ resource "aws_ecs_task_definition" "app_task_definition" {
         { name = "TENANT_DATABASE_URL", value = var.tenant_database_url },
         { name = "TELEMETRY_ENABLED", value = "true" },
         { name = "TELEMETRY_GRPC_URL", value = "http://localhost:4317" },
-        { name = "TELEMETRY_PROMETHEUS_PORT", value = "8081" }
+        { name = "TELEMETRY_PROMETHEUS_PORT", value = local.prometheus_port }
       ],
       dependsOn = [
         { containerName = "aws-otel-collector", condition = "START" }
@@ -85,7 +87,7 @@ resource "aws_ecs_task_definition" "app_task_definition" {
       cpu    = 128,
       memory = 128,
       environment = [
-        { "name" : "AWS_PROMETHEUS_SCRAPING_ENDPOINT", "value" : "0.0.0.0:8081" },
+        { name = "AWS_PROMETHEUS_SCRAPING_ENDPOINT", value = "0.0.0.0:${local.prometheus_port}" },
         { name = "AWS_PROMETHEUS_ENDPOINT", value = "${var.prometheus_endpoint}api/v1/remote_write" },
         { name = "AWS_REGION", value = "eu-central-1" }
       ],

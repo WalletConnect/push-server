@@ -10,6 +10,8 @@ pub struct Config {
     pub port: u16,
     #[serde(default = "default_log_level")]
     pub log_level: String,
+    #[serde(default = "default_log_level_otel")]
+    pub log_level_otel: String,
     #[serde(default = "default_relay_url")]
     pub relay_url: String,
     pub database_url: String,
@@ -64,6 +66,10 @@ impl Config {
         tracing::Level::from_str(self.log_level.as_str()).expect("Invalid log level")
     }
 
+    pub fn log_level_otel(&self) -> tracing::Level {
+        tracing::Level::from_str(self.log_level_otel.as_str()).expect("Invalid log level")
+    }
+
     pub fn single_tenant_supported_providers(&self) -> Vec<ProviderKind> {
         let mut supported = vec![];
 
@@ -94,7 +100,11 @@ fn default_telemetry_prometheus_port() -> u16 {
 }
 
 fn default_log_level() -> String {
-    "WARN".to_string()
+    "info,echo-server=info".to_string()
+}
+
+fn default_log_level_otel() -> String {
+    "info,echo-server=trace".to_string()
 }
 
 fn default_apns_sandbox_mode() -> bool {

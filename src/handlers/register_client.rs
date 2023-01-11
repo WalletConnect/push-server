@@ -1,11 +1,12 @@
+use opentelemetry::Context;
 use {
     crate::{
         error::{
-            Error::{EmptyField, IncludedTenantIdWhenNotNeeded, ProviderNotAvailable},
+            Error::{EmptyField, ProviderNotAvailable},
             Result,
         },
         handlers::Response,
-        state::{AppState, State},
+        state::AppState,
         stores::client::Client,
     },
     axum::extract::{Json, Path, State as StateExtractor},
@@ -26,10 +27,6 @@ pub async fn handler(
     StateExtractor(state): StateExtractor<Arc<AppState>>,
     Json(body): Json<RegisterBody>,
 ) -> Result<Response> {
-    if state.config.default_tenant_id != tenant_id && !state.is_multitenant() {
-        return Err(IncludedTenantIdWhenNotNeeded);
-    }
-
     let push_type = body.push_type.as_str().try_into()?;
     let tenant = state.tenant_store.get_tenant(&tenant_id).await?;
     let supported_providers = tenant.providers();
@@ -50,7 +47,7 @@ pub async fn handler(
         .await?;
 
     if let Some(metrics) = &state.metrics {
-        metrics.registered_webhooks.add(1, &[]);
+        metrics.registered_clients.add(&Context::current(), 1, &[]);
     }
 
     Ok(Response::default())

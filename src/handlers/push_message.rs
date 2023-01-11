@@ -1,11 +1,12 @@
+use opentelemetry::Context;
 use {
     crate::{
         blob::ENCRYPTED_FLAG,
-        error::{Error::IncludedTenantIdWhenNotNeeded, Result},
+        error::Result,
         handlers::Response,
         middleware::validate_signature::RequireValidSignature,
         providers::PushProvider,
-        state::{AppState, State},
+        state::AppState,
     },
     axum::{
         extract::{Json, Path, State as StateExtractor},
@@ -39,8 +40,8 @@ pub async fn handler(
     StateExtractor(state): StateExtractor<Arc<AppState>>,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<Response> {
-    if state.config.default_tenant_id != tenant_id && !state.is_multitenant() {
-        return Err(IncludedTenantIdWhenNotNeeded);
+    if let Some(metrics) = &state.metrics {
+        metrics.received_notifications.add(&Context::current(), 1, &[]);
     }
 
     let client = state.client_store.get_client(&tenant_id, &id).await?;
@@ -63,6 +64,10 @@ pub async fn handler(
     provider
         .send_notification(client.token, body.payload)
         .await?;
+
+    if let Some(metrics) = &state.metrics {
+        metrics.sent_notifications.add(&Context::current(), 1, &[]);
+    }
 
     Ok(Response::new_success(StatusCode::ACCEPTED))
 }

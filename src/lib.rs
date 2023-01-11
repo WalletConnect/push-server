@@ -1,5 +1,5 @@
 use {
-    crate::{metrics::Metrics, state::TenantStoreArc, stores::tenant::DefaultTenantStore},
+    crate::{state::TenantStoreArc, stores::tenant::DefaultTenantStore},
     axum::{
         routing::{delete, get, post},
         Router,
@@ -7,12 +7,10 @@ use {
     env::Config,
     opentelemetry::{
         sdk::{
-            trace::{self, IdGenerator, Sampler},
             Resource,
         },
         KeyValue,
     },
-    opentelemetry_otlp::{Protocol, WithExportConfig},
     sqlx::{
         postgres::{PgConnectOptions, PgPoolOptions},
         ConnectOptions,
@@ -28,6 +26,7 @@ pub mod blob;
 pub mod env;
 pub mod error;
 pub mod handlers;
+pub mod log;
 pub mod metrics;
 pub mod middleware;
 pub mod providers;
@@ -83,7 +82,9 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
     )?;
 
     let mut supported_providers_string = "multi-tenant".to_string();
-    if state.config.tenant_database_url.is_none() {
+    let is_multitenant = state.config.tenant_database_url.is_some();
+
+    if !is_multitenant {
         supported_providers_string = state
             .config
             .single_tenant_supported_providers()
@@ -100,18 +101,6 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
     }
 
     if state.config.telemetry_enabled.unwrap_or(false) {
-        let grpc_url = state
-            .config
-            .telemetry_grpc_url
-            .clone()
-            .unwrap_or_else(|| "http://localhost:4317".to_string());
-
-        let tracing_exporter = opentelemetry_otlp::new_exporter()
-            .tonic()
-            .with_endpoint(grpc_url)
-            .with_timeout(Duration::from_secs(5))
-            .with_protocol(Protocol::Grpc);
-
         let resource = Resource::new(vec![
             KeyValue::new("service.name", "echo-server"),
             KeyValue::new(
@@ -120,23 +109,9 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             ),
         ]);
 
-        let tracer = opentelemetry_otlp::new_pipeline()
-            .tracing()
-            .with_exporter(tracing_exporter)
-            .with_trace_config(
-                trace::config()
-                    .with_sampler(Sampler::AlwaysOn)
-                    .with_id_generator(IdGenerator::default())
-                    .with_max_events_per_span(64)
-                    .with_max_attributes_per_span(16)
-                    .with_max_events_per_span(16)
-                    .with_resource(resource.clone()),
-            )
-            .install_batch(opentelemetry::runtime::Tokio)?;
+        log::Logger::init(&state.config, resource.clone())?;
 
-        let metrics = Metrics::new(resource)?;
-
-        state.set_telemetry(tracer, metrics)
+        state.set_metrics(metrics::Metrics::new(resource)?)
     } else if !state.config.is_test && !state.config.telemetry_enabled.unwrap_or(false) {
         // Only log to console if telemetry disabled and its not in tests
         tracing_subscriber::fmt()
@@ -171,34 +146,40 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             ),
     );
 
-    let app = Router::new()
-        .route("/health", get(handlers::health::handler))
-        .route(
-            "/clients",
-            post(handlers::single_tenant_wrappers::register_handler),
-        )
-        .route(
-            "/clients/:id",
-            delete(handlers::single_tenant_wrappers::delete_handler),
-        )
-        .route(
-            "/clients/:id",
-            post(handlers::single_tenant_wrappers::push_handler),
-        )
-        .route(
-            "/:tenant_id/clients",
-            post(handlers::register_client::handler),
-        )
-        .route(
-            "/:tenant_id/clients/:id",
-            delete(handlers::delete_client::handler),
-        )
-        .route(
-            "/:tenant_id/clients/:id",
-            post(handlers::push_message::handler),
-        )
-        .layer(global_middleware)
-        .with_state(state_arc.clone());
+    let app = match is_multitenant {
+        false => Router::new()
+            .route("/health", get(handlers::health::handler))
+            .route(
+                "/clients",
+                post(handlers::single_tenant_wrappers::register_handler),
+            )
+            .route(
+                "/clients/:id",
+                delete(handlers::single_tenant_wrappers::delete_handler),
+            )
+            .route(
+                "/clients/:id",
+                post(handlers::single_tenant_wrappers::push_handler),
+            )
+            .layer(global_middleware)
+            .with_state(state_arc.clone()),
+        true => Router::new()
+            .route("/health", get(handlers::health::handler))
+            .route(
+                "/:tenant_id/clients",
+                post(handlers::register_client::handler),
+            )
+            .route(
+                "/:tenant_id/clients/:id",
+                delete(handlers::delete_client::handler),
+            )
+            .route(
+                "/:tenant_id/clients/:id",
+                post(handlers::push_message::handler),
+            )
+            .layer(global_middleware)
+            .with_state(state_arc.clone()),
+    };
 
     let private_app = Router::new()
         .route("/metrics", get(handlers::metrics::handler))
