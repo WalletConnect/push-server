@@ -1,7 +1,6 @@
 use {
     crate::{error, error::Error::InvalidConfiguration, providers::ProviderKind},
     serde::Deserialize,
-    std::str::FromStr,
 };
 
 #[derive(Deserialize, Debug, Clone, Eq, PartialEq)]
@@ -12,6 +11,8 @@ pub struct Config {
     pub log_level: String,
     #[serde(default = "default_log_level_otel")]
     pub log_level_otel: String,
+    #[serde(default = "default_disable_header")]
+    pub disable_header: bool,
     #[serde(default = "default_relay_url")]
     pub relay_url: String,
     pub database_url: String,
@@ -23,10 +24,8 @@ pub struct Config {
     pub is_test: bool,
 
     // TELEMETRY
-    pub telemetry_enabled: Option<bool>,
-    pub telemetry_grpc_url: Option<String>,
-    #[serde(default = "default_telemetry_prometheus_port")]
-    pub telemetry_prometheus_port: u16,
+    pub otel_exporter_otlp_endpoint: Option<String>,
+    pub telemetry_prometheus_port: Option<u16>,
 
     // APNS
     /// This defaults to false and should be changed if sandbox mode is
@@ -62,14 +61,6 @@ impl Config {
         Ok(())
     }
 
-    pub fn log_level(&self) -> tracing::Level {
-        tracing::Level::from_str(self.log_level.as_str()).expect("Invalid log level")
-    }
-
-    pub fn log_level_otel(&self) -> tracing::Level {
-        tracing::Level::from_str(self.log_level_otel.as_str()).expect("Invalid log level")
-    }
-
     pub fn single_tenant_supported_providers(&self) -> Vec<ProviderKind> {
         let mut supported = vec![];
 
@@ -95,16 +86,16 @@ fn default_port() -> u16 {
     3000
 }
 
-fn default_telemetry_prometheus_port() -> u16 {
-    3001
-}
-
 fn default_log_level() -> String {
     "info,echo-server=info".to_string()
 }
 
 fn default_log_level_otel() -> String {
     "info,echo-server=trace".to_string()
+}
+
+fn default_disable_header() -> bool {
+    false
 }
 
 fn default_apns_sandbox_mode() -> bool {

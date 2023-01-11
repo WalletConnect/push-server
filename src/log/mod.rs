@@ -9,10 +9,8 @@
 //! feature gate. See the [features] section of Cargo.toml for more.
 pub use tracing::{debug, error, info, trace, warn};
 use {
-    crate::env::Config,
-    opentelemetry::sdk::{trace, Resource},
-    opentelemetry_otlp::{Protocol, WithExportConfig},
-    std::time::Duration,
+    opentelemetry::sdk::trace,
+    opentelemetry_otlp::WithExportConfig,
     tracing_appender::non_blocking::WorkerGuard,
     tracing_subscriber::{prelude::*, EnvFilter},
 };
@@ -34,13 +32,22 @@ const DEFAULT_LOG_LEVEL_STDERR: tracing::Level = tracing::Level::WARN;
 /// if no other can be found.
 const DEFAULT_LOG_LEVEL_OTEL: tracing::Level = tracing::Level::WARN;
 
+/// The environment variable used to control the stderr logger.
+const ENV_LOG_LEVEL_STDERR: &str = "LOG_LEVEL";
+
+/// The environment variable used to control the telemetry logger.
+const ENV_LOG_LEVEL_OTEL: &str = "LOG_LEVEL_OTEL";
+
+/// The endpoint for the OpenTelemetry gRPC collector, e.g. "localhost:4317".
+const OTEL_EXPORTER_OTLP_ENDPOINT: &str = "OTEL_EXPORTER_OTLP_ENDPOINT";
+
 pub struct Logger {
     _guard: WorkerGuard,
 }
 
 impl Logger {
-    pub fn init(config: &Config, resource: Resource) -> crate::error::Result<Self> {
-        let stderr_filter = EnvFilter::try_from_env(&config.log_level)
+    pub fn init() -> crate::error::Result<Self> {
+        let stderr_filter = EnvFilter::try_from_env(ENV_LOG_LEVEL_STDERR)
             .unwrap_or_else(|_| EnvFilter::new(DEFAULT_LOG_LEVEL_STDERR.to_string()));
 
         let (writer, guard) = tracing_appender::non_blocking(std::io::stderr());
@@ -54,33 +61,20 @@ impl Logger {
 
         let subscriber = tracing_subscriber::registry().with(logger);
 
-        if config.telemetry_grpc_url.is_some() && config.telemetry_enabled.unwrap_or_else(|| false) {
+        if std::env::var(OTEL_EXPORTER_OTLP_ENDPOINT).is_ok() {
             let telemetry = {
                 let tracer = opentelemetry_otlp::new_pipeline()
                     .tracing()
-                    .with_exporter(
-                        opentelemetry_otlp::new_exporter()
-                            .tonic()
-                            .with_endpoint(
-                                config
-                                    .telemetry_grpc_url
-                                    .clone()
-                                    .unwrap_or_else(|| "http://localhost:4317".to_string()),
-                            )
-                            .with_timeout(Duration::from_secs(5))
-                            .with_protocol(Protocol::Grpc),
-                    )
+                    .with_exporter(opentelemetry_otlp::new_exporter().tonic().with_env())
                     .with_trace_config(
-                        trace::config()
-                            .with_id_generator(trace::XrayIdGenerator::default())
-                            .with_resource(resource),
+                        trace::config().with_id_generator(trace::XrayIdGenerator::default()),
                     )
                     .install_batch(opentelemetry::runtime::Tokio)?;
 
                 tracing_opentelemetry::layer()
                     .with_tracer(tracer)
                     .with_filter(
-                        EnvFilter::try_from_env(&config.log_level_otel)
+                        EnvFilter::try_from_env(ENV_LOG_LEVEL_OTEL)
                             .unwrap_or_else(|_| EnvFilter::new(DEFAULT_LOG_LEVEL_OTEL.to_string())),
                     )
                     .boxed()

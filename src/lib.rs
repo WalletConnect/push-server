@@ -5,12 +5,7 @@ use {
         Router,
     },
     env::Config,
-    opentelemetry::{
-        sdk::{
-            Resource,
-        },
-        KeyValue,
-    },
+    opentelemetry::{sdk::Resource, KeyValue},
     sqlx::{
         postgres::{PgConnectOptions, PgPoolOptions},
         ConnectOptions,
@@ -100,27 +95,18 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         warn!("Failed initial fetch of Relay's Public Key, this may prevent webhook validation.")
     }
 
-    if state.config.telemetry_enabled.unwrap_or(false) {
-        let resource = Resource::new(vec![
-            KeyValue::new("service.name", "echo-server"),
+    if state.config.telemetry_prometheus_port.is_some() {
+        state.set_metrics(metrics::Metrics::new(Resource::new(vec![
+            KeyValue::new("service_name", "echo-server"),
             KeyValue::new(
-                "service.version",
+                "service_version",
                 state.build_info.crate_info.version.clone().to_string(),
             ),
-        ]);
-
-        log::Logger::init(&state.config, resource.clone())?;
-
-        state.set_metrics(metrics::Metrics::new(resource)?)
-    } else if !state.config.is_test && !state.config.telemetry_enabled.unwrap_or(false) {
-        // Only log to console if telemetry disabled and its not in tests
-        tracing_subscriber::fmt()
-            .with_max_level(state.config.log_level())
-            .init();
+        ]))?);
     }
 
     let port = state.config.port;
-    let private_port = state.config.telemetry_prometheus_port;
+    let private_port = state.config.telemetry_prometheus_port.unwrap_or(3001);
     let build_version = state.build_info.crate_info.version.clone();
     let build_commit = state
         .build_info
@@ -132,6 +118,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         .commit_short_id
         .clone();
     let build_rustc_version = state.build_info.compiler.version.clone();
+    let show_header = !state.config.disable_header.clone();
 
     let state_arc = Arc::new(state);
 
@@ -185,8 +172,9 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         .route("/metrics", get(handlers::metrics::handler))
         .with_state(state_arc);
 
-    let header = format!(
-        "
+    if show_header {
+        let header = format!(
+            "
  ______       _               _____
 |  ____|     | |             / ____|
 | |__    ___ | |__    ___   | (___    ___  _ __ __   __ ___  _ __
@@ -197,14 +185,16 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
 web-host: {}, web-port: {},
 providers: [{}]
 ",
-        build_version,
-        build_commit,
-        build_rustc_version,
-        "0.0.0.0",
-        port.clone(),
-        supported_providers_string
-    );
-    println!("{}", header);
+            build_version,
+            build_commit,
+            build_rustc_version,
+            "0.0.0.0",
+            port.clone(),
+            supported_providers_string
+        );
+
+        println!("{}", header);
+    }
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     let private_addr = SocketAddr::from(([0, 0, 0, 0], private_port));

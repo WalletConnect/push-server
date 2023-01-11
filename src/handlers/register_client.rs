@@ -1,4 +1,3 @@
-use opentelemetry::Context;
 use {
     crate::{
         error::{
@@ -6,10 +5,12 @@ use {
             Result,
         },
         handlers::Response,
+        log::prelude::*,
         state::AppState,
         stores::client::Client,
     },
     axum::extract::{Json, Path, State as StateExtractor},
+    opentelemetry::Context,
     serde::{Deserialize, Serialize},
     std::sync::Arc,
 };
@@ -46,8 +47,14 @@ pub async fn handler(
         })
         .await?;
 
+    info!(
+        "client registered for tenant ({}) using {}",
+        tenant_id, body.push_type
+    );
+
     if let Some(metrics) = &state.metrics {
         metrics.registered_clients.add(&Context::current(), 1, &[]);
+        debug!("incremented `registered_clients` counter")
     }
 
     Ok(Response::default())
