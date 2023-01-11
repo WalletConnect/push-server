@@ -57,6 +57,9 @@ base64 = "0.13"
 chrono = "0.4"
 uuid = { version = "1.2", features = ["v4"] }
 
+# Vendored to allow static compilation
+openssl = { version = "*", features = ["vendored"] }
+
 [dev-dependencies]
 serial_test = "0.9"
 test-context = "0.1"
