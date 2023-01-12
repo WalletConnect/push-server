@@ -42,10 +42,16 @@ FROM                chef AS build
 
 ARG                 release
 ENV                 RELEASE=${release:+--release}
+ENV                 TINI_VERSION v0.19.0
 
 WORKDIR             /app
-# Cache dependancies
+# Cache dependencies
 COPY --from=plan    /app/recipe.json recipe.json
+
+# Install init to be used in runtime container
+ADD                 https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-static /tini
+RUN                 chmod +x /tini
+
 RUN                 cargo chef cook --recipe-path recipe.json ${RELEASE}
 # Build the local binary
 COPY                . .
@@ -69,6 +75,8 @@ LABEL               version=${version}
 LABEL               sha=${sha}
 LABEL               maintainer=${maintainer}
 
+COPY --from=build   /tini /tini
+
 WORKDIR             /app
 COPY --from=build   /app/target/${binpath:-debug}/echo-server /usr/local/bin/echo-server
 RUN                 apt-get update \
@@ -77,4 +85,5 @@ RUN                 apt-get update \
                         && rm -rf /var/lib/apt/lists/*
 
 USER                1001:1001
-ENTRYPOINT          ["/usr/local/bin/echo-server"]
+ENTRYPOINT          ["/tini", "--"]
+CMD                 ["/usr/local/bin/echo-server"]
