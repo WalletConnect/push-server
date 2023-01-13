@@ -1,6 +1,11 @@
 locals {
   file_descriptor_soft_limit = pow(2, 18)
   file_descriptor_hard_limit = local.file_descriptor_soft_limit * 2
+
+  prometheus_port = "8081"
+
+  otel_collector_image_tag = "v0.2.0"
+  otel_collector_image     = "${var.aws_otel_collector_ecr_repository_url}:${local.otel_collector_image_tag}"
 }
 
 # Log Group for our App
@@ -22,6 +27,11 @@ resource "aws_ecs_cluster" "app_cluster" {
         cloud_watch_log_group_name     = aws_cloudwatch_log_group.cluster_logs.name
       }
     }
+  }
+
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
   }
 }
 
@@ -60,12 +70,16 @@ resource "aws_ecs_task_definition" "app_task_definition" {
       ],
       environment = [
         { name = "PORT", value = "8080" },
-        { name = "LOG_LEVEL", value = "INFO" },
+        { name = "LOG_LEVEL", value = "info,echo-server=info" },
+        { name = "LOG_LEVEL_OTEL", value = "info,echo-server=trace" },
         { name = "DATABASE_URL", value = var.database_url },
         { name = "TENANT_DATABASE_URL", value = var.tenant_database_url },
-        { name = "TELEMETRY_ENABLED", value = "true" },
-        { name = "TELEMETRY_GRPC_URL", value = "http://localhost:4317" },
-        { name = "TELEMETRY_PROMETHEUS_PORT", value = "8081" }
+        { name = "TELEMETRY_PROMETHEUS_PORT", value = local.prometheus_port },
+        { name = "OTEL_SERVICE_NAME", value = var.app_name },
+        { name = "OTEL_RESOURCE_ATTRIBUTES", value = "environment=${var.environment},region=${var.region},version=${var.image_version}" },
+        { name = "OTEL_EXPORTER_OTLP_ENDPOINT", value = "http://localhost:4317" },
+        { name = "OTEL_TRACES_SAMPLER", value = "traceidratio" },
+        { name = "OTEL_TRACES_SAMPLER_ARG", value = tostring(var.telemetry_sample_ratio) }
       ],
       dependsOn = [
         { containerName = "aws-otel-collector", condition = "START" }
@@ -81,13 +95,13 @@ resource "aws_ecs_task_definition" "app_task_definition" {
     },
     {
       name   = "aws-otel-collector",
-      image  = "public.ecr.aws/aws-observability/aws-otel-collector:latest",
+      image  = local.otel_collector_image,
       cpu    = 128,
       memory = 128,
       environment = [
-        { "name" : "AWS_PROMETHEUS_SCRAPING_ENDPOINT", "value" : "0.0.0.0:8081" },
+        { name = "AWS_PROMETHEUS_SCRAPING_ENDPOINT", value = "0.0.0.0:${local.prometheus_port}" },
         { name = "AWS_PROMETHEUS_ENDPOINT", value = "${var.prometheus_endpoint}api/v1/remote_write" },
-        { name = "AWS_REGION", value = "eu-central-1" }
+        { name = "AWS_REGION", value = "eu-central-1" },
       ],
       essential = true,
       command = [

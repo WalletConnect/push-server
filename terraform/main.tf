@@ -87,21 +87,26 @@ module "database_cluster" {
 module "ecs" {
   source = "./ecs"
 
-  app_name            = "${terraform.workspace}-${local.app_name}"
-  prometheus_endpoint = aws_prometheus_workspace.prometheus.prometheus_endpoint
-  database_url        = "postgres://${module.database_cluster.cluster_master_username}:${module.database_cluster.cluster_master_password}@${module.database_cluster.cluster_endpoint}:${module.database_cluster.cluster_port}/postgres"
-  tenant_database_url = var.tenant_database_url
-  image               = "${data.aws_ecr_repository.repository.repository_url}:${local.version}"
-  acm_certificate_arn = module.dns.certificate_arn
-  cpu                 = 512
-  fqdn                = local.fqdn
-  memory              = 1024
-  private_subnets     = module.vpc.private_subnets
-  public_subnets      = module.vpc.public_subnets
-  region              = var.region
-  route53_zone_id     = module.dns.zone_id
-  vpc_cidr            = module.vpc.vpc_cidr_block
-  vpc_id              = module.vpc.vpc_id
+  app_name               = "${terraform.workspace}-${local.app_name}"
+  environment            = terraform.workspace
+  prometheus_endpoint    = aws_prometheus_workspace.prometheus.prometheus_endpoint
+  database_url           = "postgres://${module.database_cluster.cluster_master_username}:${module.database_cluster.cluster_master_password}@${module.database_cluster.cluster_endpoint}:${module.database_cluster.cluster_port}/postgres"
+  tenant_database_url    = var.tenant_database_url
+  image                  = "${data.aws_ecr_repository.repository.repository_url}:${local.version}"
+  image_version          = local.version
+  acm_certificate_arn    = module.dns.certificate_arn
+  cpu                    = 512
+  fqdn                   = local.fqdn
+  memory                 = 1024
+  private_subnets        = module.vpc.private_subnets
+  public_subnets         = module.vpc.public_subnets
+  region                 = var.region
+  route53_zone_id        = module.dns.zone_id
+  vpc_cidr               = module.vpc.vpc_cidr_block
+  vpc_id                 = module.vpc.vpc_id
+  telemetry_sample_ratio = terraform.workspace == "prod" ? 0.25 : 1.0
+
+  aws_otel_collector_ecr_repository_url = data.aws_ecr_repository.aws_otel_collector.repository_url
 }
 
 module "monitoring" {
@@ -115,6 +120,10 @@ module "monitoring" {
 
 data "aws_ecr_repository" "repository" {
   name = "echo-server"
+}
+
+data "aws_ecr_repository" "aws_otel_collector" {
+  name = "aws-otel-collector"
 }
 
 resource "aws_prometheus_workspace" "prometheus" {

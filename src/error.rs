@@ -1,6 +1,7 @@
 use {
     crate::{
         handlers::{ErrorField, ErrorLocation, ResponseError},
+        log::prelude::*,
         middleware::validate_signature::{SIGNATURE_HEADER_NAME, TIMESTAMP_HEADER_NAME},
         stores::StoreError,
     },
@@ -22,7 +23,7 @@ pub enum Error {
     Metrics(#[from] opentelemetry::metrics::MetricsError),
 
     #[error(transparent)]
-    Prometheus(#[from] prometheus::Error),
+    Prometheus(#[from] prometheus_core::Error),
 
     #[error(transparent)]
     Apns(#[from] a2::Error),
@@ -99,6 +100,7 @@ pub enum Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
+        error!("responding with error ({:?})", self);
         match self {
             Error::Apns(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
                 ResponseError {

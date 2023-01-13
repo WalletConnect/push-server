@@ -14,6 +14,7 @@ use {
         },
     },
     async_trait::async_trait,
+    base64::Engine as _,
     chrono::{DateTime, Utc},
     sqlx::PgPool,
     std::{io::BufReader, sync::Arc},
@@ -90,7 +91,8 @@ impl Tenant {
                     &self.apns_topic,
                 ) {
                     (Some(certificate), Some(password), Some(topic)) => {
-                        let decoded = base64::decode(certificate)?;
+                        let decoded =
+                            base64::engine::general_purpose::STANDARD.decode(certificate)?;
                         let mut reader = BufReader::new(&*decoded);
 
                         let apns_client = ApnsProvider::new_cert(

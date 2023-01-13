@@ -1,18 +1,11 @@
 use {
-    crate::{metrics::Metrics, state::TenantStoreArc, stores::tenant::DefaultTenantStore},
+    crate::{state::TenantStoreArc, stores::tenant::DefaultTenantStore},
     axum::{
         routing::{delete, get, post},
         Router,
     },
     env::Config,
-    opentelemetry::{
-        sdk::{
-            trace::{self, IdGenerator, Sampler},
-            Resource,
-        },
-        KeyValue,
-    },
-    opentelemetry_otlp::{Protocol, WithExportConfig},
+    opentelemetry::{sdk::Resource, KeyValue},
     sqlx::{
         postgres::{PgConnectOptions, PgPoolOptions},
         ConnectOptions,
@@ -28,6 +21,7 @@ pub mod blob;
 pub mod env;
 pub mod error;
 pub mod handlers;
+pub mod log;
 pub mod metrics;
 pub mod middleware;
 pub mod providers;
@@ -83,7 +77,9 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
     )?;
 
     let mut supported_providers_string = "multi-tenant".to_string();
-    if state.config.tenant_database_url.is_none() {
+    let is_multitenant = state.config.tenant_database_url.is_some();
+
+    if !is_multitenant {
         supported_providers_string = state
             .config
             .single_tenant_supported_providers()
@@ -99,53 +95,18 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         warn!("Failed initial fetch of Relay's Public Key, this may prevent webhook validation.")
     }
 
-    if state.config.telemetry_enabled.unwrap_or(false) {
-        let grpc_url = state
-            .config
-            .telemetry_grpc_url
-            .clone()
-            .unwrap_or_else(|| "http://localhost:4317".to_string());
-
-        let tracing_exporter = opentelemetry_otlp::new_exporter()
-            .tonic()
-            .with_endpoint(grpc_url)
-            .with_timeout(Duration::from_secs(5))
-            .with_protocol(Protocol::Grpc);
-
-        let resource = Resource::new(vec![
-            KeyValue::new("service.name", "echo-server"),
+    if state.config.telemetry_prometheus_port.is_some() {
+        state.set_metrics(metrics::Metrics::new(Resource::new(vec![
+            KeyValue::new("service_name", "echo-server"),
             KeyValue::new(
-                "service.version",
+                "service_version",
                 state.build_info.crate_info.version.clone().to_string(),
             ),
-        ]);
-
-        let tracer = opentelemetry_otlp::new_pipeline()
-            .tracing()
-            .with_exporter(tracing_exporter)
-            .with_trace_config(
-                trace::config()
-                    .with_sampler(Sampler::AlwaysOn)
-                    .with_id_generator(IdGenerator::default())
-                    .with_max_events_per_span(64)
-                    .with_max_attributes_per_span(16)
-                    .with_max_events_per_span(16)
-                    .with_resource(resource.clone()),
-            )
-            .install_batch(opentelemetry::runtime::Tokio)?;
-
-        let metrics = Metrics::new(resource)?;
-
-        state.set_telemetry(tracer, metrics)
-    } else if !state.config.is_test && !state.config.telemetry_enabled.unwrap_or(false) {
-        // Only log to console if telemetry disabled and its not in tests
-        tracing_subscriber::fmt()
-            .with_max_level(state.config.log_level())
-            .init();
+        ]))?);
     }
 
     let port = state.config.port;
-    let private_port = state.config.telemetry_prometheus_port;
+    let private_port = state.config.telemetry_prometheus_port.unwrap_or(3001);
     let build_version = state.build_info.crate_info.version.clone();
     let build_commit = state
         .build_info
@@ -157,6 +118,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         .commit_short_id
         .clone();
     let build_rustc_version = state.build_info.compiler.version.clone();
+    let show_header = !state.config.disable_header;
 
     let state_arc = Arc::new(state);
 
@@ -171,41 +133,48 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             ),
     );
 
-    let app = Router::new()
-        .route("/health", get(handlers::health::handler))
-        .route(
-            "/clients",
-            post(handlers::single_tenant_wrappers::register_handler),
-        )
-        .route(
-            "/clients/:id",
-            delete(handlers::single_tenant_wrappers::delete_handler),
-        )
-        .route(
-            "/clients/:id",
-            post(handlers::single_tenant_wrappers::push_handler),
-        )
-        .route(
-            "/:tenant_id/clients",
-            post(handlers::register_client::handler),
-        )
-        .route(
-            "/:tenant_id/clients/:id",
-            delete(handlers::delete_client::handler),
-        )
-        .route(
-            "/:tenant_id/clients/:id",
-            post(handlers::push_message::handler),
-        )
-        .layer(global_middleware)
-        .with_state(state_arc.clone());
+    let app = match is_multitenant {
+        false => Router::new()
+            .route("/health", get(handlers::health::handler))
+            .route(
+                "/clients",
+                post(handlers::single_tenant_wrappers::register_handler),
+            )
+            .route(
+                "/clients/:id",
+                delete(handlers::single_tenant_wrappers::delete_handler),
+            )
+            .route(
+                "/clients/:id",
+                post(handlers::single_tenant_wrappers::push_handler),
+            )
+            .layer(global_middleware)
+            .with_state(state_arc.clone()),
+        true => Router::new()
+            .route("/health", get(handlers::health::handler))
+            .route(
+                "/:tenant_id/clients",
+                post(handlers::register_client::handler),
+            )
+            .route(
+                "/:tenant_id/clients/:id",
+                delete(handlers::delete_client::handler),
+            )
+            .route(
+                "/:tenant_id/clients/:id",
+                post(handlers::push_message::handler),
+            )
+            .layer(global_middleware)
+            .with_state(state_arc.clone()),
+    };
 
     let private_app = Router::new()
         .route("/metrics", get(handlers::metrics::handler))
         .with_state(state_arc);
 
-    let header = format!(
-        "
+    if show_header {
+        let header = format!(
+            "
  ______       _               _____
 |  ____|     | |             / ____|
 | |__    ___ | |__    ___   | (___    ___  _ __ __   __ ___  _ __
@@ -216,14 +185,16 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
 web-host: {}, web-port: {},
 providers: [{}]
 ",
-        build_version,
-        build_commit,
-        build_rustc_version,
-        "0.0.0.0",
-        port.clone(),
-        supported_providers_string
-    );
-    println!("{}", header);
+            build_version,
+            build_commit,
+            build_rustc_version,
+            "0.0.0.0",
+            port.clone(),
+            supported_providers_string
+        );
+
+        println!("{}", header);
+    }
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     let private_addr = SocketAddr::from(([0, 0, 0, 0], private_port));
