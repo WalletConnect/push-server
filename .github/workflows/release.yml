@@ -18,6 +18,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      # TODO: Remove once https://crates.io/crates/opentelemetry-otlp is updated
+      # and no longer has a build requirement of `protoc``.
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v1
+
       - name: "Cocogitto release"
         id: release
         uses: cocogitto/cocogitto-action@v3
