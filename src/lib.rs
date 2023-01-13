@@ -118,7 +118,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         .commit_short_id
         .clone();
     let build_rustc_version = state.build_info.compiler.version.clone();
-    let show_header = !state.config.disable_header.clone();
+    let show_header = !state.config.disable_header;
 
     let state_arc = Arc::new(state);
 
