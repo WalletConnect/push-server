@@ -1,14 +1,13 @@
 use {
     crate::{
         handlers::{ErrorField, ErrorLocation, ResponseError},
+        log::prelude::*,
         middleware::validate_signature::{SIGNATURE_HEADER_NAME, TIMESTAMP_HEADER_NAME},
         stores::StoreError,
     },
     axum::response::{IntoResponse, Response},
     hyper::StatusCode,
 };
-
-use crate::log::prelude::*;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
