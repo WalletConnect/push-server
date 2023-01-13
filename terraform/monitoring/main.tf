@@ -260,6 +260,29 @@ resource "grafana_dashboard" "at_a_glance" {
             "region" : "default",
             "sqlExpression" : "",
             "statistic" : "Sum"
+          },
+          {
+            "alias" : "",
+            "datasource" : {
+              "type" : "cloudwatch",
+              "uid" : grafana_data_source.cloudwatch.uid
+            },
+            "dimensions" : {
+              "LoadBalancer" : local.load_balancer
+            },
+            "expression" : "",
+            "id" : "",
+            "matchExact" : true,
+            "metricEditorMode" : 0,
+            "metricName" : "HTTPCode_Target_5XX_Count",
+            "metricQueryType" : 0,
+            "namespace" : "AWS/ApplicationELB",
+            "period" : "",
+            "queryMode" : "Metrics",
+            "refId" : "B",
+            "region" : "default",
+            "sqlExpression" : "",
+            "statistic" : "Sum"
           }
         ],
         "title" : "5XX",
@@ -358,6 +381,29 @@ resource "grafana_dashboard" "at_a_glance" {
             "period" : "",
             "queryMode" : "Metrics",
             "refId" : "A",
+            "region" : "default",
+            "sqlExpression" : "",
+            "statistic" : "Sum"
+          },
+          {
+            "alias" : "",
+            "datasource" : {
+              "type" : "cloudwatch",
+              "uid" : grafana_data_source.cloudwatch.uid
+            },
+            "dimensions" : {
+              "LoadBalancer" : local.load_balancer
+            },
+            "expression" : "",
+            "id" : "",
+            "matchExact" : true,
+            "metricEditorMode" : 0,
+            "metricName" : "HTTPCode_Target_4XX_Count",
+            "metricQueryType" : 0,
+            "namespace" : "AWS/ApplicationELB",
+            "period" : "",
+            "queryMode" : "Metrics",
+            "refId" : "B",
             "region" : "default",
             "sqlExpression" : "",
             "statistic" : "Sum"
