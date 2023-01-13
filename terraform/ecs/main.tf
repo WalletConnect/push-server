@@ -78,7 +78,7 @@ resource "aws_ecs_task_definition" "app_task_definition" {
         { name = "OTEL_RESOURCE_ATTRIBUTES", value = "environment=${var.environment},region=${var.region},version=${var.image_version}" },
         { name = "OTEL_EXPORTER_OTLP_ENDPOINT", value = "http://localhost:4317" },
         { name = "OTEL_TRACES_SAMPLER", value = "traceidratio" },
-        { name = "OTEL_TRACES_SAMPLER_ARG", value = var.telemetry_sample_ratio }
+        { name = "OTEL_TRACES_SAMPLER_ARG", value = "${var.telemetry_sample_ratio}" }
       ],
       dependsOn = [
         { containerName = "aws-otel-collector", condition = "START" }
@@ -94,7 +94,7 @@ resource "aws_ecs_task_definition" "app_task_definition" {
     },
     {
       name   = "aws-otel-collector",
-      image  = "public.ecr.aws/aws-observability/aws-otel-collector:latest",
+      image  = local.otel_collector_image,
       cpu    = 128,
       memory = 128,
       environment = [
