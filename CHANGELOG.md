@@ -2,6 +2,17 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.12.0 - 2023-01-13
+#### Bug Fixes
+- ci/cd - (9ecf44a) - Harry Bairstow
+- not all errors tracked - (a82cd14) - Derek
+#### Features
+- Rework Logging, Metrics and Traces (#76) - (b40bfcb) - Harry Bairstow
+- define alert - (caf80c2) - Derek
+- Use tini as init in echo-server container (#77) - (963a291) - WC
+- upgrade limits (#73) - (a0afc94) - Derek
+- - -
+
 ## v0.11.5 - 2022-12-23
 #### Bug Fixes
 - Incorrect version used for container - (da338b0) - Harry Bairstow
