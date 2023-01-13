@@ -8,6 +8,8 @@ use {
     hyper::StatusCode,
 };
 
+use crate::log::prelude::*;
+
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, thiserror::Error)]
@@ -99,6 +101,7 @@ pub enum Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
+        error!("responding with error ({:?})", self);
         match self {
             Error::Apns(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
                 ResponseError {
