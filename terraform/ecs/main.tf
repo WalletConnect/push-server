@@ -105,7 +105,7 @@ resource "aws_ecs_task_definition" "app_task_definition" {
       ],
       essential = true,
       command = [
-        "--config=/etc/ecs/ecs-amp-xray-prometheus.yaml"
+        "--config=/walletconnect/relay.yaml"
       ],
       logConfiguration = {
         logDriver = "awslogs",
