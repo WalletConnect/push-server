@@ -165,6 +165,64 @@ resource "grafana_dashboard" "at_a_glance" {
         "type" : "timeseries"
       },
       {
+        "alert" : {
+          "alertRuleTags" : {},
+          "conditions" : [
+            {
+              "evaluator" : {
+                "params" : [
+                  5
+                ],
+                "type" : "gt"
+              },
+              "operator" : {
+                "type" : "and"
+              },
+              "query" : {
+                "params" : [
+                  "A",
+                  "5m",
+                  "now"
+                ]
+              },
+              "reducer" : {
+                "params" : [],
+                "type" : "sum"
+              },
+              "type" : "query"
+            },
+            {
+              "evaluator" : {
+                "params" : [
+                  5
+                ],
+                "type" : "gt"
+              },
+              "operator" : {
+                "type" : "or"
+              },
+              "query" : {
+                "params" : [
+                  "B",
+                  "5m",
+                  "now"
+                ]
+              },
+              "reducer" : {
+                "params" : [],
+                "type" : "sum"
+              },
+              "type" : "query"
+            }
+          ],
+          "executionErrorState" : "alerting",
+          "for" : "5m",
+          "frequency" : "1m",
+          "handler" : 1,
+          "name" : "${var.environment} Echo Server 5XX alert",
+          "noDataState" : "no_data",
+          "notifications" : []
+        },
         "datasource" : {
           "type" : "cloudwatch",
           "uid" : grafana_data_source.cloudwatch.uid
