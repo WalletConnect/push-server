@@ -70,15 +70,16 @@ resource "aws_ecs_task_definition" "app_task_definition" {
       ],
       environment = [
         { name = "PORT", value = "8080" },
-        { name = "LOG_LEVEL", value = "INFO" },
+        { name = "LOG_LEVEL", value = "info,echo-server=info" },
+        { name = "LOG_LEVEL_OTEL", value = "info,echo-server=trace" },
         { name = "DATABASE_URL", value = var.database_url },
         { name = "TENANT_DATABASE_URL", value = var.tenant_database_url },
         { name = "TELEMETRY_PROMETHEUS_PORT", value = local.prometheus_port },
-        { name = "OTEL_SERVICE_NAME", value = "${var.app_name}" },
+        { name = "OTEL_SERVICE_NAME", value = var.app_name },
         { name = "OTEL_RESOURCE_ATTRIBUTES", value = "environment=${var.environment},region=${var.region},version=${var.image_version}" },
         { name = "OTEL_EXPORTER_OTLP_ENDPOINT", value = "http://localhost:4317" },
         { name = "OTEL_TRACES_SAMPLER", value = "traceidratio" },
-        { name = "OTEL_TRACES_SAMPLER_ARG", value = "${var.telemetry_sample_ratio}" }
+        { name = "OTEL_TRACES_SAMPLER_ARG", value = tostring(var.telemetry_sample_ratio) }
       ],
       dependsOn = [
         { containerName = "aws-otel-collector", condition = "START" }
