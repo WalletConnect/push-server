@@ -49,13 +49,13 @@ pub async fn handler(
     }
 
     let client = state.client_store.get_client(&tenant_id, &id).await?;
-    debug!("fetched client ({}) for tenant ({})", &id, &tenant_id);
+    info!("fetched client ({}) for tenant ({})", &id, &tenant_id);
 
     let notification = state
         .notification_store
         .create_or_update_notification(&body.id, &tenant_id, &id, &body.payload)
         .await?;
-    debug!(
+    info!(
         "stored notification ({}) for tenant ({})",
         &notification.id, &tenant_id
     );
@@ -71,13 +71,13 @@ pub async fn handler(
     }
 
     let tenant = state.tenant_store.get_tenant(&tenant_id).await?;
-    debug!(
+    info!(
         "fetched tenant ({}) during notification ({})",
         &tenant_id, &notification.id
     );
 
     let mut provider = tenant.provider(&client.push_type)?;
-    debug!(
+    info!(
         "fetched provider ({}) for tenant ({}) during notification ({})",
         client.push_type.as_str(),
         &tenant_id,
@@ -87,7 +87,7 @@ pub async fn handler(
     provider
         .send_notification(client.token, body.payload)
         .await?;
-    debug!(
+    info!(
         "sent notification to provider ({}) for tenant ({}) during notification ({})",
         client.push_type.as_str(),
         &tenant_id,
