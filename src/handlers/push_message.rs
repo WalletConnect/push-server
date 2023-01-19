@@ -20,6 +20,7 @@ use {
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct MessagePayload {
     pub topic: String,
+    #[serde(skip_serializing)]
     pub flags: u32,
     pub blob: String,
 }
