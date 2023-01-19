@@ -35,10 +35,10 @@ where
     async fn from_request(req: Request<B>, state: &S) -> Result<Self, Self::Rejection> {
         if !state.validate_signatures() {
             // Skip signature validation
-            return Ok(T::from_request(req, state)
+            return T::from_request(req, state)
                 .await
                 .map(Self)
-                .map_err(|_| FromRequestError)?);
+                .map_err(|_| FromRequestError);
         }
 
         let s = span!(tracing::Level::DEBUG, "validate_signature");
