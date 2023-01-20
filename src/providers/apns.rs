@@ -58,7 +58,8 @@ impl PushProvider for ApnsProvider {
                 .set_mutable_content()
                 .build(token.as_str(), opt);
 
-            notification_payload.add_custom_data("encrypted_payload", &payload)?;
+            notification_payload.add_custom_data("topic", &payload.topic)?;
+            notification_payload.add_custom_data("blob", &payload.blob)?;
 
             let _ = self.client.send(notification_payload).await?;
         } else {
