@@ -21,6 +21,7 @@ pub trait State {
     fn tenant_store(&self) -> TenantStoreArc;
     fn relay_client(&self) -> RelayClient;
     fn is_multitenant(&self) -> bool;
+    fn validate_signatures(&self) -> bool;
 }
 
 #[derive(Clone)]
@@ -93,5 +94,9 @@ impl State for Arc<AppState> {
 
     fn is_multitenant(&self) -> bool {
         self.is_multitenant
+    }
+
+    fn validate_signatures(&self) -> bool {
+        self.config.validate_signatures
     }
 }

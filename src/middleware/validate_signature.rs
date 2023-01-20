@@ -33,6 +33,14 @@ where
     type Rejection = crate::error::Error;
 
     async fn from_request(req: Request<B>, state: &S) -> Result<Self, Self::Rejection> {
+        if !state.validate_signatures() {
+            // Skip signature validation
+            return T::from_request(req, state)
+                .await
+                .map(Self)
+                .map_err(|_| FromRequestError);
+        }
+
         let s = span!(tracing::Level::DEBUG, "validate_signature");
         let _ = s.enter();
 

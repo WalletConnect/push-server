@@ -15,6 +15,8 @@ pub struct Config {
     pub disable_header: bool,
     #[serde(default = "default_relay_url")]
     pub relay_url: String,
+    #[serde(default = "default_validate_signatures")]
+    pub validate_signatures: bool,
     pub database_url: String,
     pub tenant_database_url: Option<String>,
     #[serde(default = "default_tenant_id")]
@@ -100,6 +102,10 @@ fn default_disable_header() -> bool {
 
 fn default_apns_sandbox_mode() -> bool {
     false
+}
+
+fn default_validate_signatures() -> bool {
+    true
 }
 
 fn default_relay_url() -> String {

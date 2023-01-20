@@ -33,6 +33,7 @@ impl EchoServer {
                     log_level_otel: "info,echo-server=trace".into(),
                     disable_header: false,
                     relay_url: "https://relay.walletconnect.com".into(),
+                    validate_signatures: true,
                     database_url: "postgres://postgres@localhost:5432/postgres".into(),
                     tenant_database_url: None,
                     default_tenant_id: "https://relay.walletconnect.com".into(),
