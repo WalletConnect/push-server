@@ -39,7 +39,6 @@ impl EchoServer {
                     default_tenant_id: "https://relay.walletconnect.com".into(),
                     otel_exporter_otlp_endpoint: None,
                     telemetry_prometheus_port: Some(get_random_port()),
-                    apns_sandbox: true,
                     apns_certificate: None,
                     apns_certificate_password: None,
                     apns_topic: None,

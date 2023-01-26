@@ -63,8 +63,8 @@ impl Config {
         let mut supported = vec![];
 
         if self.apns_certificate.is_some() && self.apns_certificate_password.is_some() {
-            supported.push(ProviderKind::Apns(true));
-            supported.push(ProviderKind::Apns(false));
+            supported.push(ProviderKind::Apns);
+            supported.push(ProviderKind::ApnsSandbox);
         }
 
         if self.fcm_api_key.is_some() {

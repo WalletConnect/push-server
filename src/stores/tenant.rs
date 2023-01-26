@@ -58,8 +58,8 @@ impl Tenant {
             && self.apns_certificate_password.is_some()
             && self.apns_topic.is_some()
         {
-            supported.push(ProviderKind::Apns(true));
-            supported.push(ProviderKind::Apns(false));
+            supported.push(ProviderKind::Apns);
+            supported.push(ProviderKind::ApnsSandbox);
         }
 
         if self.fcm_api_key.is_some() {
@@ -79,10 +79,11 @@ impl Tenant {
         }
 
         match provider {
-            ProviderKind::Apns(sandbox) => {
-                let endpoint = match sandbox {
-                    true => a2::Endpoint::Sandbox,
-                    false => a2::Endpoint::Production,
+            ProviderKind::ApnsSandbox |
+            ProviderKind::Apns => {
+                let endpoint = match provider {
+                    ProviderKind::ApnsSandbox => a2::Endpoint::Sandbox,
+                    _ => a2::Endpoint::Production,
                 };
                 match (
                     &self.apns_certificate,
