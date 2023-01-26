@@ -79,8 +79,7 @@ impl Tenant {
         }
 
         match provider {
-            ProviderKind::ApnsSandbox |
-            ProviderKind::Apns => {
+            ProviderKind::ApnsSandbox | ProviderKind::Apns => {
                 let endpoint = match provider {
                     ProviderKind::ApnsSandbox => a2::Endpoint::Sandbox,
                     _ => a2::Endpoint::Production,
