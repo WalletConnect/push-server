@@ -30,10 +30,6 @@ pub struct Config {
     pub telemetry_prometheus_port: Option<u16>,
 
     // APNS
-    /// This defaults to false and should be changed if sandbox mode is
-    /// required.
-    #[serde(default = "default_apns_sandbox_mode")]
-    pub apns_sandbox: bool,
     pub apns_certificate: Option<String>,
     pub apns_certificate_password: Option<String>,
     pub apns_topic: Option<String>,
@@ -67,7 +63,8 @@ impl Config {
         let mut supported = vec![];
 
         if self.apns_certificate.is_some() && self.apns_certificate_password.is_some() {
-            supported.push(ProviderKind::Apns);
+            supported.push(ProviderKind::Apns(true));
+            supported.push(ProviderKind::Apns(false));
         }
 
         if self.fcm_api_key.is_some() {
@@ -97,10 +94,6 @@ fn default_log_level_otel() -> String {
 }
 
 fn default_disable_header() -> bool {
-    false
-}
-
-fn default_apns_sandbox_mode() -> bool {
     false
 }
 

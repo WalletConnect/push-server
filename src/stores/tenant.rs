@@ -28,7 +28,6 @@ pub struct Tenant {
 
     pub fcm_api_key: Option<String>,
 
-    pub apns_sandbox: bool,
     pub apns_topic: Option<String>,
     pub apns_certificate: Option<String>,
     pub apns_certificate_password: Option<String>,
@@ -46,7 +45,6 @@ pub struct TenantUpdateParams {
 
     pub fcm_api_key: Option<String>,
 
-    pub apns_sandbox: bool,
     pub apns_topic: Option<String>,
     pub apns_certificate: Option<String>,
     pub apns_certificate_password: Option<String>,
@@ -60,7 +58,8 @@ impl Tenant {
             && self.apns_certificate_password.is_some()
             && self.apns_topic.is_some()
         {
-            supported.push(ProviderKind::Apns);
+            supported.push(ProviderKind::Apns(true));
+            supported.push(ProviderKind::Apns(false));
         }
 
         if self.fcm_api_key.is_some() {
@@ -80,8 +79,8 @@ impl Tenant {
         }
 
         match provider {
-            ProviderKind::Apns => {
-                let endpoint = match self.apns_sandbox {
+            ProviderKind::Apns(sandbox) => {
+                let endpoint = match sandbox {
                     true => a2::Endpoint::Sandbox,
                     false => a2::Endpoint::Production,
                 };
@@ -167,9 +166,8 @@ impl TenantWriteStore for PgPool {
 
     async fn create_tenant(&self, params: TenantUpdateParams) -> Result<Tenant> {
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
-            "INSERT INTO public.tenants (id, fcm_api_key, apns_sandbox, apns_topic, \
-             apns_certificate, apns_certificate_password) VALUES ($1, $2, $3, $4, $5, $6) \
-             RETURNING *;",
+            "INSERT INTO public.tenants (id, fcm_api_key, apns_topic, apns_certificate, \
+             apns_certificate_password) VALUES ($1, $2, $3, $4, $5) RETURNING *;",
         )
         .bind(params.id.unwrap_or(Uuid::new_v4().to_string()))
         .bind(params.fcm_api_key)
@@ -209,7 +207,6 @@ impl DefaultTenantStore {
         Ok(DefaultTenantStore(Tenant {
             id: config.default_tenant_id.clone(),
             fcm_api_key: config.fcm_api_key.clone(),
-            apns_sandbox: config.apns_sandbox,
             apns_topic: config.apns_topic.clone(),
             apns_certificate: config.apns_certificate.clone(),
             apns_certificate_password: config.apns_certificate_password.clone(),

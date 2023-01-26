@@ -25,6 +25,7 @@ pub trait PushProvider {
 }
 
 const PROVIDER_APNS: &str = "apns";
+const PROVIDER_APNS_SANDBOX: &str = "apns-sandbox";
 const PROVIDER_FCM: &str = "fcm";
 #[cfg(any(debug_assertions, test))]
 const PROVIDER_NOOP: &str = "noop";
@@ -33,7 +34,8 @@ const PROVIDER_NOOP: &str = "noop";
 #[sqlx(type_name = "provider")]
 #[sqlx(rename_all = "lowercase")]
 pub enum ProviderKind {
-    Apns,
+    /// Property is if it is sandbox mode or not
+    Apns(bool),
     Fcm,
     #[cfg(any(debug_assertions, test))]
     Noop,
@@ -42,7 +44,8 @@ pub enum ProviderKind {
 impl ProviderKind {
     pub fn as_str(&self) -> &'static str {
         match self {
-            Self::Apns => PROVIDER_APNS,
+            Self::Apns(false) => PROVIDER_APNS,
+            Self::Apns(true) => PROVIDER_APNS_SANDBOX,
             Self::Fcm => PROVIDER_FCM,
             #[cfg(any(debug_assertions, test))]
             Self::Noop => PROVIDER_NOOP,
@@ -73,7 +76,8 @@ impl TryFrom<&str> for ProviderKind {
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value {
-            PROVIDER_APNS => Ok(Self::Apns),
+            PROVIDER_APNS => Ok(Self::Apns(false)),
+            PROVIDER_APNS_SANDBOX => Ok(Self::Apns(true)),
             PROVIDER_FCM => Ok(Self::Fcm),
             #[cfg(any(debug_assertions, test))]
             PROVIDER_NOOP => Ok(Self::Noop),
