@@ -182,8 +182,8 @@ impl TenantWriteStore for PgPool {
 
     async fn update_tenant(&self, params: TenantUpdateParams) -> Result<Tenant> {
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
-            "UPDATE public.tenants SET fcm_api_key = $2 AND apns_sandbox = $3 AND apns_topic = $4 \
-             AND apns_certificate = $5 AND apns_certificate_password = $6 WHERE id = $1 RETURNING \
+            "UPDATE public.tenants SET fcm_api_key = $2 AND apns_topic = $3 \
+             AND apns_certificate = $4 AND apns_certificate_password = $5 WHERE id = $1 RETURNING \
              *;",
         )
         .bind(params.id.unwrap_or(Uuid::new_v4().to_string()))
