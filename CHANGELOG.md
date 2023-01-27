@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.13.1 - 2023-01-27
+#### Bug Fixes
+- patch queries - (e559394) - Harry Bairstow
+- - -
+
 ## v0.13.0 - 2023-01-20
 #### Features
 - Disable sig validation option (#83) - (1a94f36) - Harry Bairstow
