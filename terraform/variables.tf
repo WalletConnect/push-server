@@ -21,8 +21,3 @@ variable "image_version" {
   type    = string
   default = ""
 }
-
-variable "tenant_database_url" {
-  type      = string
-  sensitive = true
-}

@@ -3,6 +3,7 @@ locals {
   fqdn                = terraform.workspace == "prod" ? var.public_url : "${terraform.workspace}.${var.public_url}"
   latest_release_name = data.github_release.latest_release.name
   version             = coalesce(var.image_version, substr(local.latest_release_name, 1, length(local.latest_release_name)))
+  database_url = "postgres://${module.database_cluster.cluster_master_username}:${module.database_cluster.cluster_master_password}@${module.database_cluster.cluster_endpoint}:${module.database_cluster.cluster_port}/postgres"
 }
 
 data "assert_test" "workspace" {
@@ -84,14 +85,31 @@ module "database_cluster" {
   }
 }
 
+resource "aws_secretsmanager_secret" "database_url" {
+  name = "${local.app_name}-${terraform.workspace}-database-url"
+}
+
+resource "aws_secretsmanager_secret_version" "database_url" {
+  secret_id     = aws_secretsmanager_secret.database_url.id
+  secret_string = local.database_url
+}
+
+data "aws_secretsmanager_secret" "tenant_db_url" {
+  name = "batcave-${terraform.workspace}-database-url"
+}
+
+data "aws_secretsmanager_secret_version" "tenant_db_url" {
+  secret_id = data.aws_secretsmanager_secret.tenant_db_url.id
+}
+
 module "ecs" {
   source = "./ecs"
 
   app_name               = "${terraform.workspace}-${local.app_name}"
   environment            = terraform.workspace
   prometheus_endpoint    = aws_prometheus_workspace.prometheus.prometheus_endpoint
-  database_url           = "postgres://${module.database_cluster.cluster_master_username}:${module.database_cluster.cluster_master_password}@${module.database_cluster.cluster_endpoint}:${module.database_cluster.cluster_port}/postgres"
-  tenant_database_url    = var.tenant_database_url
+  database_url           = local.database_url
+  tenant_database_url    = data.aws_secretsmanager_secret_version.tenant_db_url.secret_string
   image                  = "${data.aws_ecr_repository.repository.repository_url}:${local.version}"
   image_version          = local.version
   acm_certificate_arn    = module.dns.certificate_arn
