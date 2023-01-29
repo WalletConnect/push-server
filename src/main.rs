@@ -1,4 +1,4 @@
-#![deny(clippy::uninlined_format_args)]
+#![allow(clippy::uninlined_format_args)]
 
 use {
     dotenv::dotenv,
