@@ -4,6 +4,7 @@ locals {
   latest_release_name = data.github_release.latest_release.name
   version             = coalesce(var.image_version, substr(local.latest_release_name, 1, length(local.latest_release_name)))
   database_url = "postgres://${module.database_cluster.cluster_master_username}:${module.database_cluster.cluster_master_password}@${module.database_cluster.cluster_endpoint}:${module.database_cluster.cluster_port}/postgres"
+  tenant_database_url = "postgres://${module.tenant_database_cluster.cluster_master_username}:${module.tenant_database_cluster.cluster_master_password}@${module.tenant_database_cluster.cluster_endpoint}:${module.tenant_database_cluster.cluster_port}/postgres"
 }
 
 data "assert_test" "workspace" {
@@ -85,21 +86,34 @@ module "database_cluster" {
   }
 }
 
-resource "aws_secretsmanager_secret" "database_url" {
-  name = "${local.app_name}-${terraform.workspace}-database-url"
-}
+module "tenant_database_cluster" {
+  source = "terraform-aws-modules/rds-aurora/aws"
 
-resource "aws_secretsmanager_secret_version" "database_url" {
-  secret_id     = aws_secretsmanager_secret.database_url.id
-  secret_string = local.database_url
-}
+  name           = "${terraform.workspace}-${local.app_name}-tenant-database"
+  engine         = "aurora-postgresql"
+  engine_version = "13.6"
+  engine_mode    = "provisioned"
+  instance_class = "db.serverless"
+  instances = {
+    1 = {}
+  }
 
-data "aws_secretsmanager_secret" "tenant_db_url" {
-  name = "batcave-${terraform.workspace}-database-url"
-}
+  database_name = "postgres"
 
-data "aws_secretsmanager_secret_version" "tenant_db_url" {
-  secret_id = data.aws_secretsmanager_secret.tenant_db_url.id
+  vpc_id  = module.vpc.vpc_id
+  subnets = module.vpc.private_subnets
+
+  allowed_cidr_blocks = [module.vpc.vpc_cidr_block]
+
+  storage_encrypted = true
+  apply_immediately = true
+
+  allow_major_version_upgrade = true
+
+  serverlessv2_scaling_configuration = {
+    min_capacity = 2
+    max_capacity = 10
+  }
 }
 
 module "ecs" {
@@ -109,7 +123,7 @@ module "ecs" {
   environment            = terraform.workspace
   prometheus_endpoint    = aws_prometheus_workspace.prometheus.prometheus_endpoint
   database_url           = local.database_url
-  tenant_database_url    = data.aws_secretsmanager_secret_version.tenant_db_url.secret_string
+  tenant_database_url    = local.tenant_database_url
   image                  = "${data.aws_ecr_repository.repository.repository_url}:${local.version}"
   image_version          = local.version
   acm_certificate_arn    = module.dns.certificate_arn
