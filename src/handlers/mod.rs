@@ -4,12 +4,19 @@ use {
     serde_json::{json, Value},
 };
 
+// Push
 pub mod delete_client;
 pub mod health;
 pub mod metrics;
 pub mod push_message;
 pub mod register_client;
 pub mod single_tenant_wrappers;
+// Tenant Management
+pub mod create_tenant;
+pub mod delete_tenant;
+pub mod get_tenant;
+pub mod update_apns;
+pub mod update_fcm;
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "lowercase")]

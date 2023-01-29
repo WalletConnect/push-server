@@ -1,6 +1,6 @@
 use {
     crate::{
-        env::Config,
+        config::Config,
         metrics::Metrics,
         relay::RelayClient,
         stores::{client::ClientStore, notification::NotificationStore, tenant::TenantStore},

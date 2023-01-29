@@ -1,6 +1,6 @@
 use {
     dotenv::dotenv,
-    echo_server::{env, log},
+    echo_server::{config, log},
     tokio::sync::broadcast,
 };
 
@@ -10,8 +10,8 @@ async fn main() -> echo_server::error::Result<()> {
 
     let (_signal, shutdown) = broadcast::channel(1);
     dotenv().ok();
-    let config =
-        env::get_config().expect("Failed to load config, please ensure all env vars are defined.");
+    let config = config::get_config()
+        .expect("Failed to load config, please ensure all env vars are defined.");
 
     let result = echo_server::bootstap(shutdown, config).await;
 

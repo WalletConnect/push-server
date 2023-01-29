@@ -4,7 +4,7 @@ use {
         routing::{delete, get, post},
         Router,
     },
-    env::Config,
+    config::Config,
     opentelemetry::{sdk::Resource, KeyValue},
     sqlx::{
         postgres::{PgConnectOptions, PgPoolOptions},
@@ -18,7 +18,7 @@ use {
 };
 
 pub mod blob;
-pub mod env;
+pub mod config;
 pub mod error;
 pub mod handlers;
 pub mod log;
@@ -152,6 +152,14 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             .with_state(state_arc.clone()),
         true => Router::new()
             .route("/health", get(handlers::health::handler))
+            .route("/health", get(handlers::health::handler))
+            .route("/tenants", post(handlers::create_tenant::handler))
+            .route(
+                "/tenants/:id",
+                get(handlers::get_tenant::handler).delete(handlers::delete_tenant::handler),
+            )
+            .route("/tenants/:id/fcm", post(handlers::update_fcm::handler))
+            .route("/tenants/:id/apns", post(handlers::update_apns::handler))
             .route(
                 "/:tenant_id/clients",
                 post(handlers::register_client::handler),
