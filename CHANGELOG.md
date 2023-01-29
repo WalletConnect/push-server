@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.14.0 - 2023-01-29
+#### Features
+- migrate `bat-cave` to `echo-server` (#86) - (1d24db7) - Harry Bairstow
+- use `bat-cave` secret for tenant db - (884da1e) - Harry Bairstow
+#### Miscellaneous Chores
+- bump lockfile - (ccd4490) - Harry Bairstow
+- - -
+
 ## v0.13.1 - 2023-01-27
 #### Bug Fixes
 - patch queries - (e559394) - Harry Bairstow
