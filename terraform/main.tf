@@ -3,7 +3,7 @@ locals {
   fqdn                = terraform.workspace == "prod" ? var.public_url : "${terraform.workspace}.${var.public_url}"
   latest_release_name = data.github_release.latest_release.name
   version             = coalesce(var.image_version, substr(local.latest_release_name, 1, length(local.latest_release_name)))
-  database_url = "postgres://${module.database_cluster.cluster_master_username}:${module.database_cluster.cluster_master_password}@${module.database_cluster.cluster_endpoint}:${module.database_cluster.cluster_port}/postgres"
+  database_url        = "postgres://${module.database_cluster.cluster_master_username}:${module.database_cluster.cluster_master_password}@${module.database_cluster.cluster_endpoint}:${module.database_cluster.cluster_port}/postgres"
   tenant_database_url = "postgres://${module.tenant_database_cluster.cluster_master_username}:${module.tenant_database_cluster.cluster_master_password}@${module.tenant_database_cluster.cluster_endpoint}:${module.tenant_database_cluster.cluster_port}/postgres"
 }
 
