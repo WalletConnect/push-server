@@ -201,7 +201,7 @@ providers: [{}]
             supported_providers_string
         );
 
-        println!("{}", header);
+        println!("{header}");
     }
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));

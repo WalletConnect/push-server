@@ -170,7 +170,7 @@ impl IntoResponse for Error {
                     vec![],
                     vec![ErrorField {
                         field: format!("{}.id", &entity),
-                        description: format!("Cannot find {} with specified identifier {}", entity, id),
+                        description: format!("Cannot find {entity} with specified identifier {id}"),
                         location: ErrorLocation::Body, // TODO evaluate if correct location
                     }],
                 ),
