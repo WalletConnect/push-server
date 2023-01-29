@@ -29,6 +29,7 @@ impl EchoServer {
             rt.block_on(async move {
                 let config: Config = Config {
                     port: public_port,
+                    public_url: format!("http://127.0.0.1:{public_port}"),
                     log_level: "info,echo-server=info".into(),
                     log_level_otel: "info,echo-server=trace".into(),
                     disable_header: false,
