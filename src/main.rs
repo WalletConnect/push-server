@@ -1,3 +1,5 @@
+#![deny(clippy::uninlined-format-args)]
+
 use {
     dotenv::dotenv,
     echo_server::{config, log},
