@@ -1,6 +1,6 @@
 use {
     crate::{
-        env::Config,
+        config::Config,
         error::{
             Error::{InvalidTenantId, ProviderNotAvailable},
             Result,
@@ -16,11 +16,10 @@ use {
     async_trait::async_trait,
     base64::Engine as _,
     chrono::{DateTime, Utc},
-    sqlx::PgPool,
+    sqlx::{Executor, PgPool},
     std::{io::BufReader, sync::Arc},
+    uuid::Uuid,
 };
-#[cfg(feature = "tenant_write")]
-use {sqlx::Executor, uuid::Uuid};
 
 #[derive(sqlx::FromRow, Debug, Eq, PartialEq, Clone)]
 pub struct Tenant {
@@ -37,7 +36,6 @@ pub struct Tenant {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-#[cfg(feature = "tenant_write")]
 pub struct TenantUpdateParams {
     /// Optional ID to override generated UUID, used for vanity IDs e.g.
     /// swift-sdk
@@ -122,13 +120,7 @@ impl Tenant {
 #[async_trait]
 pub trait TenantStore {
     async fn get_tenant(&self, id: &str) -> Result<Tenant>;
-}
-
-#[async_trait]
-#[cfg(feature = "tenant_write")]
-pub trait TenantWriteStore {
     async fn delete_tenant(&self, id: &str) -> Result<()>;
-
     async fn create_tenant(&self, params: TenantUpdateParams) -> Result<Tenant>;
     async fn update_tenant(&self, params: TenantUpdateParams) -> Result<Tenant>;
 }
@@ -149,11 +141,7 @@ impl TenantStore for PgPool {
             Ok(row) => Ok(row),
         }
     }
-}
 
-#[cfg(feature = "tenant_write")]
-#[async_trait]
-impl TenantWriteStore for PgPool {
     async fn delete_tenant(&self, id: &str) -> Result<()> {
         let mut query_builder = sqlx::QueryBuilder::new("DELETE FROM public.tenants WHERE id = ");
         query_builder.push_bind(id);
@@ -182,9 +170,8 @@ impl TenantWriteStore for PgPool {
 
     async fn update_tenant(&self, params: TenantUpdateParams) -> Result<Tenant> {
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
-            "UPDATE public.tenants SET fcm_api_key = $2 AND apns_topic = $3 \
-             AND apns_certificate = $4 AND apns_certificate_password = $5 WHERE id = $1 RETURNING \
-             *;",
+            "UPDATE public.tenants SET fcm_api_key = $2 AND apns_topic = $3 AND apns_certificate \
+             = $4 AND apns_certificate_password = $5 WHERE id = $1 RETURNING *;",
         )
         .bind(params.id.unwrap_or(Uuid::new_v4().to_string()))
         .bind(params.fcm_api_key)
@@ -218,5 +205,17 @@ impl DefaultTenantStore {
 impl TenantStore for DefaultTenantStore {
     async fn get_tenant(&self, _id: &str) -> Result<Tenant> {
         Ok(self.0.clone())
+    }
+
+    async fn delete_tenant(&self, _id: &str) -> Result<()> {
+        panic!("Shouldn't have run in single tenant mode")
+    }
+
+    async fn create_tenant(&self, _params: TenantUpdateParams) -> Result<Tenant> {
+        panic!("Shouldn't have run in single tenant mode")
+    }
+
+    async fn update_tenant(&self, _params: TenantUpdateParams) -> Result<Tenant> {
+        panic!("Shouldn't have run in single tenant mode")
     }
 }

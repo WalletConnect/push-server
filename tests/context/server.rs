@@ -1,5 +1,5 @@
 use {
-    echo_server::env::Config,
+    echo_server::config::Config,
     std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4, TcpListener},
     tokio::{
         runtime::Handle,
@@ -29,6 +29,7 @@ impl EchoServer {
             rt.block_on(async move {
                 let config: Config = Config {
                     port: public_port,
+                    public_url: format!("http://127.0.0.1:{public_port}"),
                     log_level: "info,echo-server=info".into(),
                     log_level_otel: "info,echo-server=trace".into(),
                     disable_header: false,
@@ -52,7 +53,7 @@ impl EchoServer {
         });
 
         if let Err(e) = wait_for_server_to_start(public_port).await {
-            panic!("Failed to start server with error: {:?}", e)
+            panic!("Failed to start server with error: {e:?}")
         }
 
         Self {
