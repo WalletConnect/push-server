@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.14.2 - 2023-01-30
+#### Bug Fixes
+- broken query - (07672e5) - Harry Bairstow
+- - -
+
 ## v0.14.1 - 2023-01-30
 #### Bug Fixes
 - duplicate health endpoint - (0312b2b) - Harry Bairstow
