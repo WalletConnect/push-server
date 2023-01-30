@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.14.1 - 2023-01-30
+#### Bug Fixes
+- duplicate health endpoint - (0312b2b) - Harry Bairstow
+- missing env var - (f390f4c) - Harry Bairstow
+- - -
+
 ## v0.14.0 - 2023-01-29
 #### Features
 - migrate `bat-cave` to `echo-server` (#86) - (1d24db7) - Harry Bairstow
