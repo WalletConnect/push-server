@@ -152,7 +152,6 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             .with_state(state_arc.clone()),
         true => Router::new()
             .route("/health", get(handlers::health::handler))
-            .route("/health", get(handlers::health::handler))
             .route("/tenants", post(handlers::create_tenant::handler))
             .route(
                 "/tenants/:id",
