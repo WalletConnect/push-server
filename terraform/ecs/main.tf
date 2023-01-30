@@ -70,6 +70,7 @@ resource "aws_ecs_task_definition" "app_task_definition" {
       ],
       environment = [
         { name = "PORT", value = "8080" },
+        { name = "PUBLIC_URL", value = "https://${var.fqdn}" },
         { name = "LOG_LEVEL", value = "info,echo-server=info" },
         { name = "LOG_LEVEL_OTEL", value = "info,echo-server=trace" },
         { name = "DATABASE_URL", value = var.database_url },
