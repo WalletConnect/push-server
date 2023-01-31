@@ -11,7 +11,7 @@ build = "build.rs"
 tokio = { version = "1", features = ["full"] }
 axum = { version = "0.6", features = ["json", "multipart"] }
 tower = "0.4"
-tower-http = { version = "0.3", features = ["trace"] }
+tower-http = { version = "0.3", features = ["trace", "cors"] }
 hyper = "0.14"
 
 # Database

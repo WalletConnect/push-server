@@ -1,6 +1,7 @@
 use {
     crate::{state::TenantStoreArc, stores::tenant::DefaultTenantStore},
     axum::{
+        http::{HeaderValue, Method},
         routing::{delete, get, post},
         Router,
     },
@@ -13,7 +14,10 @@ use {
     std::{net::SocketAddr, str::FromStr, sync::Arc, time::Duration},
     tokio::{select, sync::broadcast},
     tower::ServiceBuilder,
-    tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
+    tower_http::{
+        cors::CorsLayer,
+        trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
+    },
     tracing::{info, log::LevelFilter, warn, Level},
 };
 
@@ -119,6 +123,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         .clone();
     let build_rustc_version = state.build_info.compiler.version.clone();
     let show_header = !state.config.disable_header;
+    let allowed_origins = state.config.cors_allowed_origins.clone();
 
     let state_arc = Arc::new(state);
 
@@ -132,6 +137,27 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
                     .include_headers(true),
             ),
     );
+
+    let tenancy_routes = Router::new()
+        .route("/", post(handlers::create_tenant::handler))
+        .route(
+            "/:id",
+            get(handlers::get_tenant::handler).delete(handlers::delete_tenant::handler),
+        )
+        .route("/:id/fcm", post(handlers::update_fcm::handler))
+        .route("/:id/apns", post(handlers::update_apns::handler))
+        .layer(
+            global_middleware.clone().layer(
+                CorsLayer::new()
+                    .allow_methods([Method::GET, Method::POST, Method::DELETE])
+                    .allow_origin(
+                        allowed_origins
+                            .iter()
+                            .map(|v| v.parse::<HeaderValue>().unwrap())
+                            .collect::<Vec<HeaderValue>>(),
+                    ),
+            ),
+        );
 
     let app = match is_multitenant {
         false => Router::new()
@@ -147,18 +173,10 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             .route(
                 "/clients/:id",
                 post(handlers::single_tenant_wrappers::push_handler),
-            )
-            .layer(global_middleware)
-            .with_state(state_arc.clone()),
+            ),
         true => Router::new()
             .route("/health", get(handlers::health::handler))
-            .route("/tenants", post(handlers::create_tenant::handler))
-            .route(
-                "/tenants/:id",
-                get(handlers::get_tenant::handler).delete(handlers::delete_tenant::handler),
-            )
-            .route("/tenants/:id/fcm", post(handlers::update_fcm::handler))
-            .route("/tenants/:id/apns", post(handlers::update_apns::handler))
+            .nest("/tenants", tenancy_routes)
             .route(
                 "/:tenant_id/clients",
                 post(handlers::register_client::handler),
@@ -170,10 +188,10 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             .route(
                 "/:tenant_id/clients/:id",
                 post(handlers::push_message::handler),
-            )
-            .layer(global_middleware)
-            .with_state(state_arc.clone()),
-    };
+            ),
+    }
+    .layer(global_middleware)
+    .with_state(state_arc.clone());
 
     let private_app = Router::new()
         .route("/metrics", get(handlers::metrics::handler))

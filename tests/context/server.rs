@@ -45,6 +45,7 @@ impl EchoServer {
                     apns_topic: None,
                     fcm_api_key: None,
                     is_test: true,
+                    cors_allowed_origins: vec!["*".to_string()],
                 };
 
                 echo_server::bootstap(shutdown, config).await
