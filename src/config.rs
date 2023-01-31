@@ -26,6 +26,10 @@ pub struct Config {
     /// This is an internal flag to disable logging, cannot be defined by user
     pub is_test: bool,
 
+    // CORS
+    #[serde(default = "default_cors_allowed_origin")]
+    pub cors_allowed_origin: String,
+
     // TELEMETRY
     pub otel_exporter_otlp_endpoint: Option<String>,
     pub telemetry_prometheus_port: Option<u16>,
@@ -112,6 +116,10 @@ fn default_tenant_id() -> String {
 
 fn default_is_test() -> bool {
     false
+}
+
+fn default_cors_allowed_origin() -> String {
+    "*".to_string()
 }
 
 pub fn get_config() -> error::Result<Config> {
