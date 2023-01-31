@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.15.0 - 2023-01-31
+#### Features
+- CORS (#88) - (18f49a4) - Harry Bairstow
+- - -
+
 ## v0.14.2 - 2023-01-30
 #### Bug Fixes
 - broken query - (07672e5) - Harry Bairstow
