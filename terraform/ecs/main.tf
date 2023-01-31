@@ -75,6 +75,7 @@ resource "aws_ecs_task_definition" "app_task_definition" {
         { name = "LOG_LEVEL_OTEL", value = "info,echo-server=trace" },
         { name = "DATABASE_URL", value = var.database_url },
         { name = "TENANT_DATABASE_URL", value = var.tenant_database_url },
+        { name = "CORS_ALLOWED_ORIGINS", value = var.allowed_origins },
         { name = "TELEMETRY_PROMETHEUS_PORT", value = local.prometheus_port },
         { name = "OTEL_SERVICE_NAME", value = var.app_name },
         { name = "OTEL_RESOURCE_ATTRIBUTES", value = "environment=${var.environment},region=${var.region},version=${var.image_version}" },

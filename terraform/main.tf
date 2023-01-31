@@ -137,6 +137,7 @@ module "ecs" {
   vpc_cidr               = module.vpc.vpc_cidr_block
   vpc_id                 = module.vpc.vpc_id
   telemetry_sample_ratio = terraform.workspace == "prod" ? 0.25 : 1.0
+  allowed_origins        = terraform.workspace == "prod" ? "https://cloud.walletconnect.com" : "*"
 
   aws_otel_collector_ecr_repository_url = data.aws_ecr_repository.aws_otel_collector.repository_url
 }

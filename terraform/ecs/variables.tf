@@ -75,3 +75,7 @@ variable "telemetry_sample_ratio" {
 variable "aws_otel_collector_ecr_repository_url" {
   type = string
 }
+
+variable "allowed_origins" {
+  type = string
+}
