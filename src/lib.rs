@@ -1,8 +1,7 @@
-use axum::http::HeaderValue;
 use {
     crate::{state::TenantStoreArc, stores::tenant::DefaultTenantStore},
     axum::{
-        http::Method,
+        http::{HeaderValue, Method},
         routing::{delete, get, post},
         Router,
     },
