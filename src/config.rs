@@ -27,8 +27,8 @@ pub struct Config {
     pub is_test: bool,
 
     // CORS
-    #[serde(default = "default_cors_allowed_origin")]
-    pub cors_allowed_origin: String,
+    #[serde(default = "default_cors_allowed_origins")]
+    pub cors_allowed_origins: Vec<String>,
 
     // TELEMETRY
     pub otel_exporter_otlp_endpoint: Option<String>,
@@ -118,8 +118,8 @@ fn default_is_test() -> bool {
     false
 }
 
-fn default_cors_allowed_origin() -> String {
-    "*".to_string()
+fn default_cors_allowed_origins() -> Vec<String> {
+    vec!["*".to_string()]
 }
 
 pub fn get_config() -> error::Result<Config> {

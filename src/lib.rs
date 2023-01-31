@@ -123,7 +123,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         .clone();
     let build_rustc_version = state.build_info.compiler.version.clone();
     let show_header = !state.config.disable_header;
-    let allowed_origins = state.config.cors_allowed_origin.clone();
+    let allowed_origins = state.config.cors_allowed_origins.clone();
 
     let state_arc = Arc::new(state);
 
@@ -150,7 +150,12 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             global_middleware.clone().layer(
                 CorsLayer::new()
                     .allow_methods([Method::GET, Method::POST, Method::DELETE])
-                    .allow_origin(allowed_origins.parse::<HeaderValue>().unwrap()),
+                    .allow_origin(
+                        allowed_origins
+                            .iter()
+                            .map(|v| v.parse::<HeaderValue>().unwrap())
+                            .collect::<Vec<HeaderValue>>(),
+                    ),
             ),
         );
 
