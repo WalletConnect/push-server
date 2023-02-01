@@ -21,12 +21,12 @@ git clone https://github.com/walletconnect/echo-server.git
 > for both. An example docker command is below for how to start a container running postgres
 > ```bash
 > docker run \
-> -p 5432:5432 \
-> -e POSTGRES_USER=postgres \
-> -e POSTGRES_PASSWORD=password \
-> -e POSTGRES_DB=postgres \
-> --name echo-server-database \
-> -d postgres
+>   -p 5432:5432 \
+>   -e POSTGRES_USER=postgres \
+>   -e POSTGRES_PASSWORD=password \
+>   -e POSTGRES_DB=postgres \
+>   --name echo-server-database \
+>   -d postgres
 > ```
 
 # Client Registration
