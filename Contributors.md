@@ -15,6 +15,20 @@ git clone https://github.com/walletconnect/echo-server.git
 > the required environment variables. In multi-tenant mode, you must register
 > a tenant, see [here](#registering-tenants)
 
+> **Warning**
+> Echo Server requires a postgres database, the `DATABASE_URL` & `TENANT_DATABASE_URL`
+> should both be valid postgres database url. We **recommend** using a clean database
+> for both. An example docker command is below for how to start a container running postgres
+> ```bash
+> docker run \
+> -p 5432:5432 \
+> -e POSTGRES_USER=postgres \
+> -e POSTGRES_PASSWORD=password \
+> -e POSTGRES_DB=postgres \
+> --name echo-server-database \
+> -d postgres
+> ```
+
 # Client Registration
 
 > **Note**
