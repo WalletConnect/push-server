@@ -42,9 +42,9 @@ difference is the URL you are sending your requests to.
    below for how this json payload should look.
 ```jsonc
 {
-    "client_id": <CLIENT_ID>, // The Client ID from Step 1
-    "type": <TYPE>, // See note below
-    "token": <DEVICE_TOKEN> // The token from Step 2
+    "client_id": "<CLIENT_ID>", // The Client ID from Step 1
+    "type": "<TYPE>", // See note below
+    "token": "<DEVICE_TOKEN>" // The token from Step 2
 }
 ```
 > **Note**
