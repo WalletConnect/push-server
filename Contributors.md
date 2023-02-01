@@ -43,8 +43,8 @@ git clone https://github.com/walletconnect/echo-server.git
 ## Validation
 To test your instance is working, open a browser and visit the `/health` endpoint.
 
-You can also run the integration tests against your instance by doing the following
-steps:
+You could also, optionally, run the integration tests against your instance by
+following these steps:
 1. Open a terminal in the same directory as the code
 2. Run `yarn install`
 3. Run `yarn integration:dev`
