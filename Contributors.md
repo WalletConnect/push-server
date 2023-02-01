@@ -4,6 +4,7 @@ hopefully with ease, there are sections for most actions you may want to take as
 well as a full setup guide.
 
 - [Initial Setup](#initial-setup)
+- [Testing with the Relay](#testing-with-the-relay)
 - [Client Registration](#client-registration)
 - [Sending a Push Notification](#sending-a-push-notification)
 - [Registering a Tenant](#registering-tenant)
@@ -52,6 +53,16 @@ following these steps:
 > **Note**
 > The integration tests presume you are running your local instance on 
 > port `3000`
+
+# Testing with the Relay
+To test with the relay your local instance needs to be available on the internet.
+To do this you can use a tunnel, e.g. ngrok or cloudflare tunnels. Once you have a
+public url that points to your local instance. Go into the [cloud app](https://cloud.walletconnect.com),
+find your project and put that url as the `push_url` in the settings. Then the relay
+will be sending the notifications to your local instance.
+
+> **Warning**
+> The Relay caches the `push_url` field, it can take up-to 5 minutes
 
 # Client Registration
 
@@ -119,3 +130,12 @@ difference is the URL you are sending your requests to.
 > The sections makes a few assumptions:
 > - You have setup a local instance and have disabled signature validation
 > - You have registered a client, following the steps [here](#client-registration)
+
+Echo Server supports 2 kinds of notifications, they are typically delivered by
+the Relay. The Relay can send "plain text" notifications which include the notification
+in the JSON payload or the notification can be "encrypted" which means the JSON-RPC
+request is just forwarded to the SDKs on the device to be decrypted - using
+`mutable-content` with APNS & the `data` object for FCM.
+
+This guide will split about half-way through so that there are instructions for
+both Encrypted and Plain Text.
