@@ -4,14 +4,13 @@ pub mod noop;
 
 use {
     crate::{
-        error,
+        error::{self, Error::MissingTopic},
         handlers::push_message::MessagePayload,
         providers::{apns::ApnsProvider, fcm::FcmProvider},
     },
     async_trait::async_trait,
     tracing::span,
 };
-use crate::error::Error::MissingTopic;
 
 #[cfg(any(debug_assertions, test))]
 use crate::providers::noop::NoopProvider;
@@ -106,7 +105,7 @@ impl PushProvider for Provider {
         let _ = s.enter();
 
         if payload.is_encrypted() && payload.topic.is_none() {
-            return Err(MissingTopic)
+            return Err(MissingTopic);
         }
 
         match self {

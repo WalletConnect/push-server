@@ -109,8 +109,11 @@ pub enum Error {
     #[error("The provided multi-part body did not satisfy the requirements")]
     InvalidMultipartBody,
 
-    #[error("Encrypted push notification received without a topic, please ensure all required parameters set")]
-    MissingTopic
+    #[error(
+        "Encrypted push notification received without a topic, please ensure all required \
+         parameters set"
+    )]
+    MissingTopic,
 }
 
 impl IntoResponse for Error {
