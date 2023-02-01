@@ -7,8 +7,6 @@ well as a full setup guide.
 - [Testing with the Relay](#testing-with-the-relay)
 - [Client Registration](#client-registration)
 - [Sending a Push Notification](#sending-a-push-notification)
-- [Registering a Tenant](#registering-tenant)
-- [Updating a Tenant's Provider Info](#updating-tenant)
 
 # Initial Setup
 
