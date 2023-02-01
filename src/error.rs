@@ -108,6 +108,9 @@ pub enum Error {
 
     #[error("The provided multi-part body did not satisfy the requirements")]
     InvalidMultipartBody,
+
+    #[error("Encrypted push notification received without a topic, please ensure all required parameters set")]
+    MissingTopic
 }
 
 impl IntoResponse for Error {
@@ -265,6 +268,14 @@ impl IntoResponse for Error {
                 vec![ResponseError {
                     name: "tenancy-mode".to_string(),
                     message: "multi-tenant request made while echo server in single-tenant mode".to_string(),
+                }],
+                vec![],
+            ),
+            Error::MissingTopic => crate::handlers::Response::new_failure(
+                StatusCode::BAD_REQUEST,
+                vec![ResponseError {
+                    name: "topic".to_string(),
+                    message: "encrypted push notifications require topic to be set".to_string(),
                 }],
                 vec![],
             ),
