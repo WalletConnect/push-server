@@ -4,7 +4,7 @@ pub mod noop;
 
 use {
     crate::{
-        error,
+        error::{self, Error::MissingTopic},
         handlers::push_message::MessagePayload,
         providers::{apns::ApnsProvider, fcm::FcmProvider},
     },
@@ -103,6 +103,11 @@ impl PushProvider for Provider {
     ) -> error::Result<()> {
         let s = span!(tracing::Level::INFO, "send_notification");
         let _ = s.enter();
+
+        if payload.is_encrypted() && payload.topic.is_none() {
+            return Err(MissingTopic);
+        }
+
         match self {
             Provider::Fcm(p) => p.send_notification(token, payload).await,
             Provider::Apns(p) => p.send_notification(token, payload).await,

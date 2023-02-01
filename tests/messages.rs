@@ -21,7 +21,7 @@ const EXAMPLE_ENCRYPTED_BLOB: &str = "encrypted-blob";
 #[test]
 pub fn check_payload_encrypted() {
     let payload = MessagePayload {
-        topic: EXAMPLE_TOPIC.to_string(),
+        topic: Some(EXAMPLE_TOPIC.to_string()),
         flags: ENCRYPTED_FLAG,
         blob: EXAMPLE_ENCRYPTED_BLOB.to_string(),
     };
@@ -32,7 +32,7 @@ pub fn check_payload_encrypted() {
 #[test]
 pub fn check_payload_not_encrypted() {
     let payload = MessagePayload {
-        topic: EXAMPLE_TOPIC.to_string(),
+        topic: None,
         flags: 0,
         blob: EXAMPLE_CLEARTEXT_ENCODED_BLOB.to_string(),
     };
@@ -43,7 +43,7 @@ pub fn check_payload_not_encrypted() {
 #[test]
 pub fn parse_blob_from_payload() {
     let payload = MessagePayload {
-        topic: EXAMPLE_TOPIC.to_string(),
+        topic: None,
         flags: 0,
         blob: EXAMPLE_CLEARTEXT_ENCODED_BLOB.to_string(),
     };
