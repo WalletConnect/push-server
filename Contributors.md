@@ -1,3 +1,14 @@
+# Echo Server Contribution Guide
+This guide helps contributors & WalletConnect team members work on Echo Server,
+hopefully with ease, there are sections for most actions you may want to take as
+well as a full setup guide.
+
+- [Initial Setup](#initial-setup)
+- [Client Registration](#client-registration)
+- [Sending a Push Notification](#sending-a-push-notification)
+- [Registering a Tenant](#registering-tenant)
+- [Updating a Tenant's Provider Info](#updating-tenant)
+
 # Initial Setup
 
 1. Clone the repository
@@ -28,6 +39,19 @@ git clone https://github.com/walletconnect/echo-server.git
 >   --name echo-server-database \
 >   -d postgres
 > ```
+
+## Validation
+To test your instance is working, open a browser and visit the `/health` endpoint.
+
+You can also run the integration tests against your instance by doing the following
+steps:
+1. Open a terminal in the same directory as the code
+2. Run `yarn install`
+3. Run `yarn integration:dev`
+
+> **Note**
+> The integration tests presume you are running your local instance on 
+> port `3000`
 
 # Client Registration
 
@@ -88,3 +112,10 @@ difference is the URL you are sending your requests to.
   > Project ID in it, so use the format of the single-tenant URL
 5. Send a `POST` request with the JSON body from Step 3, to the URL from Step 4
   If everything is correct you should receive a `2XX` status code
+
+# Sending a Push Notification
+
+> **Note**
+> The sections makes a few assumptions:
+> - You have setup a local instance and have disabled signature validation
+> - You have registered a client, following the steps [here](#client-registration)
