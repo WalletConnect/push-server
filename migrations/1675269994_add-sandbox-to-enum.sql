@@ -1,1 +1,1 @@
-ALTER TYPE public.provider ADD VALUE 'apns-sandbox';
+ALTER TYPE public.provider ADD VALUE 'apnssandbox';
