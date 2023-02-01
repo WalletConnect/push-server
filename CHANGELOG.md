@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.16.0 - 2023-02-01
+#### Features
+- Contributor Guide (#93) - (2023792) - Harry Bairstow
+#### Miscellaneous Chores
+- update labels in `intake.yml` - (c994c32) - Harry Bairstow
+- - -
+
 ## v0.15.0 - 2023-01-31
 #### Features
 - CORS (#88) - (18f49a4) - Harry Bairstow
