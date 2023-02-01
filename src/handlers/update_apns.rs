@@ -63,7 +63,8 @@ pub async fn handler(
             }
             "apns_certificate" => {
                 let data = field.bytes().await?;
-                let encoded_certificate = base64::engine::general_purpose::STANDARD.encode(&data.to_vec());
+                let encoded_certificate =
+                    base64::engine::general_purpose::STANDARD.encode(&data.to_vec());
                 body.apns_certificate = Some(encoded_certificate);
             }
             "apns_certificate_password" => {
