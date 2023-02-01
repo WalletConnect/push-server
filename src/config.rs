@@ -62,7 +62,7 @@ impl Config {
         }
 
         if let Some(tenant_database_url) = &self.tenant_database_url {
-            if tenant_database_url == self.database_url {
+            if tenant_database_url == &self.database_url {
                 return Err(InvalidConfiguration(
                     "`TENANT_DATABASE_URL` is equal to `DATABASE_URL`, this is not allowed"
                         .to_string(),
