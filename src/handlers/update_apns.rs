@@ -55,19 +55,19 @@ pub async fn handler(
     };
     while let Some(field) = form_body.next_field().await? {
         let name = field.name().unwrap_or("unknown").to_string();
-        let data = field.text().await?;
 
         // Check the lowercase name against list of known names for struct
         match name.to_lowercase().as_str() {
             "apns_topic" => {
-                body.apns_topic = Some(data);
+                body.apns_topic = Some(field.text().await?);
             }
             "apns_certificate" => {
-                let encoded_certificate = base64::engine::general_purpose::STANDARD.encode(data);
+                let data = field.bytes().await?;
+                let encoded_certificate = base64::engine::general_purpose::STANDARD.encode(&data.to_vec());
                 body.apns_certificate = Some(encoded_certificate);
             }
             "apns_certificate_password" => {
-                body.apns_certificate_password = Some(data);
+                body.apns_certificate_password = Some(field.text().await?);
             }
             _ => {
                 // Unknown field, ignored
