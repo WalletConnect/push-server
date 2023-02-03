@@ -4,7 +4,7 @@ use {
             Error::{EmptyField, ProviderNotAvailable},
             Result,
         },
-        handlers::Response,
+        handlers::{Response, DECENTRALIZED_IDENTIFIER_PREFIX},
         log::prelude::*,
         state::AppState,
         stores::client::Client,
@@ -39,9 +39,13 @@ pub async fn handler(
         return Err(EmptyField("token".to_string()));
     }
 
+    let client_id = body
+        .client_id
+        .trim_start_matches(DECENTRALIZED_IDENTIFIER_PREFIX);
+
     state
         .client_store
-        .create_client(&tenant_id, &body.client_id, Client {
+        .create_client(&tenant_id, &client_id, Client {
             push_type,
             token: body.token,
         })

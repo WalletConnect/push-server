@@ -18,6 +18,8 @@ pub mod get_tenant;
 pub mod update_apns;
 pub mod update_fcm;
 
+pub const DECENTRALIZED_IDENTIFIER_PREFIX: &str = "did:key:";
+
 #[derive(serde::Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ErrorLocation {
