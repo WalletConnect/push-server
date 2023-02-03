@@ -2,6 +2,15 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.17.0 - 2023-02-03
+#### Bug Fixes
+- clippy - (5510f23) - Derek
+- CI workflow broken - (df9b643) - Derek
+- apple push notifications not showing - (86ae566) - Derek
+#### Features
+- improve pipelines - (cf726a0) - Derek
+- - -
+
 ## v0.16.0 - 2023-02-01
 #### Features
 - Contributor Guide (#93) - (2023792) - Harry Bairstow
