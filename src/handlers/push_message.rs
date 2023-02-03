@@ -2,7 +2,7 @@ use {
     crate::{
         blob::ENCRYPTED_FLAG,
         error::Result,
-        handlers::Response,
+        handlers::{Response, DECENTRALIZED_IDENTIFIER_PREFIX},
         log::prelude::*,
         middleware::validate_signature::RequireValidSignature,
         providers::PushProvider,
@@ -47,6 +47,10 @@ pub async fn handler(
             .add(&Context::current(), 1, &[]);
         debug!("incremented `received_notifications` counter")
     }
+
+    let id = id
+        .trim_start_matches(DECENTRALIZED_IDENTIFIER_PREFIX)
+        .to_string();
 
     let client = state.client_store.get_client(&tenant_id, &id).await?;
     info!("fetched client ({}) for tenant ({})", &id, &tenant_id);

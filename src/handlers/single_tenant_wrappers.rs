@@ -1,12 +1,7 @@
 use {
     crate::{
         error::{Error::MissingTenantId, Result},
-        handlers::{
-            push_message::PushMessageBody,
-            register_client::RegisterBody,
-            Response,
-            DECENTRALIZED_IDENTIFIER_PREFIX,
-        },
+        handlers::{push_message::PushMessageBody, register_client::RegisterBody, Response},
         middleware::validate_signature::RequireValidSignature,
         state::{AppState, State},
     },
@@ -25,10 +20,6 @@ pub async fn delete_handler(
         return Err(MissingTenantId);
     }
 
-    let id = id
-        .trim_start_matches(DECENTRALIZED_IDENTIFIER_PREFIX)
-        .to_string();
-
     crate::handlers::delete_client::handler(
         Path((state.config.default_tenant_id.clone(), id)),
         state,
@@ -44,10 +35,6 @@ pub async fn push_handler(
     if state.is_multitenant() {
         return Err(MissingTenantId);
     }
-
-    let id = id
-        .trim_start_matches(DECENTRALIZED_IDENTIFIER_PREFIX)
-        .to_string();
 
     crate::handlers::push_message::handler(
         Path((state.config.default_tenant_id.clone(), id)),
