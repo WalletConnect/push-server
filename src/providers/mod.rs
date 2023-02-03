@@ -75,7 +75,7 @@ impl TryFrom<&str> for ProviderKind {
     type Error = error::Error;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        match value {
+        match value.to_lowercase().as_str() {
             PROVIDER_APNS => Ok(Self::Apns),
             PROVIDER_APNS_SANDBOX => Ok(Self::ApnsSandbox),
             PROVIDER_FCM => Ok(Self::Fcm),
