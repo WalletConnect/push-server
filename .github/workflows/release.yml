@@ -2,6 +2,7 @@ name: release
 
 on:
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: write
@@ -132,3 +133,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  kick-off-cd:
+    needs: [build-container]
+    uses: ./.github/workflows/cd.yml
+    secrets: inherit
