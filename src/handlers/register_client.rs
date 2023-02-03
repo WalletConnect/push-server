@@ -45,7 +45,7 @@ pub async fn handler(
 
     state
         .client_store
-        .create_client(&tenant_id, &client_id, Client {
+        .create_client(&tenant_id, client_id, Client {
             push_type,
             token: body.token,
         })
