@@ -6,7 +6,7 @@ use {
 
 pub type Flag = u32;
 pub const ENCRYPTED_FLAG: Flag = 1 << 0;
-pub const SIGN_FLAG: Flag = 1 << 1;
+// pub const SIGN_FLAG: Flag = 1 << 1;
 // pub const AUTH_FLAG: Flag = 1 << 2;
 // pub const CHAT_FLAG: Flag = 1 << 3;
 // pub const PUSH_FLAG: Flag = 1 << 4;
