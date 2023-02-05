@@ -51,6 +51,18 @@ pub async fn handler(
     let client = state.client_store.get_client(&tenant_id, &id).await?;
     info!("fetched client ({}) for tenant ({})", &id, &tenant_id);
 
+    if let Ok(_notification) = state
+        .notification_store
+        .get_notification(&body.id, &tenant_id)
+        .await
+    {
+        info!(
+            "notification ({}) already received for client ({})",
+            body.id, id
+        );
+        return Ok(Response::new_success(StatusCode::OK));
+    }
+
     let notification = state
         .notification_store
         .create_or_update_notification(&body.id, &tenant_id, &id, &body.payload)
@@ -67,7 +79,7 @@ pub async fn handler(
             "notification ({}) already received for client ({})",
             body.id, id
         );
-        return Ok(Response::new_success(StatusCode::ACCEPTED));
+        return Ok(Response::new_success(StatusCode::OK));
     }
 
     let tenant = state.tenant_store.get_tenant(&tenant_id).await?;
