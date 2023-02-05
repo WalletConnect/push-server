@@ -1,13 +1,13 @@
 use {
-    crate::context::ServerContext,
+    crate::context::SingleTenantServerContext,
     echo_server::handlers::register_client::RegisterBody,
     random_string::generate,
     test_context::test_context,
 };
 
-#[test_context(ServerContext)]
+#[test_context(SingleTenantServerContext)]
 #[tokio::test]
-async fn test_registration(ctx: &mut ServerContext) {
+async fn test_registration(ctx: &mut SingleTenantServerContext) {
     let charset = "1234567890";
     let random_client_id = generate(12, charset);
     let payload = RegisterBody {
@@ -49,9 +49,9 @@ async fn test_registration(ctx: &mut ServerContext) {
     );
 }
 
-#[test_context(ServerContext)]
+#[test_context(SingleTenantServerContext)]
 #[tokio::test]
-async fn test_deregistration(ctx: &mut ServerContext) {
+async fn test_deregistration(ctx: &mut SingleTenantServerContext) {
     let charset = "1234567890";
     let random_client_id = generate(12, charset);
     let payload = RegisterBody {
