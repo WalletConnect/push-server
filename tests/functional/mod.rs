@@ -1,5 +1,6 @@
 use {crate::context::ServerContext, test_context::test_context};
 
+mod push;
 mod registration;
 
 #[test_context(ServerContext)]
