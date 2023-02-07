@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.17.2 - 2023-02-07
+#### Bug Fixes
+- **(hotfix)** cors not properly configured (#99) - (eecd5ee) - Derek
+- - -
+
 ## v0.17.1 - 2023-02-06
 #### Bug Fixes
 - **(hotfix)** dedupe messages (#97) - (c12ea58) - Derek
