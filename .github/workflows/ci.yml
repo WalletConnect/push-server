@@ -145,9 +145,3 @@ jobs:
 
       - name: "Stop sccache server"
         run: sccache --stop-server || true
-
-  kick-off-release:
-    needs: [tasks]
-    if: github.event_name != 'pull_request'
-    uses: ./.github/workflows/release.yml
-    secrets: inherit

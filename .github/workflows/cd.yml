@@ -1,7 +1,13 @@
 name: cd
 on:
   workflow_dispatch:
-  workflow_call:
+  push:
+    branches:
+      - "main"
+    paths:
+      - "terraform/**"
+  release:
+    types: ["published"]
 
 concurrency:
   # Only allow for one action to run at once, queue any others

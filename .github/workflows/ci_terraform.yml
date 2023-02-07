@@ -77,9 +77,3 @@ jobs:
               repo: context.repo.repo,
               body: output
             })
-
-  kick-off-release:
-    needs: [fmt]
-    if: github.event_name != 'pull_request'
-    uses: ./.github/workflows/cd.yml
-    secrets: inherit
