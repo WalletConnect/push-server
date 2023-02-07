@@ -15,7 +15,7 @@ use {
     tokio::{select, sync::broadcast},
     tower::ServiceBuilder,
     tower_http::{
-        cors::CorsLayer,
+        cors::{AllowOrigin, CorsLayer},
         trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
     },
     tracing::{info, log::LevelFilter, warn, Level},
@@ -150,12 +150,13 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             global_middleware.clone().layer(
                 CorsLayer::new()
                     .allow_methods([Method::GET, Method::POST, Method::DELETE])
-                    .allow_origin(
+                    /*
+                        TOOD: switch back to using the real configuration
                         allowed_origins
                             .iter()
                             .map(|v| v.parse::<HeaderValue>().unwrap())
-                            .collect::<Vec<HeaderValue>>(),
-                    ),
+                            .collect::<Vec<HeaderValue>>(), */
+                    .allow_origin(AllowOrigin::any()),
             ),
         );
 

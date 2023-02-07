@@ -1,5 +1,5 @@
 use {
-    crate::context::ServerContext,
+    crate::context::SingleTenantServerContext,
     echo_server::handlers::{
         push_message::{MessagePayload, PushMessageBody},
         register_client::RegisterBody,
@@ -9,9 +9,9 @@ use {
     uuid::Uuid,
 };
 
-#[test_context(ServerContext)]
+#[test_context(SingleTenantServerContext)]
 #[tokio::test]
-async fn test_push(ctx: &mut ServerContext) {
+async fn test_push(ctx: &mut SingleTenantServerContext) {
     let charset = "1234567890";
     let random_client_id = generate(12, charset);
     let payload = RegisterBody {

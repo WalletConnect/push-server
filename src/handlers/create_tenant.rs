@@ -5,7 +5,7 @@ use {
     std::sync::Arc,
 };
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct TenantRegisterBody {
     /// The project ID
     pub id: String,
