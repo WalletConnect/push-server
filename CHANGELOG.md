@@ -2,6 +2,15 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.17.3 - 2023-02-07
+#### Bug Fixes
+- lowercase string conversions into ProviderKind (#95) - (0cf66a0) - WC
+- Strip out decentralized identifier prefix from client_id (#96) - (89c7b77) - WC
+#### Miscellaneous Chores
+- ignore `.github` from `ci` - (baa395b) - Harry Bairstow
+- revert pipeline changes - (f58a2a2) - Harry Bairstow
+- - -
+
 ## v0.17.2 - 2023-02-07
 #### Bug Fixes
 - **(hotfix)** cors not properly configured (#99) - (eecd5ee) - Derek
