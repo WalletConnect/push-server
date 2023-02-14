@@ -2,6 +2,7 @@ use {
     crate::{
         config::Config,
         error::{
+            self,
             Error::{InvalidTenantId, ProviderNotAvailable},
             Result,
         },
@@ -16,10 +17,61 @@ use {
     async_trait::async_trait,
     base64::Engine as _,
     chrono::{DateTime, Utc},
+    serde::{Deserialize, Serialize},
     sqlx::{Executor, PgPool},
     std::{io::BufReader, sync::Arc},
     uuid::Uuid,
 };
+
+const APNS_TYPE_CERTIFICATE: &str = "certificate";
+const APNS_TYPE_TOKEN: &str = "token";
+
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, sqlx::Type)]
+#[sqlx(type_name = "provider")]
+#[sqlx(rename_all = "lowercase")]
+pub enum ApnsType {
+    Certificate,
+    Token,
+}
+
+impl ApnsType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Certificate => APNS_TYPE_CERTIFICATE,
+            Self::Token => APNS_TYPE_TOKEN,
+        }
+    }
+}
+
+impl From<&ApnsType> for String {
+    fn from(val: &ApnsType) -> Self {
+        val.as_str().to_string()
+    }
+}
+
+impl From<ApnsType> for String {
+    fn from(val: ApnsType) -> Self {
+        val.as_str().to_string()
+    }
+}
+
+impl From<ApnsType> for &str {
+    fn from(val: ApnsType) -> Self {
+        val.as_str()
+    }
+}
+
+impl TryFrom<&str> for ApnsType {
+    type Error = error::Error;
+
+    fn try_from(value: &str) -> Result<Self> {
+        match value.to_lowercase().as_str() {
+            APNS_TYPE_CERTIFICATE => Ok(Self::Certificate),
+            APNS_TYPE_TOKEN => Ok(Self::Token),
+            _ => Err(error::Error::InvalidApnsType(value.to_owned())),
+        }
+    }
+}
 
 #[derive(sqlx::FromRow, Debug, Eq, PartialEq, Clone)]
 pub struct Tenant {
@@ -27,9 +79,17 @@ pub struct Tenant {
 
     pub fcm_api_key: Option<String>,
 
+    pub apns_type: Option<ApnsType>,
     pub apns_topic: Option<String>,
+
+    // Certificate Based
     pub apns_certificate: Option<String>,
     pub apns_certificate_password: Option<String>,
+
+    // Token Based
+    pub apns_pkcs8_pem: Option<String>,
+    pub apns_key_id: Option<String>,
+    pub apns_team_id: Option<String>,
 
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -52,10 +112,7 @@ impl Tenant {
     pub fn providers(&self) -> Vec<ProviderKind> {
         let mut supported = vec![];
 
-        if self.apns_certificate.is_some()
-            && self.apns_certificate_password.is_some()
-            && self.apns_topic.is_some()
-        {
+        if self.get_apns_type().is_some() {
             supported.push(ProviderKind::Apns);
             supported.push(ProviderKind::ApnsSandbox);
         }
@@ -71,6 +128,33 @@ impl Tenant {
         supported
     }
 
+    pub fn get_apns_type(&self) -> Option<ApnsType> {
+        if let Some(apns_type) = &self.apns_type {
+            // Check if APNS config is correct
+            match apns_type {
+                ApnsType::Certificate => match (
+                    &self.apns_topic,
+                    &self.apns_certificate,
+                    &self.apns_certificate_password,
+                ) {
+                    (Some(_), Some(_), Some(_)) => Some(ApnsType::Certificate),
+                    _ => None,
+                },
+                ApnsType::Token => match (
+                    &self.apns_topic,
+                    &self.apns_pkcs8_pem,
+                    &self.apns_key_id,
+                    &self.apns_team_id,
+                ) {
+                    (Some(_), Some(_), Some(_), Some(_)) => Some(ApnsType::Token),
+                    _ => None,
+                },
+            }
+        } else {
+            None
+        }
+    }
+
     pub fn provider(&self, provider: &ProviderKind) -> Result<Provider> {
         if !self.providers().contains(provider) {
             return Err(ProviderNotAvailable(provider.into()));
@@ -82,26 +166,52 @@ impl Tenant {
                     ProviderKind::ApnsSandbox => a2::Endpoint::Sandbox,
                     _ => a2::Endpoint::Production,
                 };
-                match (
-                    &self.apns_certificate,
-                    &self.apns_certificate_password,
-                    &self.apns_topic,
-                ) {
-                    (Some(certificate), Some(password), Some(topic)) => {
-                        let decoded =
-                            base64::engine::general_purpose::STANDARD.decode(certificate)?;
-                        let mut reader = BufReader::new(&*decoded);
+                match self.get_apns_type() {
+                    Some(ApnsType::Certificate) => match (
+                        &self.apns_certificate,
+                        &self.apns_certificate_password,
+                        &self.apns_topic,
+                    ) {
+                        (Some(certificate), Some(password), Some(topic)) => {
+                            let decoded =
+                                base64::engine::general_purpose::STANDARD.decode(certificate)?;
+                            let mut reader = BufReader::new(&*decoded);
 
-                        let apns_client = ApnsProvider::new_cert(
-                            &mut reader,
-                            password.clone(),
-                            endpoint,
-                            topic.clone(),
-                        )?;
+                            let apns_client = ApnsProvider::new_cert(
+                                &mut reader,
+                                password.clone(),
+                                endpoint,
+                                topic.clone(),
+                            )?;
 
-                        Ok(Apns(apns_client))
-                    }
-                    _ => Err(ProviderNotAvailable(provider.into())),
+                            Ok(Apns(apns_client))
+                        }
+                        _ => Err(ProviderNotAvailable(provider.into())),
+                    },
+                    Some(ApnsType::Token) => match (
+                        &self.apns_topic,
+                        &self.apns_pkcs8_pem,
+                        &self.apns_key_id,
+                        &self.apns_team_id,
+                    ) {
+                        (Some(topic), Some(pkcs8_pem), Some(key_id), Some(team_id)) => {
+                            let decoded =
+                                base64::engine::general_purpose::STANDARD.decode(pkcs8_pem)?;
+                            let mut reader = BufReader::new(&*decoded);
+
+                            let apns_client = ApnsProvider::new_token(
+                                &mut reader,
+                                key_id.clone(),
+                                team_id.clone(),
+                                endpoint,
+                                topic.clone(),
+                            )?;
+
+                            Ok(Apns(apns_client))
+                        }
+                        _ => Err(ProviderNotAvailable(provider.into())),
+                    },
+                    None => Err(ProviderNotAvailable(provider.into())),
                 }
             }
             ProviderKind::Fcm => match self.fcm_api_key.clone() {
@@ -192,9 +302,13 @@ impl DefaultTenantStore {
         Ok(DefaultTenantStore(Tenant {
             id: config.default_tenant_id.clone(),
             fcm_api_key: config.fcm_api_key.clone(),
+            apns_type: config.apns_type.clone(),
             apns_topic: config.apns_topic.clone(),
             apns_certificate: config.apns_certificate.clone(),
             apns_certificate_password: config.apns_certificate_password.clone(),
+            apns_pkcs8_pem: config.apns_pkcs8_pem.clone(),
+            apns_key_id: config.apns_key_id.clone(),
+            apns_team_id: config.apns_team_id.clone(),
             created_at: Default::default(),
             updated_at: Default::default(),
         }))

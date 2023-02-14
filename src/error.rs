@@ -109,6 +109,9 @@ pub enum Error {
     #[error("The provided multi-part body did not satisfy the requirements")]
     InvalidMultipartBody,
 
+    #[error("invalid apns type: {0}")]
+    InvalidApnsType(String),
+
     #[error(
         "Encrypted push notification received without a topic, please ensure all required \
          parameters set"
