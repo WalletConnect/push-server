@@ -36,6 +36,8 @@ pub async fn handler(
 
     let tenant = state.tenant_store.create_tenant(params).await?;
 
+    increment_counter!(state.metrics, registered_tenants);
+
     Ok(Json(TenantRegisterResponse {
         url: format!("{}/tenants/{}", state.config.public_url, tenant.id),
     }))

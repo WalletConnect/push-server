@@ -17,6 +17,7 @@ use {
     serde::{Deserialize, Serialize},
     std::sync::Arc,
 };
+use crate::providers::Provider;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct MessagePayload {
@@ -106,7 +107,12 @@ pub async fn handler(
         &notification.id
     );
 
-    increment_counter!(state.metrics, sent_notifications);
+    // Provider specific metrics
+    match provider {
+        Provider::Fcm(_) => increment_counter!(state.metrics, sent_fcm_notifications),
+        Provider::Apns(_) => increment_counter!(state.metrics, sent_apns_notifications),
+        Provider::Noop(_) => {}
+    }
 
     Ok(Response::new_success(StatusCode::ACCEPTED))
 }
