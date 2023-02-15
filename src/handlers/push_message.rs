@@ -13,7 +13,6 @@ use {
         extract::{Json, Path, State as StateExtractor},
         http::StatusCode,
     },
-    opentelemetry::Context,
     serde::{Deserialize, Serialize},
     std::sync::Arc,
 };

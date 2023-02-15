@@ -11,7 +11,6 @@ use {
         stores::client::Client,
     },
     axum::extract::{Json, Path, State as StateExtractor},
-    opentelemetry::Context,
     serde::{Deserialize, Serialize},
     std::sync::Arc,
 };

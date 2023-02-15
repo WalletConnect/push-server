@@ -105,7 +105,7 @@ pub async fn handler(
 
     let _new_tenant = state.tenant_store.update_tenant(update_body).await?;
 
-    increment_counter!(state.metrics, tenant_apns_updates_counter);
+    increment_counter!(state.metrics, tenant_apns_updates);
 
     Ok(Json(UpdateTenantApnsResponse { success: true }))
 }

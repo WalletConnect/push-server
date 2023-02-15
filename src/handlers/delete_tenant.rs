@@ -7,6 +7,7 @@ use {
     serde::Serialize,
     std::sync::Arc,
 };
+use crate::decrement_counter;
 
 #[derive(Serialize)]
 pub struct DeleteTenantResponse {
@@ -18,6 +19,8 @@ pub async fn handler(
     Path(id): Path<String>,
 ) -> Result<Json<DeleteTenantResponse>, Error> {
     state.tenant_store.delete_tenant(&id).await?;
+
+    decrement_counter!(state.metrics, registered_tenants);
 
     Ok(Json(DeleteTenantResponse { success: true }))
 }

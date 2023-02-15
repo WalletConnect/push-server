@@ -7,7 +7,6 @@ use {
         state::AppState,
     },
     axum::extract::{Path, State as StateExtractor},
-    opentelemetry::Context,
     std::sync::Arc,
 };
 
