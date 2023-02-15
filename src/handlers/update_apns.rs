@@ -15,9 +15,14 @@ use {
 
 #[derive(Deserialize)]
 pub struct ApnsUpdateBody {
-    apns_topic: Option<String>,
-    apns_certificate: Option<String>,
-    apns_certificate_password: Option<String>,
+    pub apns_topic: Option<String>,
+
+    pub apns_certificate: Option<String>,
+    pub apns_certificate_password: Option<String>,
+
+    pub apns_pkcs8_pem: Option<String>,
+    pub apns_key_id: Option<String>,
+    pub apns_team_id: Option<String>,
 }
 
 impl ApnsUpdateBody {
@@ -25,15 +30,26 @@ impl ApnsUpdateBody {
         // Match cases when the input is not valid and return false.
         // Input is valid if certificate and certificate_password is included for
         // updates. topic is required for new tenants
-        if self.apns_certificate.is_some() && self.apns_certificate_password.is_none() {
-            return false; // New certificate without new password
-        }
 
-        if self.apns_certificate.is_none() && self.apns_certificate_password.is_some() {
-            return false; // New password without certificate
+        match (
+            &self.apns_topic,
+            &self.apns_certificate,
+            &self.apns_certificate_password,
+            &self.apns_pkcs8_pem,
+            &self.apns_key_id,
+            &self.apns_team_id,
+        ) {
+            // Update Topic
+            (Some(_), None, None, None, None, None) => true,
+            // Update Certificate
+            (Some(_), Some(_), Some(_), None, None, None) => true,
+            (None, Some(_), Some(_), None, None, None) => true,
+            // Update Token
+            (Some(_), None, None, Some(_), Some(_), Some(_)) => true,
+            (None, None, None, Some(_), Some(_), Some(_)) => true,
+            // All other cases are invalid
+            _ => false,
         }
-
-        true
     }
 }
 
@@ -50,8 +66,13 @@ pub async fn handler(
     // ---- retrieve body from form
     let mut body = ApnsUpdateBody {
         apns_topic: None,
+
         apns_certificate: None,
         apns_certificate_password: None,
+
+        apns_pkcs8_pem: None,
+        apns_key_id: None,
+        apns_team_id: None,
     };
     while let Some(field) = form_body.next_field().await? {
         let name = field.name().unwrap_or("unknown").to_string();
@@ -68,6 +89,17 @@ pub async fn handler(
             }
             "apns_certificate_password" => {
                 body.apns_certificate_password = Some(field.text().await?);
+            }
+            "apns_pkcs8_pem" => {
+                let data = field.bytes().await?;
+                let encoded_pem = base64::engine::general_purpose::STANDARD.encode(&data);
+                body.apns_pkcs8_pem = Some(encoded_pem);
+            }
+            "apns_key_id" => {
+                body.apns_key_id = Some(field.text().await?);
+            }
+            "apns_team_id" => {
+                body.apns_team_id = Some(field.text().await?);
             }
             _ => {
                 // Unknown field, ignored
@@ -88,7 +120,14 @@ pub async fn handler(
         apns_topic: existing_tenant.apns_topic,
         apns_certificate: existing_tenant.apns_certificate,
         apns_certificate_password: existing_tenant.apns_certificate_password,
+        apns_pkcs8_pem: existing_tenant.apns_pkcs8_pem,
+        apns_key_id: existing_tenant.apns_key_id,
+        apns_team_id: existing_tenant.apns_team_id,
     };
+
+    if let Some(topic) = body.apns_topic {
+        update_body.apns_topic = Some(topic);
+    }
 
     if let Some(cert) = body.apns_certificate {
         update_body.apns_certificate = Some(cert);
@@ -98,8 +137,16 @@ pub async fn handler(
         update_body.apns_certificate_password = Some(password);
     }
 
-    if let Some(topic) = body.apns_topic {
-        update_body.apns_topic = Some(topic);
+    if let Some(pem) = body.apns_pkcs8_pem {
+        update_body.apns_pkcs8_pem = Some(pem);
+    }
+
+    if let Some(key) = body.apns_key_id {
+        update_body.apns_key_id = Some(key);
+    }
+
+    if let Some(team) = body.apns_team_id {
+        update_body.apns_team_id = Some(team);
     }
 
     let _new_tenant = state.tenant_store.update_tenant(update_body).await?;

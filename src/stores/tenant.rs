@@ -96,6 +96,8 @@ pub struct Tenant {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
+// TODO (Harry): Split up to support more generic updates e.g. TenantApnsUpdate,
+// TenantFcmUpdate, TenantUpdate, etc
 pub struct TenantUpdateParams {
     /// Optional ID to override generated UUID, used for vanity IDs e.g.
     /// swift-sdk
@@ -104,8 +106,13 @@ pub struct TenantUpdateParams {
     pub fcm_api_key: Option<String>,
 
     pub apns_topic: Option<String>,
+
     pub apns_certificate: Option<String>,
     pub apns_certificate_password: Option<String>,
+
+    pub apns_pkcs8_pem: Option<String>,
+    pub apns_key_id: Option<String>,
+    pub apns_team_id: Option<String>,
 }
 
 impl Tenant {
