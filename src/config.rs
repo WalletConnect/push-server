@@ -1,7 +1,10 @@
 use {
     crate::{
         error,
-        error::{Error, Error::InvalidConfiguration},
+        error::{
+            Error,
+            Error::{InvalidConfiguration, NoApnsConfigured},
+        },
         providers::ProviderKind,
         stores::tenant::ApnsType,
     },
@@ -81,7 +84,12 @@ impl Config {
             }
         }
 
-        let _apns_type = self.get_apns_type()?;
+        // Check that APNS config is valid when it has been configured
+        match self.get_apns_type() {
+            Ok(_) => Ok(()),
+            Err(NoApnsConfigured) => Ok(()),
+            Err(e) => Err(e),
+        }?;
 
         Ok(())
     }
@@ -139,7 +147,7 @@ impl Config {
             }?;
         }
 
-        Err(InvalidConfiguration("No APNS_TYPE configured".to_string()))
+        Err(NoApnsConfigured)
     }
 }
 
