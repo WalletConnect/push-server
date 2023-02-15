@@ -309,7 +309,7 @@ impl DefaultTenantStore {
         Ok(DefaultTenantStore(Tenant {
             id: config.default_tenant_id.clone(),
             fcm_api_key: config.fcm_api_key.clone(),
-            apns_type: config.apns_type.clone(),
+            apns_type: config.apns_type,
             apns_topic: config.apns_topic.clone(),
             apns_certificate: config.apns_certificate.clone(),
             apns_certificate_password: config.apns_certificate_password.clone(),
