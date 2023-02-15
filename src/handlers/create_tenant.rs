@@ -37,6 +37,6 @@ pub async fn handler(
     let tenant = state.tenant_store.create_tenant(params).await?;
 
     Ok(Json(TenantRegisterResponse {
-        url: format!("{}/tenants/{}", state.config.public_url, tenant.id),
+        url: format!("{}/{}", state.config.public_url, tenant.id),
     }))
 }
