@@ -6,7 +6,7 @@ use {
         increment_counter,
         log::prelude::*,
         middleware::validate_signature::RequireValidSignature,
-        providers::PushProvider,
+        providers::{Provider, PushProvider},
         state::AppState,
     },
     axum::{
@@ -17,7 +17,6 @@ use {
     serde::{Deserialize, Serialize},
     std::sync::Arc,
 };
-use crate::providers::Provider;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct MessagePayload {

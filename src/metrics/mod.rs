@@ -23,6 +23,9 @@ pub struct Metrics {
 
     pub registered_clients: UpDownCounter<i64>,
     pub registered_tenants: UpDownCounter<i64>,
+
+    pub tenant_apns_updates: Counter<u64>,
+    pub tenant_fcm_updates: Counter<u64>,
 }
 
 impl Metrics {
@@ -70,6 +73,16 @@ impl Metrics {
             .with_description("The number of notifications sent to APNS")
             .init();
 
+        let tenant_apns_updates_counter = meter
+            .u64_counter("tenant_apns_updates")
+            .with_description("The number of times tenants have updated their APNS")
+            .init();
+
+        let tenant_fcm_updates_counter = meter
+            .u64_counter("tenant_apns_updates")
+            .with_description("The number of times tenants have updated their APNS")
+            .init();
+
         Ok(Metrics {
             prometheus_exporter,
             registered_clients: clients_counter,
@@ -77,6 +90,8 @@ impl Metrics {
             sent_fcm_notifications: sent_fcm_notification_counter,
             sent_apns_notifications: sent_apns_notification_counter,
             registered_tenants: tenants_counter,
+            tenant_apns_updates: tenant_apns_updates_counter,
+            tenant_fcm_updates: tenant_fcm_updates_counter,
         })
     }
 

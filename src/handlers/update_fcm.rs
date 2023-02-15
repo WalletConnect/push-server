@@ -1,6 +1,7 @@
 use {
     crate::{
         error::{Error, Error::InvalidMultipartBody},
+        increment_counter,
         state::AppState,
         stores::tenant::TenantUpdateParams,
     },
@@ -57,6 +58,8 @@ pub async fn handler(
     };
 
     let _new_tenant = state.tenant_store.update_tenant(update_body).await?;
+
+    increment_counter!(state.metrics, tenant_fcm_updates_counter);
 
     Ok(Json(UpdateTenantFcmResponse { success: true }))
 }
