@@ -1,5 +1,5 @@
 use {
-    crate::{error::Error, state::AppState},
+    crate::{decrement_counter, error::Error, state::AppState},
     axum::{
         extract::{Path, State},
         Json,
@@ -7,7 +7,6 @@ use {
     serde::Serialize,
     std::sync::Arc,
 };
-use crate::decrement_counter;
 
 #[derive(Serialize)]
 pub struct DeleteTenantResponse {
