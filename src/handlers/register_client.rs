@@ -5,6 +5,7 @@ use {
             Result,
         },
         handlers::{Response, DECENTRALIZED_IDENTIFIER_PREFIX},
+        increment_counter,
         log::prelude::*,
         state::AppState,
         stores::client::Client,
@@ -56,10 +57,7 @@ pub async fn handler(
         tenant_id, body.push_type
     );
 
-    if let Some(metrics) = &state.metrics {
-        metrics.registered_clients.add(&Context::current(), 1, &[]);
-        debug!("incremented `registered_clients` counter")
-    }
+    increment_counter!(state.metrics, registered_clients);
 
     Ok(Response::default())
 }

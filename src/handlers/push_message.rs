@@ -3,6 +3,7 @@ use {
         blob::ENCRYPTED_FLAG,
         error::Result,
         handlers::{Response, DECENTRALIZED_IDENTIFIER_PREFIX},
+        increment_counter,
         log::prelude::*,
         middleware::validate_signature::RequireValidSignature,
         providers::PushProvider,
@@ -41,12 +42,7 @@ pub async fn handler(
     StateExtractor(state): StateExtractor<Arc<AppState>>,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<Response> {
-    if let Some(metrics) = &state.metrics {
-        metrics
-            .received_notifications
-            .add(&Context::current(), 1, &[]);
-        debug!("incremented `received_notifications` counter")
-    }
+    increment_counter!(state.metrics, received_notifications);
 
     let id = id
         .trim_start_matches(DECENTRALIZED_IDENTIFIER_PREFIX)
@@ -110,10 +106,7 @@ pub async fn handler(
         &notification.id
     );
 
-    if let Some(metrics) = &state.metrics {
-        metrics.sent_notifications.add(&Context::current(), 1, &[]);
-        debug!("incremented `sent_notifications` counter")
-    }
+    increment_counter!(state.metrics, sent_notifications);
 
     Ok(Response::new_success(StatusCode::ACCEPTED))
 }
