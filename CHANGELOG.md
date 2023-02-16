@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.18.0 - 2023-02-16
+#### Bug Fixes
+- tenant url (#102) - (2200ce4) - Harry Bairstow
+#### Features
+- Support p8 certificates (#100) - (dba344c) - Harry Bairstow
+- More Metrics (#103) - (2e46761) - Harry Bairstow
+- - -
+
 ## v0.17.3 - 2023-02-07
 #### Bug Fixes
 - lowercase string conversions into ProviderKind (#95) - (0cf66a0) - WC
