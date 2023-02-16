@@ -24,7 +24,7 @@ pub async fn handler(
     let providers = tenant.providers();
 
     let mut res = GetTenantResponse {
-        url: format!("{}/tenants/{}", state.config.public_url, tenant.id),
+        url: format!("{}/{}", state.config.public_url, tenant.id),
         enabled_providers: tenant.providers().iter().map(Into::into).collect(),
         apns_topic: None,
     };

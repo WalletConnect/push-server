@@ -39,6 +39,6 @@ pub async fn handler(
     increment_counter!(state.metrics, registered_tenants);
 
     Ok(Json(TenantRegisterResponse {
-        url: format!("{}/tenants/{}", state.config.public_url, tenant.id),
+        url: format!("{}/{}", state.config.public_url, tenant.id),
     }))
 }
