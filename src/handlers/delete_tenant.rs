@@ -1,5 +1,5 @@
 use {
-    crate::{error::Error, state::AppState},
+    crate::{decrement_counter, error::Error, state::AppState},
     axum::{
         extract::{Path, State},
         Json,
@@ -18,6 +18,8 @@ pub async fn handler(
     Path(id): Path<String>,
 ) -> Result<Json<DeleteTenantResponse>, Error> {
     state.tenant_store.delete_tenant(&id).await?;
+
+    decrement_counter!(state.metrics, registered_tenants);
 
     Ok(Json(DeleteTenantResponse { success: true }))
 }

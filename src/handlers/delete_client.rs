@@ -1,12 +1,12 @@
 use {
     crate::{
+        decrement_counter,
         error::Result,
         handlers::{Response, DECENTRALIZED_IDENTIFIER_PREFIX},
         log::prelude::*,
         state::AppState,
     },
     axum::extract::{Path, State as StateExtractor},
-    opentelemetry::Context,
     std::sync::Arc,
 };
 
@@ -21,10 +21,7 @@ pub async fn handler(
     state.client_store.delete_client(&tenant_id, &id).await?;
     info!("client ({}) deleted for tenant ({})", id, tenant_id);
 
-    if let Some(metrics) = &state.metrics {
-        metrics.registered_clients.add(&Context::current(), -1, &[]);
-        debug!("decremented `registered_clients` counter")
-    }
+    decrement_counter!(state.metrics, registered_clients);
 
     Ok(Response::default())
 }

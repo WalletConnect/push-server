@@ -26,6 +26,7 @@ pub mod config;
 pub mod error;
 pub mod handlers;
 pub mod log;
+pub mod macros;
 pub mod metrics;
 pub mod middleware;
 pub mod providers;
