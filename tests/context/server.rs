@@ -41,10 +41,14 @@ impl SingleTenantEchoServer {
             telemetry_prometheus_port: Some(get_random_port()),
             apns_certificate: None,
             apns_certificate_password: None,
+            apns_pkcs8_pem: None,
+            apns_key_id: None,
             apns_topic: None,
             fcm_api_key: None,
             is_test: true,
             cors_allowed_origins: vec!["*".to_string()],
+            apns_type: None,
+            apns_team_id: None,
         };
         let (public_addr, signal, is_shutdown) = start_server(config).await;
         Self {
@@ -84,10 +88,14 @@ impl MultiTenantEchoServer {
             telemetry_prometheus_port: Some(get_random_port()),
             apns_certificate: None,
             apns_certificate_password: None,
+            apns_pkcs8_pem: None,
+            apns_key_id: None,
             apns_topic: None,
             fcm_api_key: None,
             is_test: true,
             cors_allowed_origins: vec!["*".to_string()],
+            apns_type: None,
+            apns_team_id: None,
         };
         let (public_addr, signal, is_shutdown) = start_server(config).await;
 

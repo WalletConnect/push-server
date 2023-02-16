@@ -1,7 +1,7 @@
 use {
     crate::{state::TenantStoreArc, stores::tenant::DefaultTenantStore},
     axum::{
-        http::{HeaderValue, Method},
+        http::Method,
         routing::{delete, get, post},
         Router,
     },
@@ -124,7 +124,8 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         .clone();
     let build_rustc_version = state.build_info.compiler.version.clone();
     let show_header = !state.config.disable_header;
-    let allowed_origins = state.config.cors_allowed_origins.clone();
+    // TODO use value again
+    let _allowed_origins = state.config.cors_allowed_origins.clone();
 
     let state_arc = Arc::new(state);
 

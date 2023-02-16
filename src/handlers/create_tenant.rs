@@ -32,6 +32,9 @@ pub async fn handler(
         apns_topic: None,
         apns_certificate: None,
         apns_certificate_password: None,
+        apns_pkcs8_pem: None,
+        apns_key_id: None,
+        apns_team_id: None,
     };
 
     let tenant = state.tenant_store.create_tenant(params).await?;

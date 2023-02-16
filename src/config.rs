@@ -1,5 +1,13 @@
 use {
-    crate::{error, error::Error::InvalidConfiguration, providers::ProviderKind},
+    crate::{
+        error,
+        error::{
+            Error,
+            Error::{InvalidConfiguration, NoApnsConfigured},
+        },
+        providers::ProviderKind,
+        stores::tenant::ApnsType,
+    },
     serde::Deserialize,
 };
 
@@ -35,9 +43,15 @@ pub struct Config {
     pub telemetry_prometheus_port: Option<u16>,
 
     // APNS
+    pub apns_type: Option<ApnsType>,
+    pub apns_topic: Option<String>,
+
     pub apns_certificate: Option<String>,
     pub apns_certificate_password: Option<String>,
-    pub apns_topic: Option<String>,
+
+    pub apns_pkcs8_pem: Option<String>,
+    pub apns_key_id: Option<String>,
+    pub apns_team_id: Option<String>,
 
     // FCM
     pub fcm_api_key: Option<String>,
@@ -70,13 +84,20 @@ impl Config {
             }
         }
 
+        // Check that APNS config is valid when it has been configured
+        match self.get_apns_type() {
+            Ok(_) => Ok(()),
+            Err(NoApnsConfigured) => Ok(()),
+            Err(e) => Err(e),
+        }?;
+
         Ok(())
     }
 
     pub fn single_tenant_supported_providers(&self) -> Vec<ProviderKind> {
         let mut supported = vec![];
 
-        if self.apns_certificate.is_some() && self.apns_certificate_password.is_some() {
+        if self.get_apns_type().is_ok() {
             supported.push(ProviderKind::Apns);
             supported.push(ProviderKind::ApnsSandbox);
         }
@@ -92,6 +113,41 @@ impl Config {
         }
 
         supported
+    }
+
+    pub fn get_apns_type(&self) -> Result<ApnsType, Error> {
+        if let Some(apns_type) = &self.apns_type {
+            // Check if APNS config is correct
+            let _ = match apns_type {
+                ApnsType::Certificate => match (
+                    &self.apns_topic,
+                    &self.apns_certificate,
+                    &self.apns_certificate_password,
+                ) {
+                    (Some(_), Some(_), Some(_)) => Ok(ApnsType::Certificate),
+                    _ => Err(InvalidConfiguration(
+                        "APNS_TYPE of Certificate requires specific variables, please check the \
+                         documentation."
+                            .to_string(),
+                    )),
+                },
+                ApnsType::Token => match (
+                    &self.apns_topic,
+                    &self.apns_pkcs8_pem,
+                    &self.apns_key_id,
+                    &self.apns_team_id,
+                ) {
+                    (Some(_), Some(_), Some(_), Some(_)) => Ok(ApnsType::Token),
+                    _ => Err(InvalidConfiguration(
+                        "APNS_TYPE of Certificate requires specific variables, please check the \
+                         documentation."
+                            .to_string(),
+                    )),
+                },
+            }?;
+        }
+
+        Err(NoApnsConfigured)
     }
 }
 

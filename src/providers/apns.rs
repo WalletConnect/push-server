@@ -31,6 +31,22 @@ impl ApnsProvider {
             topic,
         })
     }
+
+    pub fn new_token<R>(
+        pkcs8_pem: &mut R,
+        key_id: String,
+        team_id: String,
+        endpoint: a2::Endpoint,
+        topic: String,
+    ) -> crate::error::Result<Self>
+    where
+        R: Read,
+    {
+        Ok(ApnsProvider {
+            client: a2::Client::token(pkcs8_pem, key_id, team_id, endpoint)?,
+            topic,
+        })
+    }
 }
 
 #[async_trait]

@@ -8,7 +8,7 @@ This list contains both supported and potentially planned providers
 - [x] FCM (API Key)
 - [ ] FCM (Google Services)
 - [x] APNS (Certificate Based)
-- [ ] APNS (Token Based)
+- [x] APNS (Token Based)
 - [ ] Web Push
 
 ## Supporting Notifications

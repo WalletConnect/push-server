@@ -55,6 +55,9 @@ pub async fn handler(
         apns_topic: existing_tenant.apns_topic,
         apns_certificate: existing_tenant.apns_certificate,
         apns_certificate_password: existing_tenant.apns_certificate_password,
+        apns_pkcs8_pem: existing_tenant.apns_pkcs8_pem,
+        apns_key_id: existing_tenant.apns_key_id,
+        apns_team_id: existing_tenant.apns_team_id,
     };
 
     let _new_tenant = state.tenant_store.update_tenant(update_body).await?;
