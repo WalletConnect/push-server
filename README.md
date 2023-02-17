@@ -30,9 +30,8 @@ You also have to register the device with the instance of Echo Server once when 
 generated. By sending a POST request to `<INSTANCE_URL>/clients` as per the [spec](./spec/spec.md).
 
 ## Multi-tenancy
-Echo Server supports multi-tenancy. However, the management of tenants is delegated to an alternative service. 
-To enable multi-tenancy you need to specify a `TENANT_DATABASE_URL` which will then disable the single-tenant
-endpoints in favour of endpoints with a `/:tenant_id` prefix e.g. `/:tenant_id/client/:id`
+Echo Server supports multi-tenancy. To enable multi-tenancy you need to specify a `TENANT_DATABASE_URL` which will then disable 
+the single-tenant endpoints in favour of endpoints with a `/:tenant_id` prefix e.g. `/:tenant_id/client/:id`
 
 > **Warning**
 > The `TENANT_DATABASE_URL` **must** point to a different database than the `DATABASE_URL`
