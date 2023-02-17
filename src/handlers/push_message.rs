@@ -1,7 +1,10 @@
 use {
     crate::{
         blob::ENCRYPTED_FLAG,
-        error::{Error::ClientNotFound, Result},
+        error::{
+            Error::{self, ClientNotFound, Store},
+            Result,
+        },
         handlers::{Response, DECENTRALIZED_IDENTIFIER_PREFIX},
         increment_counter,
         log::prelude::*,
@@ -51,7 +54,7 @@ pub async fn handler(
     let client = match state.client_store.get_client(&tenant_id, &id).await {
         Ok(c) => Ok(c),
         Err(StoreError::NotFound(_, _)) => Err(ClientNotFound),
-        Err(e) => Err(e),
+        Err(e) => Err(Store(e)),
     }?;
     info!("fetched client ({}) for tenant ({})", &id, &tenant_id);
 
