@@ -122,7 +122,7 @@ pub enum Error {
     MissingTopic,
 
     #[error("client cannot be found")]
-    ClientNotFound
+    ClientNotFound,
 }
 
 impl IntoResponse for Error {

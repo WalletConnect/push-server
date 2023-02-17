@@ -1,13 +1,14 @@
 use {
     crate::{
         blob::ENCRYPTED_FLAG,
-        error::Result,
+        error::{Error::ClientNotFound, Result},
         handlers::{Response, DECENTRALIZED_IDENTIFIER_PREFIX},
         increment_counter,
         log::prelude::*,
         middleware::validate_signature::RequireValidSignature,
         providers::{Provider, PushProvider},
         state::AppState,
+        stores::StoreError,
     },
     axum::{
         extract::{Json, Path, State as StateExtractor},
@@ -16,8 +17,6 @@ use {
     serde::{Deserialize, Serialize},
     std::sync::Arc,
 };
-use crate::error::Error::ClientNotFound;
-use crate::stores::StoreError;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct MessagePayload {
@@ -52,7 +51,7 @@ pub async fn handler(
     let client = match state.client_store.get_client(&tenant_id, &id).await {
         Ok(c) => Ok(c),
         Err(StoreError::NotFound(_, _)) => Err(ClientNotFound),
-        Err(e) => Err(e)
+        Err(e) => Err(e),
     }?;
     info!("fetched client ({}) for tenant ({})", &id, &tenant_id);
 
