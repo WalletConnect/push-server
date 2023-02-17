@@ -120,6 +120,9 @@ pub enum Error {
          parameters set"
     )]
     MissingTopic,
+
+    #[error("client cannot be found")]
+    ClientNotFound
 }
 
 impl IntoResponse for Error {
@@ -288,6 +291,8 @@ impl IntoResponse for Error {
                 }],
                 vec![],
             ),
+            // If the client cannot be found we gracefully handle this
+            Error::ClientNotFound => crate::handlers::Response::new_success(StatusCode::ACCEPTED),
             e => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
                 ResponseError {
                     name: "unknown_error".to_string(),

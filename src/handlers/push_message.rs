@@ -16,6 +16,8 @@ use {
     serde::{Deserialize, Serialize},
     std::sync::Arc,
 };
+use crate::error::Error::ClientNotFound;
+use crate::stores::StoreError;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct MessagePayload {
@@ -47,7 +49,11 @@ pub async fn handler(
         .trim_start_matches(DECENTRALIZED_IDENTIFIER_PREFIX)
         .to_string();
 
-    let client = state.client_store.get_client(&tenant_id, &id).await?;
+    let client = match state.client_store.get_client(&tenant_id, &id).await {
+        Ok(c) => Ok(c),
+        Err(StoreError::NotFound(_, _)) => Err(ClientNotFound),
+        Err(e) => Err(e)
+    }?;
     info!("fetched client ({}) for tenant ({})", &id, &tenant_id);
 
     if let Ok(_notification) = state
