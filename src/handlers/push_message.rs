@@ -1,13 +1,17 @@
 use {
     crate::{
         blob::ENCRYPTED_FLAG,
-        error::Result,
+        error::{
+            Error::{self, ClientNotFound, Store},
+            Result,
+        },
         handlers::{Response, DECENTRALIZED_IDENTIFIER_PREFIX},
         increment_counter,
         log::prelude::*,
         middleware::validate_signature::RequireValidSignature,
         providers::{Provider, PushProvider},
         state::AppState,
+        stores::StoreError,
     },
     axum::{
         extract::{Json, Path, State as StateExtractor},
@@ -47,7 +51,11 @@ pub async fn handler(
         .trim_start_matches(DECENTRALIZED_IDENTIFIER_PREFIX)
         .to_string();
 
-    let client = state.client_store.get_client(&tenant_id, &id).await?;
+    let client = match state.client_store.get_client(&tenant_id, &id).await {
+        Ok(c) => Ok(c),
+        Err(StoreError::NotFound(_, _)) => Err(ClientNotFound),
+        Err(e) => Err(Store(e)),
+    }?;
     info!("fetched client ({}) for tenant ({})", &id, &tenant_id);
 
     if let Ok(_notification) = state

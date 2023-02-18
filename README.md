@@ -15,10 +15,12 @@ This list contains both supported and potentially planned providers
 > **Note** Full documentation will be available soon. This is only a brief overview.
 
 There are 3 options for receiving notifications within your wallet:
-1. Use the hosted platform. (available in the [cloud app](https://cloud.walletconnect.com) soon)
-2. Host this rust implementation - there is an included [`terraform`](https://github.com/WalletConnect/echo-server/tree/main/terraform) 
-configuration to help with this.
-3. Write your own implementation using the [spec](./spec/spec.md).
+1. **Use the hosted platform.**
+   Go to settings in the [cloud app](https://cloud.walletconnect.com) for a project and create a Push URL, see the documentation on Push
+   prerequisites for more info.
+2. Host this rust implementation.
+   there is an included [`terraform`](https://github.com/WalletConnect/echo-server/tree/main/terraform) configuration to help with this.
+3. Write your own implementation that follows the [spec](https://docs.walletconnect.com/2.0/specs/servers/echo/echo-server-api)
 
 When using the hosted platform or self-hosting this implementation you have to provide the instance
 you FCM API Key or APNS certificates and then - following the FCM/APNS docs - add support for that within your
@@ -28,9 +30,8 @@ You also have to register the device with the instance of Echo Server once when 
 generated. By sending a POST request to `<INSTANCE_URL>/clients` as per the [spec](./spec/spec.md).
 
 ## Multi-tenancy
-Echo Server supports multi-tenancy. However, the management of tenants is delegated to an alternative service. 
-To enable multi-tenancy you need to specify a `TENANT_DATABASE_URL` which will then disable the single-tenant
-endpoints in favour of endpoints with a `/:tenant_id` prefix e.g. `/:tenant_id/client/:id`
+Echo Server supports multi-tenancy. To enable multi-tenancy you need to specify a `TENANT_DATABASE_URL` which will then disable 
+the single-tenant endpoints in favour of endpoints with a `/:tenant_id` prefix e.g. `/:tenant_id/client/:id`
 
 > **Warning**
 > The `TENANT_DATABASE_URL` **must** point to a different database than the `DATABASE_URL`
