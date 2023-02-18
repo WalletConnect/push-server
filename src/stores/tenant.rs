@@ -312,9 +312,9 @@ impl TenantStore for PgPool {
 
     async fn update_tenant_apns(&self, id: &str, params: TenantApnsUpdateParams) -> Result<Tenant> {
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
-            "UPDATE public.tenants SET apns_type = $2, apns_topic = $3, apns_certificate = $4, \
-             apns_certificate_password = $5, apns_key_id = $6, apns_team_id = $7, apns_pkcs8_pem \
-             = $8 WHERE id = $1 RETURNING *;",
+            "UPDATE public.tenants SET apns_type = $2::apns_type, apns_topic = $3, \
+             apns_certificate = $4, apns_certificate_password = $5, apns_key_id = $6, \
+             apns_team_id = $7, apns_pkcs8_pem = $8 WHERE id = $1 RETURNING *;",
         )
         .bind(id)
         .bind(params.apns_type)
