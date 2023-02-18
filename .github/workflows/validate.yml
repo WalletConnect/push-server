@@ -40,4 +40,4 @@ jobs:
       - run: yarn integration:$ENVIRONMENT
         env:
           ENVIRONMENT: ${{ inputs.environment }}
-          TEST_TENANT_ID_APNS: ${{ secrets.TEST_TENANT_ID }}
+          TEST_TENANT_ID: ${{ secrets.TEST_TENANT_ID }}
