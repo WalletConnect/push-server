@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.19.1 - 2023-02-18
+#### Bug Fixes
+- APNS type not set (#106) - (87aa4f0) - Harry Bairstow
+- - -
+
 ## v0.19.0 - 2023-02-18
 #### Bug Fixes
 - CD Secret - (129aecb) - Harry Bairstow
