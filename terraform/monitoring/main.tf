@@ -37,32 +37,397 @@ resource "grafana_dashboard" "at_a_glance" {
   overwrite = true
   message   = "Updated by Terraform"
   config_json = jsonencode({
-    annotations : {
-      list : [
+    "annotations" : {
+      "list" : [
         {
-          builtIn : 1,
-          datasource : "-- Grafana --",
-          enable : true,
-          hide : true,
-          iconColor : "rgba(0, 211, 255, 1)",
-          name : "Annotations & Alerts",
-          target : {
-            limit : 100,
-            matchAny : false,
-            tags : [],
-            type : "dashboard"
+          "builtIn" : 1,
+          "datasource" : "-- Grafana --",
+          "enable" : true,
+          "hide" : true,
+          "iconColor" : "rgba(0, 211, 255, 1)",
+          "name" : "Annotations & Alerts",
+          "target" : {
+            "limit" : 100,
+            "matchAny" : false,
+            "tags" : [],
+            "type" : "dashboard"
           },
-          type : "dashboard"
+          "type" : "dashboard"
         }
       ]
     },
-    editable : true,
-    fiscalYearStartMonth : 0,
-    graphTooltip : 0,
-    id : 19,
-    links : [],
-    liveNow : false,
-    panels : [
+    "editable" : true,
+    "fiscalYearStartMonth" : 0,
+    "graphTooltip" : 0,
+    "id" : 37,
+    "links" : [],
+    "liveNow" : false,
+    "panels" : [
+      {
+        "datasource" : {
+          "type" : "prometheus",
+          "uid" : grafana_data_source.prometheus.uid
+        },
+        "description" : "",
+        "fieldConfig" : {
+          "defaults" : {
+            "color" : {
+              "mode" : "thresholds"
+            },
+            "mappings" : [],
+            "thresholds" : {
+              "mode" : "absolute",
+              "steps" : [
+                {
+                  "color" : "green",
+                  "value" : null
+                }
+              ]
+            }
+          },
+          "overrides" : []
+        },
+        "gridPos" : {
+          "h" : 8,
+          "w" : 11,
+          "x" : 0,
+          "y" : 0
+        },
+        "id" : 14,
+        "options" : {
+          "colorMode" : "value",
+          "graphMode" : "area",
+          "justifyMode" : "auto",
+          "orientation" : "auto",
+          "reduceOptions" : {
+            "calcs" : [
+              "lastNotNull"
+            ],
+            "fields" : "",
+            "values" : false
+          },
+          "text" : {},
+          "textMode" : "auto"
+        },
+        "pluginVersion" : "8.4.7",
+        "targets" : [
+          {
+            "datasource" : {
+              "type" : "prometheus",
+              "uid" : grafana_data_source.prometheus.uid
+            },
+            "exemplar" : true,
+            "expr" : "sum(rate(received_notifications{}[1h]))",
+            "interval" : "",
+            "legendFormat" : "",
+            "refId" : "A"
+          }
+        ],
+        "title" : "Notifications per Hour",
+        "type" : "stat"
+      },
+      {
+        "datasource" : {
+          "type" : "prometheus",
+          "uid" : grafana_data_source.prometheus.uid
+        },
+        "fieldConfig" : {
+          "defaults" : {
+            "color" : {
+              "mode" : "thresholds"
+            },
+            "mappings" : [],
+            "thresholds" : {
+              "mode" : "absolute",
+              "steps" : [
+                {
+                  "color" : "green",
+                  "value" : null
+                },
+                {
+                  "color" : "red",
+                  "value" : 80
+                }
+              ]
+            }
+          },
+          "overrides" : []
+        },
+        "gridPos" : {
+          "h" : 8,
+          "w" : 10,
+          "x" : 11,
+          "y" : 0
+        },
+        "id" : 16,
+        "options" : {
+          "colorMode" : "value",
+          "graphMode" : "area",
+          "justifyMode" : "auto",
+          "orientation" : "auto",
+          "reduceOptions" : {
+            "calcs" : [
+              "lastNotNull"
+            ],
+            "fields" : "",
+            "values" : false
+          },
+          "textMode" : "auto"
+        },
+        "pluginVersion" : "8.4.7",
+        "targets" : [
+          {
+            "datasource" : {
+              "type" : "prometheus",
+              "uid" : grafana_data_source.prometheus.uid
+            },
+            "exemplar" : true,
+            "expr" : "sum(rate(registered_clients{}[1h]))",
+            "interval" : "",
+            "legendFormat" : "",
+            "refId" : "A"
+          }
+        ],
+        "title" : "Client Registrations per Hour",
+        "type" : "stat"
+      },
+      {
+        "gridPos" : {
+          "h" : 1,
+          "w" : 24,
+          "x" : 0,
+          "y" : 8
+        },
+        "id" : 8,
+        "title" : "Graphs",
+        "type" : "row"
+      },
+      {
+        "datasource" : {
+          "type" : "prometheus",
+          "uid" : grafana_data_source.prometheus.uid
+        },
+        "fieldConfig" : {
+          "defaults" : {
+            "color" : {
+              "mode" : "palette-classic"
+            },
+            "custom" : {
+              "axisLabel" : "Notifications",
+              "axisPlacement" : "auto",
+              "barAlignment" : 0,
+              "drawStyle" : "line",
+              "fillOpacity" : 0,
+              "gradientMode" : "none",
+              "hideFrom" : {
+                "legend" : false,
+                "tooltip" : false,
+                "viz" : false
+              },
+              "lineInterpolation" : "linear",
+              "lineWidth" : 1,
+              "pointSize" : 5,
+              "scaleDistribution" : {
+                "type" : "linear"
+              },
+              "showPoints" : "auto",
+              "spanNulls" : false,
+              "stacking" : {
+                "group" : "A",
+                "mode" : "none"
+              },
+              "thresholdsStyle" : {
+                "mode" : "off"
+              }
+            },
+            "mappings" : [],
+            "thresholds" : {
+              "mode" : "absolute",
+              "steps" : [
+                {
+                  "color" : "green",
+                  "value" : null
+                }
+              ]
+            },
+            "unit" : "none"
+          },
+          "overrides" : [
+            {
+              "__systemRef" : "hideSeriesFrom",
+              "matcher" : {
+                "id" : "byNames",
+                "options" : {
+                  "mode" : "exclude",
+                  "names" : [
+                    "sum(received_notifications{})"
+                  ],
+                  "prefix" : "All except:",
+                  "readOnly" : true
+                }
+              },
+              "properties" : [
+                {
+                  "id" : "custom.hideFrom",
+                  "value" : {
+                    "legend" : false,
+                    "tooltip" : false,
+                    "viz" : true
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos" : {
+          "h" : 8,
+          "w" : 11,
+          "x" : 0,
+          "y" : 9
+        },
+        "id" : 10,
+        "options" : {
+          "legend" : {
+            "calcs" : [],
+            "displayMode" : "list",
+            "placement" : "bottom"
+          },
+          "tooltip" : {
+            "mode" : "single",
+            "sort" : "none"
+          }
+        },
+        "targets" : [
+          {
+            "datasource" : {
+              "type" : "prometheus",
+              "uid" : grafana_data_source.prometheus.uid
+            },
+            "exemplar" : true,
+            "expr" : "sum(received_notifications{})",
+            "format" : "time_series",
+            "interval" : "",
+            "legendFormat" : "",
+            "refId" : "Notifications"
+          },
+          {
+            "datasource" : {
+              "type" : "prometheus",
+              "uid" : "S5BhqwK4z"
+            },
+            "exemplar" : true,
+            "expr" : "",
+            "hide" : false,
+            "interval" : "",
+            "legendFormat" : "",
+            "refId" : "Processed Notifications"
+          }
+        ],
+        "title" : "Received Notifications",
+        "type" : "timeseries"
+      },
+      {
+        "datasource" : {
+          "type" : "prometheus",
+          "uid" : grafana_data_source.prometheus.uid
+        },
+        "fieldConfig" : {
+          "defaults" : {
+            "color" : {
+              "mode" : "palette-classic"
+            },
+            "custom" : {
+              "axisLabel" : "Clients",
+              "axisPlacement" : "auto",
+              "barAlignment" : 0,
+              "drawStyle" : "line",
+              "fillOpacity" : 0,
+              "gradientMode" : "none",
+              "hideFrom" : {
+                "legend" : false,
+                "tooltip" : false,
+                "viz" : false
+              },
+              "lineInterpolation" : "linear",
+              "lineWidth" : 1,
+              "pointSize" : 5,
+              "scaleDistribution" : {
+                "type" : "linear"
+              },
+              "showPoints" : "auto",
+              "spanNulls" : false,
+              "stacking" : {
+                "group" : "A",
+                "mode" : "none"
+              },
+              "thresholdsStyle" : {
+                "mode" : "off"
+              }
+            },
+            "mappings" : [],
+            "thresholds" : {
+              "mode" : "absolute",
+              "steps" : [
+                {
+                  "color" : "green",
+                  "value" : null
+                },
+                {
+                  "color" : "red",
+                  "value" : 80
+                }
+              ]
+            }
+          },
+          "overrides" : []
+        },
+        "gridPos" : {
+          "h" : 8,
+          "w" : 10,
+          "x" : 11,
+          "y" : 9
+        },
+        "id" : 12,
+        "options" : {
+          "legend" : {
+            "calcs" : [],
+            "displayMode" : "list",
+            "placement" : "bottom"
+          },
+          "tooltip" : {
+            "mode" : "single",
+            "sort" : "none"
+          }
+        },
+        "targets" : [
+          {
+            "datasource" : {
+              "type" : "prometheus",
+              "uid" : grafana_data_source.prometheus.uid
+            },
+            "exemplar" : true,
+            "expr" : "sum(registered_clients{})",
+            "interval" : "",
+            "legendFormat" : "",
+            "refId" : "Clients"
+          }
+        ],
+        "title" : "Registered Clients",
+        "type" : "timeseries"
+      },
+      {
+        "collapsed" : false,
+        "gridPos" : {
+          "h" : 1,
+          "w" : 24,
+          "x" : 0,
+          "y" : 17
+        },
+        "id" : 6,
+        "panels" : [],
+        "title" : "AWS Load Balancer",
+        "type" : "row"
+      },
       {
         "datasource" : {
           "type" : "cloudwatch",
@@ -122,7 +487,7 @@ resource "grafana_dashboard" "at_a_glance" {
           "h" : 9,
           "w" : 7,
           "x" : 0,
-          "y" : 0
+          "y" : 18
         },
         "id" : 2,
         "options" : {
@@ -281,7 +646,7 @@ resource "grafana_dashboard" "at_a_glance" {
           "h" : 9,
           "w" : 7,
           "x" : 7,
-          "y" : 0
+          "y" : 18
         },
         "id" : 3,
         "options" : {
@@ -405,7 +770,7 @@ resource "grafana_dashboard" "at_a_glance" {
           "h" : 9,
           "w" : 7,
           "x" : 14,
-          "y" : 0
+          "y" : 18
         },
         "id" : 4,
         "options" : {
@@ -471,21 +836,21 @@ resource "grafana_dashboard" "at_a_glance" {
         "type" : "timeseries"
       }
     ],
-    schemaVersion : 36,
-    style : "dark",
-    tags : [],
-    templating : {
-      list : []
+    "schemaVersion" : 35,
+    "style" : "dark",
+    "tags" : [],
+    "templating" : {
+      "list" : []
     },
-    time : {
-      from : "now-6h",
-      to : "now"
+    "time" : {
+      "from" : "now-6h",
+      "to" : "now"
     },
-    timepicker : {},
-    timezone : "",
-    title : "${var.app_name}",
-    uid : "${var.app_name}",
-    version : 1,
-    weekStart : ""
+    "timepicker" : {},
+    "timezone" : "",
+    "title" : var.app_name,
+    "uid" : var.app_name,
+    "version" : 13,
+    "weekStart" : ""
   })
 }
