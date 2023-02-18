@@ -20,14 +20,13 @@ use {
     serde::{Deserialize, Serialize},
     sqlx::{Executor, PgPool},
     std::{io::BufReader, sync::Arc},
-    uuid::Uuid,
 };
 
 const APNS_TYPE_CERTIFICATE: &str = "certificate";
 const APNS_TYPE_TOKEN: &str = "token";
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, sqlx::Type)]
-#[sqlx(type_name = "provider")]
+#[sqlx(type_name = "apns_type")]
 #[sqlx(rename_all = "lowercase")]
 pub enum ApnsType {
     Certificate,
@@ -96,15 +95,20 @@ pub struct Tenant {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-// TODO (Harry): Split up to support more generic updates e.g. TenantApnsUpdate,
-// TenantFcmUpdate, TenantUpdate, etc
 pub struct TenantUpdateParams {
     /// Optional ID to override generated UUID, used for vanity IDs e.g.
     /// swift-sdk
-    pub id: Option<String>,
+    pub id: String,
+}
 
-    pub fcm_api_key: Option<String>,
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub struct TenantFcmUpdateParams {
+    pub fcm_api_key: String,
+}
 
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub struct TenantApnsUpdateParams {
+    pub apns_type: Option<ApnsType>,
     pub apns_topic: Option<String>,
 
     pub apns_certificate: Option<String>,
@@ -239,7 +243,9 @@ pub trait TenantStore {
     async fn get_tenant(&self, id: &str) -> Result<Tenant>;
     async fn delete_tenant(&self, id: &str) -> Result<()>;
     async fn create_tenant(&self, params: TenantUpdateParams) -> Result<Tenant>;
-    async fn update_tenant(&self, params: TenantUpdateParams) -> Result<Tenant>;
+    async fn update_tenant(&self, id: &str, params: TenantUpdateParams) -> Result<Tenant>;
+    async fn update_tenant_fcm(&self, id: &str, params: TenantFcmUpdateParams) -> Result<Tenant>;
+    async fn update_tenant_apns(&self, id: &str, params: TenantApnsUpdateParams) -> Result<Tenant>;
 }
 
 #[async_trait]
@@ -271,30 +277,53 @@ impl TenantStore for PgPool {
 
     async fn create_tenant(&self, params: TenantUpdateParams) -> Result<Tenant> {
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
-            "INSERT INTO public.tenants (id, fcm_api_key, apns_topic, apns_certificate, \
-             apns_certificate_password) VALUES ($1, $2, $3, $4, $5) RETURNING *;",
+            "INSERT INTO public.tenants (id) VALUES ($1) RETURNING *;",
         )
-        .bind(params.id.unwrap_or(Uuid::new_v4().to_string()))
-        .bind(params.fcm_api_key)
-        .bind(params.apns_topic)
-        .bind(params.apns_certificate)
-        .bind(params.apns_certificate_password)
+        .bind(params.id)
         .fetch_one(self)
         .await?;
 
         Ok(res)
     }
 
-    async fn update_tenant(&self, params: TenantUpdateParams) -> Result<Tenant> {
+    async fn update_tenant(&self, id: &str, params: TenantUpdateParams) -> Result<Tenant> {
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
-            "UPDATE public.tenants SET fcm_api_key = $2, apns_topic = $3, apns_certificate = $4, \
-             apns_certificate_password = $5 WHERE id = $1 RETURNING *;",
+            "UPDATE public.tenants SET id = $2 WHERE id = $1 RETURNING *;",
         )
-        .bind(params.id.unwrap_or(Uuid::new_v4().to_string()))
+        .bind(id)
+        .bind(params.id)
+        .fetch_one(self)
+        .await?;
+
+        Ok(res)
+    }
+
+    async fn update_tenant_fcm(&self, id: &str, params: TenantFcmUpdateParams) -> Result<Tenant> {
+        let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
+            "UPDATE public.tenants SET fcm_api_key = $2 WHERE id = $1 RETURNING *;",
+        )
+        .bind(id)
         .bind(params.fcm_api_key)
+        .fetch_one(self)
+        .await?;
+
+        Ok(res)
+    }
+
+    async fn update_tenant_apns(&self, id: &str, params: TenantApnsUpdateParams) -> Result<Tenant> {
+        let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
+            "UPDATE public.tenants SET apns_type = $2, apns_topic = $3, apns_certificate = $4, \
+             apns_certificate_password = $5, apns_key_id = $6, apns_team_id = $7, apns_pkcs8_pem \
+             = $8 WHERE id = $1 RETURNING *;",
+        )
+        .bind(id)
+        .bind(params.apns_type)
         .bind(params.apns_topic)
         .bind(params.apns_certificate)
         .bind(params.apns_certificate_password)
+        .bind(params.apns_key_id)
+        .bind(params.apns_team_id)
+        .bind(params.apns_pkcs8_pem)
         .fetch_one(self)
         .await?;
 
@@ -336,7 +365,19 @@ impl TenantStore for DefaultTenantStore {
         panic!("Shouldn't have run in single tenant mode")
     }
 
-    async fn update_tenant(&self, _params: TenantUpdateParams) -> Result<Tenant> {
+    async fn update_tenant(&self, _id: &str, _params: TenantUpdateParams) -> Result<Tenant> {
+        panic!("Shouldn't have run in single tenant mode")
+    }
+
+    async fn update_tenant_fcm(&self, _id: &str, _params: TenantFcmUpdateParams) -> Result<Tenant> {
+        panic!("Shouldn't have run in single tenant mode")
+    }
+
+    async fn update_tenant_apns(
+        &self,
+        _id: &str,
+        _params: TenantApnsUpdateParams,
+    ) -> Result<Tenant> {
         panic!("Shouldn't have run in single tenant mode")
     }
 }

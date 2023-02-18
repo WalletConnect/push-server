@@ -2,7 +2,7 @@ use {
     crate::{
         blob::ENCRYPTED_FLAG,
         error::{
-            Error::{self, ClientNotFound, Store},
+            Error::{ClientNotFound, Store},
             Result,
         },
         handlers::{Response, DECENTRALIZED_IDENTIFIER_PREFIX},

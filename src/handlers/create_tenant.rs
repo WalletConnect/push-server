@@ -24,18 +24,7 @@ pub async fn handler(
     // TODO authentication
     // TODO validation
 
-    let params = TenantUpdateParams {
-        id: Some(body.id),
-
-        fcm_api_key: None,
-
-        apns_topic: None,
-        apns_certificate: None,
-        apns_certificate_password: None,
-        apns_pkcs8_pem: None,
-        apns_key_id: None,
-        apns_team_id: None,
-    };
+    let params = TenantUpdateParams { id: body.id };
 
     let tenant = state.tenant_store.create_tenant(params).await?;
 

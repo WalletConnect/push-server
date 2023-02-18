@@ -123,6 +123,9 @@ pub enum Error {
 
     #[error("client cannot be found")]
     ClientNotFound,
+
+    #[error("this should not have occurred; used when case has been handled before")]
+    InternalServerError,
 }
 
 impl IntoResponse for Error {
