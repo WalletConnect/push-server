@@ -1,5 +1,5 @@
 use {
-    crate::{error::Error, providers::ProviderKind, state::AppState},
+    crate::{error::Error, providers::ProviderKind, state::AppState, stores::tenant::ApnsType},
     axum::{
         extract::{Path, State},
         Json,
@@ -13,6 +13,7 @@ pub struct GetTenantResponse {
     url: String,
     enabled_providers: Vec<String>,
     apns_topic: Option<String>,
+    apns_type: Option<ApnsType>,
 }
 
 pub async fn handler(
@@ -27,10 +28,12 @@ pub async fn handler(
         url: format!("{}/{}", state.config.public_url, tenant.id),
         enabled_providers: tenant.providers().iter().map(Into::into).collect(),
         apns_topic: None,
+        apns_type: None,
     };
 
     if providers.contains(&ProviderKind::Apns) {
         res.apns_topic = tenant.apns_topic;
+        res.apns_type = tenant.apns_type;
     }
 
     Ok(Json(res))
