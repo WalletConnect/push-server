@@ -2,6 +2,16 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.19.0 - 2023-02-18
+#### Bug Fixes
+- CD Secret - (129aecb) - Harry Bairstow
+- always fetch HEAD when building container - (24af511) - Harry Bairstow
+#### Features
+- new dashboard (#104) - (965b554) - Harry Bairstow
+#### Miscellaneous Chores
+- Tidy up Echo Server, closing small issues (#105) - (869d7a1) - Harry Bairstow
+- - -
+
 ## v0.18.0 - 2023-02-16
 #### Bug Fixes
 - tenant url (#102) - (2200ce4) - Harry Bairstow
