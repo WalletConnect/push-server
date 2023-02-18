@@ -68,7 +68,7 @@ jobs:
     with:
       environment: 'staging'
     secrets:
-      TEST_TENANT_ID_APNS: ${{ secrets.TEST_TENANT_ID_APNS }}
+      TEST_TENANT_ID: ${{ secrets.TEST_TENANT_ID }}
 
   deploy-infra-prod:
     runs-on: ubuntu-latest
