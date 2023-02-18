@@ -116,8 +116,8 @@ pub async fn handler(
 
     let apns_type = body.validate()?;
 
-    if let None = apns_type {
-        // Just update topic!
+    if apns_type.is_none() {
+        // Just update topic
         let update_body = TenantApnsUpdateParams {
             apns_topic: body.apns_topic,
             apns_type: existing_tenant.apns_type,
