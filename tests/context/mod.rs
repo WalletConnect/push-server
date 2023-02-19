@@ -22,8 +22,8 @@ pub struct MultiTenantServerContext {
 }
 
 pub struct StoreContext {
-    pub pool: Pool<Postgres>,
-    pub tenant_pool: Pool<Postgres>,
+    pub pool: Arc<Pool<Postgres>>,
+    pub tenant_pool: Arc<Pool<Postgres>>,
 
     pub clients: ClientStoreArc,
     pub notifications: NotificationStoreArc,
@@ -57,15 +57,17 @@ impl AsyncTestContext for MultiTenantServerContext {
 #[async_trait]
 impl AsyncTestContext for StoreContext {
     async fn setup() -> Self {
-        let db = stores::open_pg_connection(DATABASE_URL).await;
-        let tenant_db = stores::open_pg_connection(TENANT_DATABASE_URL).await;
+        let (db, tenant_db) = stores::open_pg_connections().await;
+
+        let db_arc = Arc::new(db);
+        let tenant_db_arc = Arc::new(tenant_db);
 
         Self {
-            pool: db,
-            tenant_pool: tenant_db,
-            clients: Arc::new(db.clone()),
-            notifications: Arc::new(db.clone()),
-            tenants: Arc::new(tenant_db.clone()),
+            pool: db_arc.clone(),
+            tenant_pool: tenant_db_arc.clone(),
+            clients: db_arc.clone(),
+            notifications: db_arc.clone(),
+            tenants: tenant_db_arc.clone(),
         }
     }
 
