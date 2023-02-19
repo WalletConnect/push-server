@@ -1,4 +1,5 @@
 use {
+    crate::context::{DATABASE_URL, TENANT_DATABASE_URL},
     echo_server::config::Config,
     std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4, TcpListener},
     tokio::{
@@ -81,8 +82,8 @@ impl MultiTenantEchoServer {
             disable_header: true,
             relay_url: "https://relay.walletconnect.com".into(),
             validate_signatures: false,
-            database_url: "postgres://postgres:root@localhost:5432/postgres".into(),
-            tenant_database_url: Some("postgres://postgres:root@localhost:5433/postgres".into()),
+            database_url: DATABASE_URL.into(),
+            tenant_database_url: Some(TENANT_DATABASE_URL.into()),
             default_tenant_id: "9bfe94c9cbf74aaa0597094ef561f703".into(),
             otel_exporter_otlp_endpoint: None,
             telemetry_prometheus_port: Some(get_random_port()),
