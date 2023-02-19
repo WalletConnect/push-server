@@ -1,9 +1,6 @@
 use {
     crate::{
-        error::{
-            Error,
-            Error::{InternalServerError, InvalidMultipartBody},
-        },
+        error::{Error, Error::InvalidMultipartBody},
         increment_counter,
         state::AppState,
         stores::tenant::{TenantApnsUpdateAuth, TenantApnsUpdateParams},
