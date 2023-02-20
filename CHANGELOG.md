@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.19.3 - 2023-02-20
+#### Bug Fixes
+- APNS Store Logic & Tests (#107) - (4e1575b) - Harry Bairstow
+- - -
+
 ## v0.19.2 - 2023-02-18
 #### Bug Fixes
 - cast `apns_type` - (7233111) - Harry Bairstow
