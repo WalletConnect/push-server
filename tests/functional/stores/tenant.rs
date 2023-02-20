@@ -9,10 +9,11 @@ use {
     test_context::test_context,
     uuid::Uuid,
 };
+use echo_server::stores::tenant::Tenant;
 
 #[test_context(StoreContext)]
 #[tokio::test]
-async fn test_tenant_creation(ctx: &mut StoreContext) {
+async fn tenant_creation(ctx: &mut StoreContext) {
     let res = ctx
         .tenants
         .create_tenant(TenantUpdateParams {
@@ -25,7 +26,54 @@ async fn test_tenant_creation(ctx: &mut StoreContext) {
 
 #[test_context(StoreContext)]
 #[tokio::test]
-async fn test_tenant_update(ctx: &mut StoreContext) {
+async fn tenant_deletion(ctx: &mut StoreContext) {
+    let id = Uuid::new_v4().to_string();
+
+    let res = ctx
+        .tenants
+        .create_tenant(TenantUpdateParams {
+            id,
+        })
+        .await;
+
+    assert!(res.is_ok());
+
+    let delete_res = ctx
+        .tenants
+        .delete_tenant(&id)
+        .await;
+
+    assert!(delete_res.is_ok())
+}
+
+#[tokio::test]
+async fn tenant_get(ctx: &mut StoreContext) {
+    let id = Uuid::new_v4().to_string();
+
+    let res = ctx
+        .tenants
+        .create_tenant(TenantUpdateParams {
+            id: id.clone(),
+        })
+        .await;
+
+    assert!(res.is_ok());
+
+    let tenant_res = ctx
+        .tenants
+        .get_tenant(&id)
+        .await;
+
+    assert!(tenant_res.is_ok());
+
+    let tenant = tenant_res.expect("failed to unwrap tenant");
+
+    assert_eq!(tenant.id, id);
+}
+
+#[test_context(StoreContext)]
+#[tokio::test]
+async fn tenant_update(ctx: &mut StoreContext) {
     let tenant = ctx
         .tenants
         .create_tenant(TenantUpdateParams {
@@ -46,7 +94,7 @@ async fn test_tenant_update(ctx: &mut StoreContext) {
 
 #[test_context(StoreContext)]
 #[tokio::test]
-async fn test_tenant_fcm(ctx: &mut StoreContext) {
+async fn tenant_fcm(ctx: &mut StoreContext) {
     let tenant = ctx
         .tenants
         .create_tenant(TenantUpdateParams {
@@ -67,7 +115,7 @@ async fn test_tenant_fcm(ctx: &mut StoreContext) {
 
 #[test_context(StoreContext)]
 #[tokio::test]
-async fn test_tenant_apns(ctx: &mut StoreContext) {
+async fn tenant_apns(ctx: &mut StoreContext) {
     let tenant = ctx
         .tenants
         .create_tenant(TenantUpdateParams {
@@ -88,7 +136,7 @@ async fn test_tenant_apns(ctx: &mut StoreContext) {
 
 #[test_context(StoreContext)]
 #[tokio::test]
-async fn test_tenant_apns_certificate_auth(ctx: &mut StoreContext) {
+async fn tenant_apns_certificate_auth(ctx: &mut StoreContext) {
     let tenant = ctx
         .tenants
         .create_tenant(TenantUpdateParams {
@@ -110,7 +158,7 @@ async fn test_tenant_apns_certificate_auth(ctx: &mut StoreContext) {
 
 #[test_context(StoreContext)]
 #[tokio::test]
-async fn test_tenant_apns_token_auth(ctx: &mut StoreContext) {
+async fn tenant_apns_token_auth(ctx: &mut StoreContext) {
     let tenant = ctx
         .tenants
         .create_tenant(TenantUpdateParams {
