@@ -79,7 +79,7 @@ impl Metrics {
             .init();
 
         let tenant_fcm_updates_counter = meter
-            .u64_counter("tenant_apns_updates")
+            .u64_counter("tenant_fcm_updates")
             .with_description("The number of times tenants have updated their APNS")
             .init();
 
