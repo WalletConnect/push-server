@@ -29,7 +29,7 @@ async fn tenant_creation(ctx: &mut StoreContext) {
 async fn tenant_deletion(ctx: &mut StoreContext) {
     let id = Uuid::new_v4().to_string();
 
-    let res = ctx.tenants.create_tenant(TenantUpdateParams { id }).await;
+    let res = ctx.tenants.create_tenant(TenantUpdateParams { id: id.clone() }).await;
 
     assert!(res.is_ok());
 
