@@ -11,6 +11,8 @@ use {
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+#[cfg(any(debug_assertions, test))]
+#[derive(is_variant_derive::IsVariant)]
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]

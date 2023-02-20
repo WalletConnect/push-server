@@ -60,12 +60,14 @@ hex = "0.4"
 base64 = "0.21"
 chrono = "0.4"
 uuid = { version = "1.2", features = ["v4"] }
+is-variant-derive = { path = "crates/is-variant-derive" }
 
 [dev-dependencies]
-serial_test = "0.9"
+serial_test = "1.0"
 test-context = "0.1"
 futures-util = "0.3"
 random-string = "1.0"
+rand = "0.7"
 
 [build-dependencies]
 build-info-build = "0.0"

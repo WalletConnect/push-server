@@ -1,0 +1,17 @@
+[package]
+name = "is-variant-derive"
+version = "0.1.0"
+edition = "2021"
+authors = [
+    "Harry Bairstow <harry@walletconnect.com>",
+    "Mihir Luthra"
+]
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = "1.0"
+quote = "1.0"
+proc-macro2 = "1.0"
+convert_case = "0.6"
