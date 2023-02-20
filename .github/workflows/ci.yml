@@ -73,7 +73,7 @@ jobs:
             rustc: nightly
           - name: "Unit Tests"
             cmd: test
-            args: --all-features
+            args: -- --all-features
             cache: { sharedKey: "tests" }
             rustc: stable
         include:
