@@ -11,7 +11,7 @@ use {
 
 #[test_context(SingleTenantServerContext)]
 #[tokio::test]
-async fn test_push(ctx: &mut SingleTenantServerContext) {
+async fn push(ctx: &mut SingleTenantServerContext) {
     let charset = "1234567890";
     let random_client_id = generate(12, charset);
     let payload = RegisterBody {
