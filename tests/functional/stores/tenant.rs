@@ -1,7 +1,6 @@
 use {
     crate::context::StoreContext,
     echo_server::stores::tenant::{
-        Tenant,
         TenantApnsUpdateAuth,
         TenantApnsUpdateParams,
         TenantFcmUpdateParams,
@@ -38,6 +37,7 @@ async fn tenant_deletion(ctx: &mut StoreContext) {
     assert!(delete_res.is_ok())
 }
 
+#[test_context(StoreContext)]
 #[tokio::test]
 async fn tenant_get(ctx: &mut StoreContext) {
     let id = Uuid::new_v4().to_string();
