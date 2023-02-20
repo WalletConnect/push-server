@@ -1,23 +1,18 @@
 use {
-    crate::context::StoreContext,
+    crate::{context::StoreContext, functional::stores::gen_id},
     echo_server::{providers::ProviderKind, stores::client::Client},
     test_context::test_context,
-    uuid::Uuid,
 };
 
 pub const TENANT_ID: &str = "000-000-000-000";
 pub const TOKEN: &str = "noop-111-222-333";
-
-pub fn gen_id() -> &str {
-    &Uuid::new_v4().to_string()
-}
 
 #[test_context(StoreContext)]
 #[tokio::test]
 async fn client_creation(ctx: &mut StoreContext) {
     let res = ctx
         .clients
-        .create_client(TENANT_ID, gen_id(), Client {
+        .create_client(TENANT_ID, &gen_id(), Client {
             push_type: ProviderKind::Noop,
             token: TOKEN.to_string(),
         })
@@ -31,7 +26,7 @@ async fn client_creation(ctx: &mut StoreContext) {
 async fn client_creation_fcm(ctx: &mut StoreContext) {
     let res = ctx
         .clients
-        .create_client(TENANT_ID, gen_id(), Client {
+        .create_client(TENANT_ID, &gen_id(), Client {
             push_type: ProviderKind::Fcm,
             token: TOKEN.to_string(),
         })
@@ -45,7 +40,7 @@ async fn client_creation_fcm(ctx: &mut StoreContext) {
 async fn client_creation_apns(ctx: &mut StoreContext) {
     let res = ctx
         .clients
-        .create_client(TENANT_ID, gen_id(), Client {
+        .create_client(TENANT_ID, &gen_id(), Client {
             push_type: ProviderKind::Apns,
             token: TOKEN.to_string(),
         })
@@ -61,7 +56,7 @@ async fn client_upsert(ctx: &mut StoreContext) {
 
     let res = ctx
         .clients
-        .create_client(TENANT_ID, id, Client {
+        .create_client(TENANT_ID, &id, Client {
             push_type: ProviderKind::Apns,
             token: TOKEN.to_string(),
         })
@@ -71,7 +66,7 @@ async fn client_upsert(ctx: &mut StoreContext) {
 
     let upsert_res = ctx
         .clients
-        .create_client(TENANT_ID, id, Client {
+        .create_client(TENANT_ID, &id, Client {
             push_type: ProviderKind::Fcm,
             token: TOKEN.to_string(),
         })
@@ -87,7 +82,7 @@ async fn client_deletion(ctx: &mut StoreContext) {
 
     let res = ctx
         .clients
-        .create_client(TENANT_ID, id, Client {
+        .create_client(TENANT_ID, &id, Client {
             push_type: ProviderKind::Noop,
             token: TOKEN.to_string(),
         })
@@ -95,7 +90,7 @@ async fn client_deletion(ctx: &mut StoreContext) {
 
     assert!(res.is_ok());
 
-    let delete_res = ctx.clients.delete_client(TENANT_ID, id).await;
+    let delete_res = ctx.clients.delete_client(TENANT_ID, &id).await;
 
     assert!(delete_res.is_ok());
 }
@@ -107,7 +102,7 @@ async fn client_fetch(ctx: &mut StoreContext) {
 
     let res = ctx
         .clients
-        .create_client(TENANT_ID, id, Client {
+        .create_client(TENANT_ID, &id, Client {
             push_type: ProviderKind::Noop,
             token: TOKEN.to_string(),
         })
@@ -115,7 +110,7 @@ async fn client_fetch(ctx: &mut StoreContext) {
 
     assert!(res.is_ok());
 
-    let client_res = ctx.clients.get_client(TENANT_ID, id).await;
+    let client_res = ctx.clients.get_client(TENANT_ID, &id).await;
 
     assert!(client_res.is_ok());
 
