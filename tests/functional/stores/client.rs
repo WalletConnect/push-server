@@ -1,10 +1,12 @@
 use {
-    crate::{context::StoreContext, functional::stores::gen_id},
+    crate::{
+        context::StoreContext,
+        functional::stores::{gen_id, TENANT_ID},
+    },
     echo_server::{providers::ProviderKind, stores::client::Client},
     test_context::test_context,
 };
 
-pub const TENANT_ID: &str = "000-000-000-000";
 pub const TOKEN: &str = "noop-111-222-333";
 
 #[test_context(StoreContext)]
