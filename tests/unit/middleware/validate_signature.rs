@@ -1,12 +1,13 @@
-use ed25519_dalek::{PublicKey, Signer};
-use ed25519_dalek::ed25519::signature::Signature;
-use rand::rngs::OsRng;
-use ed25519_dalek::Keypair;
-use echo_server::middleware::validate_signature::signature_is_valid;
+use {
+    echo_server::middleware::validate_signature::signature_is_valid,
+    ed25519_dalek::{ed25519::signature::Signature, Keypair, PublicKey, Signer},
+    rand::rngs::OsRng,
+};
 
-/// Setup for tests by creating a public key and returning a signature, timestamp and body
+/// Setup for tests by creating a public key and returning a signature,
+/// timestamp and body
 fn setup() -> (PublicKey, String, String, String) {
-    let mut csprng = OsRng{};
+    let mut csprng = OsRng {};
     let keypair: Keypair = Keypair::generate(&mut csprng);
 
     let body = "example_body";
@@ -16,7 +17,12 @@ fn setup() -> (PublicKey, String, String, String) {
     let sig = keypair.sign(sig_body.as_bytes());
     let sig_hex = hex::encode(sig.as_bytes());
 
-    (keypair.public, sig_hex, timestamp.to_string(), body.to_string())
+    (
+        keypair.public,
+        sig_hex,
+        timestamp.to_string(),
+        body.to_string(),
+    )
 }
 
 #[tokio::test]
@@ -49,7 +55,13 @@ pub async fn invalid_signature_not_hex() {
 pub async fn invalid_signature_hex() {
     let (pub_key, _, timestamp, body) = setup();
 
-    let res = signature_is_valid("696e76616c69642d7369676e6174757265", &timestamp, &body, &pub_key).await;
+    let res = signature_is_valid(
+        "696e76616c69642d7369676e6174757265",
+        &timestamp,
+        &body,
+        &pub_key,
+    )
+    .await;
 
     // Should error
     assert!(res.is_err());

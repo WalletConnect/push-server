@@ -1,7 +1,8 @@
-use uuid::Uuid;
-use echo_server::providers::ProviderKind;
-use echo_server::stores::client::Client;
-use crate::context::StoreContext;
+use {
+    crate::context::StoreContext,
+    echo_server::{providers::ProviderKind, stores::client::Client},
+    uuid::Uuid,
+};
 
 pub const TENANT_ID: &str = "000-000-000-000";
 pub const TOKEN: &str = "noop-111-222-333";
@@ -93,10 +94,7 @@ async fn client_deletion(ctx: &mut StoreContext) {
 
     assert!(res.is_ok());
 
-    let delete_res = ctx
-        .clients
-        .delete_client(TENANT_ID, id)
-        .await;
+    let delete_res = ctx.clients.delete_client(TENANT_ID, id).await;
 
     assert!(delete_res.is_ok());
 }
@@ -116,10 +114,7 @@ async fn client_fetch(ctx: &mut StoreContext) {
 
     assert!(res.is_ok());
 
-    let client_res = ctx
-        .clients
-        .get_client(TENANT_ID, id)
-        .await;
+    let client_res = ctx.clients.get_client(TENANT_ID, id).await;
 
     assert!(client_res.is_ok());
 

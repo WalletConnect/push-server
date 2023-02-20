@@ -1,5 +1,4 @@
-use echo_server::config;
-use echo_server::relay::RelayClient;
+use echo_server::{config, relay::RelayClient};
 
 pub fn get_client() -> RelayClient {
     RelayClient::new(config::RELAY_URL.to_string())
@@ -7,7 +6,6 @@ pub fn get_client() -> RelayClient {
 
 #[tokio::test]
 pub async fn fetch_public_key() {
-
     let mut client = get_client();
 
     let res = client.public_key().await;

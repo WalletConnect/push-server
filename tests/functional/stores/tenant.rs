@@ -1,6 +1,7 @@
 use {
     crate::context::StoreContext,
     echo_server::stores::tenant::{
+        Tenant,
         TenantApnsUpdateAuth,
         TenantApnsUpdateParams,
         TenantFcmUpdateParams,
@@ -9,7 +10,6 @@ use {
     test_context::test_context,
     uuid::Uuid,
 };
-use echo_server::stores::tenant::Tenant;
 
 #[test_context(StoreContext)]
 #[tokio::test]
@@ -29,19 +29,11 @@ async fn tenant_creation(ctx: &mut StoreContext) {
 async fn tenant_deletion(ctx: &mut StoreContext) {
     let id = Uuid::new_v4().to_string();
 
-    let res = ctx
-        .tenants
-        .create_tenant(TenantUpdateParams {
-            id,
-        })
-        .await;
+    let res = ctx.tenants.create_tenant(TenantUpdateParams { id }).await;
 
     assert!(res.is_ok());
 
-    let delete_res = ctx
-        .tenants
-        .delete_tenant(&id)
-        .await;
+    let delete_res = ctx.tenants.delete_tenant(&id).await;
 
     assert!(delete_res.is_ok())
 }
@@ -52,17 +44,12 @@ async fn tenant_get(ctx: &mut StoreContext) {
 
     let res = ctx
         .tenants
-        .create_tenant(TenantUpdateParams {
-            id: id.clone(),
-        })
+        .create_tenant(TenantUpdateParams { id: id.clone() })
         .await;
 
     assert!(res.is_ok());
 
-    let tenant_res = ctx
-        .tenants
-        .get_tenant(&id)
-        .await;
+    let tenant_res = ctx.tenants.get_tenant(&id).await;
 
     assert!(tenant_res.is_ok());
 

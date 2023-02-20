@@ -1,3 +1,3 @@
 mod messages;
-mod relay;
 mod middleware;
+mod relay;
