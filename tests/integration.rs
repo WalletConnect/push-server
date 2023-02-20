@@ -4,6 +4,7 @@
 mod context;
 mod functional;
 mod messages;
+mod store;
 
 pub type ErrorResult<T> = Result<T, TestError>;
 

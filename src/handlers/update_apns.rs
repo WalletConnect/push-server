@@ -1,12 +1,9 @@
 use {
     crate::{
-        error::{
-            Error,
-            Error::{InternalServerError, InvalidMultipartBody},
-        },
+        error::{Error, Error::InvalidMultipartBody},
         increment_counter,
         state::AppState,
-        stores::tenant::{ApnsType, TenantApnsUpdateParams},
+        stores::tenant::{TenantApnsUpdateAuth, TenantApnsUpdateParams},
     },
     axum::{
         extract::{Multipart, Path, State},
@@ -29,8 +26,14 @@ pub struct ApnsUpdateBody {
     pub apns_team_id: Option<String>,
 }
 
+pub struct ApnsSqlUpdate {
+    pub topic: Option<String>,
+
+    pub auth: Option<TenantApnsUpdateAuth>,
+}
+
 impl ApnsUpdateBody {
-    pub fn validate(&self) -> Result<Option<ApnsType>, Error> {
+    pub fn validate(&self) -> Result<ApnsSqlUpdate, Error> {
         // Match cases when the input is not valid and return false.
         // Input is valid if certificate and certificate_password is included for
         // updates. topic is required for new tenants
@@ -44,13 +47,46 @@ impl ApnsUpdateBody {
             &self.apns_team_id,
         ) {
             // Update Topic
-            (Some(_), None, None, None, None, None) => Ok(None),
+            (Some(topic), None, None, None, None, None) => Ok(ApnsSqlUpdate {
+                topic: Some(topic.clone()),
+                auth: None,
+            }),
             // Update Certificate
-            (Some(_), Some(_), Some(_), None, None, None) => Ok(Some(ApnsType::Certificate)),
-            (None, Some(_), Some(_), None, None, None) => Ok(Some(ApnsType::Certificate)),
+            (Some(topic), Some(certificate), Some(password), None, None, None) => {
+                Ok(ApnsSqlUpdate {
+                    topic: Some(topic.clone()),
+                    auth: Some(TenantApnsUpdateAuth::Certificate {
+                        apns_certificate: certificate.clone(),
+                        apns_certificate_password: password.clone(),
+                    }),
+                })
+            }
+            (None, Some(certificate), Some(password), None, None, None) => Ok(ApnsSqlUpdate {
+                topic: None,
+                auth: Some(TenantApnsUpdateAuth::Certificate {
+                    apns_certificate: certificate.clone(),
+                    apns_certificate_password: password.clone(),
+                }),
+            }),
             // Update Token
-            (Some(_), None, None, Some(_), Some(_), Some(_)) => Ok(Some(ApnsType::Token)),
-            (None, None, None, Some(_), Some(_), Some(_)) => Ok(Some(ApnsType::Token)),
+            (Some(topic), None, None, Some(pkcs8_pem), Some(key_id), Some(team_id)) => {
+                Ok(ApnsSqlUpdate {
+                    topic: Some(topic.clone()),
+                    auth: Some(TenantApnsUpdateAuth::Token {
+                        apns_pkcs8_pem: pkcs8_pem.clone(),
+                        apns_key_id: key_id.clone(),
+                        apns_team_id: team_id.clone(),
+                    }),
+                })
+            }
+            (None, None, None, Some(pkcs8_pem), Some(key_id), Some(team_id)) => Ok(ApnsSqlUpdate {
+                topic: None,
+                auth: Some(TenantApnsUpdateAuth::Token {
+                    apns_pkcs8_pem: pkcs8_pem.clone(),
+                    apns_key_id: key_id.clone(),
+                    apns_team_id: team_id.clone(),
+                }),
+            }),
             // All other cases are invalid
             _ => Err(InvalidMultipartBody),
         }
@@ -68,7 +104,7 @@ pub async fn handler(
     mut form_body: Multipart,
 ) -> Result<Json<UpdateTenantApnsResponse>, Error> {
     // Ensure tenant real
-    let existing_tenant = state.tenant_store.get_tenant(&id).await?;
+    let _existing_tenant = state.tenant_store.get_tenant(&id).await?;
 
     // ---- retrieve body from form
     let mut body = ApnsUpdateBody {
@@ -114,23 +150,31 @@ pub async fn handler(
         };
     }
 
-    let apns_type = body.validate()?;
+    let apns_updates = body.validate()?;
 
-    if apns_type.is_none() {
+    if let Some(topic) = apns_updates.topic {
         // Just update topic
-        let update_body = TenantApnsUpdateParams {
-            apns_topic: body.apns_topic,
-            apns_type: existing_tenant.apns_type,
-            apns_certificate: existing_tenant.apns_certificate,
-            apns_certificate_password: existing_tenant.apns_certificate_password,
-            apns_pkcs8_pem: existing_tenant.apns_pkcs8_pem,
-            apns_key_id: existing_tenant.apns_key_id,
-            apns_team_id: existing_tenant.apns_team_id,
-        };
+        let update_body = TenantApnsUpdateParams { apns_topic: topic };
 
         let _new_tenant = state
             .tenant_store
             .update_tenant_apns(&id, update_body)
+            .await?;
+
+        if apns_updates.auth.is_none() {
+            // Breakout early as there are no auth updates
+
+            increment_counter!(state.metrics, tenant_apns_updates);
+
+            return Ok(Json(UpdateTenantApnsResponse { success: true }));
+        }
+    }
+
+    // ---- handler
+    if let Some(auth) = apns_updates.auth {
+        let _new_tenant = state
+            .tenant_store
+            .update_tenant_apns_auth(&id, auth)
             .await?;
 
         increment_counter!(state.metrics, tenant_apns_updates);
@@ -138,37 +182,7 @@ pub async fn handler(
         return Ok(Json(UpdateTenantApnsResponse { success: true }));
     }
 
-    // ---- handler
-    let update_body = match apns_type {
-        None => Err(InternalServerError),
-        Some(t) => Ok(match t {
-            ApnsType::Certificate => TenantApnsUpdateParams {
-                apns_type: Some(ApnsType::Certificate),
-                apns_topic: existing_tenant.apns_topic,
-                apns_certificate: body.apns_certificate,
-                apns_certificate_password: body.apns_certificate_password,
-                apns_pkcs8_pem: None,
-                apns_key_id: None,
-                apns_team_id: None,
-            },
-            ApnsType::Token => TenantApnsUpdateParams {
-                apns_type: Some(ApnsType::Token),
-                apns_topic: existing_tenant.apns_topic,
-                apns_certificate: None,
-                apns_certificate_password: None,
-                apns_pkcs8_pem: body.apns_pkcs8_pem,
-                apns_key_id: body.apns_key_id,
-                apns_team_id: body.apns_team_id,
-            },
-        }),
-    }?;
-
-    let _new_tenant = state
-        .tenant_store
-        .update_tenant_apns(&id, update_body)
-        .await?;
-
-    increment_counter!(state.metrics, tenant_apns_updates);
-
-    Ok(Json(UpdateTenantApnsResponse { success: true }))
+    // No auth updates or topic updates were carried out therefore the body was
+    // invalid
+    Err(InvalidMultipartBody)
 }
