@@ -46,7 +46,7 @@ a2 = { git = "https://github.com/WalletConnect/a2", rev = "d0236c3", features = 
 fcm = "0.9"
 
 # Signature validation
-ed25519-dalek = "1.0"
+ed25519-dalek = "2.0.0-rc.2"
 
 # JWT Authentication
 relay_rpc = { git = "https://github.com/WalletConnect/WalletConnectRust.git", rev = "ced99e7"}
