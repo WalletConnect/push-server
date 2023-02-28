@@ -51,7 +51,8 @@ impl RelayClient {
             .await?;
         let body = response.text().await?;
         let key_bytes = hex::decode(body)?;
-        let public_key = VerifyingKey::from_bytes(<&[u8; 32]>::try_from(key_bytes.as_slice()).unwrap())?;
+        let public_key =
+            VerifyingKey::from_bytes(<&[u8; 32]>::try_from(key_bytes.as_slice()).unwrap())?;
         Ok(public_key)
     }
 
