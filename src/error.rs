@@ -126,6 +126,12 @@ pub enum Error {
 
     #[error("this should not have occurred; used when case has been handled before")]
     InternalServerError,
+
+    #[error(transparent)]
+    JwtError(#[from] crate::authentication::JwtVerificationError),
+
+    #[error("the provided authentication does not authenticate the request")]
+    InvalidAuthentication,
 }
 
 impl IntoResponse for Error {
@@ -296,6 +302,20 @@ impl IntoResponse for Error {
             ),
             // If the client cannot be found we gracefully handle this
             Error::ClientNotFound => crate::handlers::Response::new_success(StatusCode::ACCEPTED),
+            Error::JwtError(_) | Error::InvalidAuthentication => crate::handlers::Response::new_failure(
+                StatusCode::UNAUTHORIZED,
+                vec![ResponseError {
+                    name: "authentication".to_string(),
+                    message: "the provided authentication is not sufficient".to_string(),
+                }],
+                vec![
+                    ErrorField {
+                        field: axum::http::header::AUTHORIZATION.to_string(),
+                        description: "invalid authorization token".to_string(),
+                        location: ErrorLocation::Header,
+                    }
+                ],
+            ),
             e => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
                 ResponseError {
                     name: "unknown_error".to_string(),
