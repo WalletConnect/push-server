@@ -18,7 +18,7 @@ pub async fn handler(
     StateExtractor(state): StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
 ) -> Result<Response> {
-    if !authenticate_client(headers, |client_id| {
+    if !authenticate_client(headers, &state.config.public_url, |client_id| {
         if let Some(client_id) = client_id {
             &client_id == &body.client_id
         } else {

@@ -7,6 +7,7 @@ use {
     hyper::StatusCode,
     relay_rpc::domain::ClientId,
     serde_json::{json, Value},
+    std::{collections::HashSet, string::ToString},
 };
 
 // Push
@@ -27,11 +28,12 @@ pub const DECENTRALIZED_IDENTIFIER_PREFIX: &str = "did:key:";
 
 pub fn authenticate_client(
     headers: HeaderMap,
+    aud: &str,
     check: fn(Option<ClientId>) -> bool,
 ) -> Result<bool> {
     return if let Some(auth_header) = headers.get(axum::http::header::AUTHORIZATION) {
         let header_str = auth_header.to_str()?;
-        let client_id = Jwt(header_str.to_string()).decode(&AUD)?;
+        let client_id = Jwt(header_str.to_string()).decode(&HashSet::from([aud.to_string()]))?;
         Ok(check(Some(client_id)))
     } else {
         // Note: Authentication is not required right now to ensure that this is a
