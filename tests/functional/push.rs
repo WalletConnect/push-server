@@ -5,6 +5,8 @@ use {
         register_client::RegisterBody,
     },
     random_string::generate,
+    relay_rpc::domain::ClientId,
+    std::sync::Arc,
     test_context::test_context,
     uuid::Uuid,
 };
@@ -13,7 +15,7 @@ use {
 #[tokio::test]
 async fn test_push(ctx: &mut SingleTenantServerContext) {
     let charset = "1234567890";
-    let random_client_id = generate(12, charset);
+    let random_client_id = ClientId(Arc::from(generate(12, charset)));
     let payload = RegisterBody {
         client_id: random_client_id.clone(),
         push_type: "noop".to_string(),
