@@ -5,8 +5,7 @@ version = 3
 [[package]]
 name = "a2"
 version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02a1fce6c426a8e26af6f720d0b7fd771fc178d18fe3bd156429356fbe0d6506"
+source = "git+https://github.com/WalletConnect/a2#d0236c317751f45305d96433e816e6d9272a32b1"
 dependencies = [
  "base64 0.20.0",
  "erased-serde",
@@ -600,7 +599,7 @@ checksum = "03d8c417d7a8cb362e0c37e5d815f5eb7c37f79ff93707329d5a194e42e54ca0"
 
 [[package]]
 name = "echo-server"
-version = "0.19.2"
+version = "0.19.3"
 dependencies = [
  "a2",
  "async-trait",
@@ -1066,8 +1065,7 @@ dependencies = [
 [[package]]
 name = "hyper-alpn"
 version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f485f87658b5ac391dbed0379d50928de16b54bffee0a85234dc6a92fbe534f6"
+source = "git+https://github.com/WalletConnect/hyper-alpn#0030fd02266f761db7770412b4efa051af76c23d"
 dependencies = [
  "hyper",
  "log",
