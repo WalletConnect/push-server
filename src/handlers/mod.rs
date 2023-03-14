@@ -1,8 +1,5 @@
 use {
-    crate::{
-        authentication::Jwt,
-        error::{Error::InvalidAuthentication, Result},
-    },
+    crate::{authentication::Jwt, error::Result},
     axum::{http::HeaderMap, response::IntoResponse, Json},
     hyper::StatusCode,
     relay_rpc::domain::ClientId,
@@ -26,13 +23,14 @@ pub mod update_fcm;
 
 pub const DECENTRALIZED_IDENTIFIER_PREFIX: &str = "did:key:";
 
-pub fn authenticate_client(
-    headers: HeaderMap,
-    aud: &str,
-    check: fn(Option<ClientId>) -> bool,
-) -> Result<bool> {
+pub fn authenticate_client<F>(headers: HeaderMap, aud: &str, check: F) -> Result<bool>
+where
+    F: FnOnce(Option<ClientId>) -> bool,
+{
     return if let Some(auth_header) = headers.get(axum::http::header::AUTHORIZATION) {
-        let header_str = auth_header.to_str()?;
+        // TODO: fix unwrap
+        let header_str = auth_header.to_str().unwrap();
+        // let header_str = auth_header.to_str()?;
         let client_id = Jwt(header_str.to_string()).decode(&HashSet::from([aud.to_string()]))?;
         Ok(check(Some(client_id)))
     } else {

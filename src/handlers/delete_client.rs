@@ -1,4 +1,5 @@
 use {
+    super::register_client::RegisterBody,
     crate::{
         decrement_counter,
         error::{Error::InvalidAuthentication, Result},
@@ -9,6 +10,7 @@ use {
     axum::{
         extract::{Path, State as StateExtractor},
         http::HeaderMap,
+        Json,
     },
     std::sync::Arc,
 };
@@ -17,10 +19,11 @@ pub async fn handler(
     Path((tenant_id, id)): Path<(String, String)>,
     StateExtractor(state): StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
+    Json(body): Json<RegisterBody>,
 ) -> Result<Response> {
     if !authenticate_client(headers, &state.config.public_url, |client_id| {
         if let Some(client_id) = client_id {
-            &client_id == &body.client_id
+            client_id == body.client_id
         } else {
             false
         }

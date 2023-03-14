@@ -4,7 +4,7 @@ use {
     std::collections::HashSet,
 };
 
-#[derive(Debug, ThisError)]
+#[derive(Debug, thiserror::Error)]
 pub enum JwtVerificationError {
     #[error("Invalid format")]
     Format,

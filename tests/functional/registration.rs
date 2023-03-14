@@ -11,7 +11,7 @@ use {
 #[tokio::test]
 async fn test_registration(ctx: &mut SingleTenantServerContext) {
     let charset = "1234567890";
-    let random_client_id = ClientId(Arc::from(generate(12, charset)));
+    let random_client_id = ClientId::new(Arc::from(generate(12, charset)));
     let payload = RegisterBody {
         client_id: random_client_id.clone(),
         push_type: "noop".to_string(),
@@ -55,7 +55,7 @@ async fn test_registration(ctx: &mut SingleTenantServerContext) {
 #[tokio::test]
 async fn test_deregistration(ctx: &mut SingleTenantServerContext) {
     let charset = "1234567890";
-    let random_client_id = ClientId(Arc::from(generate(12, charset)));
+    let random_client_id = ClientId::new(Arc::from(generate(12, charset)));
     let payload = RegisterBody {
         client_id: random_client_id.clone(),
         push_type: "noop".to_string(),
@@ -84,6 +84,8 @@ async fn test_deregistration(ctx: &mut SingleTenantServerContext) {
         .send()
         .await
         .expect("Call failed");
+
+    dbg!(&delete_response);
 
     assert!(
         delete_response.status().is_success(),

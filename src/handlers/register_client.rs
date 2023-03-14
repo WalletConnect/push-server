@@ -1,6 +1,5 @@
 use {
     crate::{
-        authentication::Jwt,
         error::{
             Error::{EmptyField, InvalidAuthentication, ProviderNotAvailable},
             Result,
@@ -15,10 +14,9 @@ use {
         extract::{Json, Path, State as StateExtractor},
         http::HeaderMap,
     },
-    hyper::header::AUTHORIZATION,
     relay_rpc::domain::ClientId,
     serde::{Deserialize, Serialize},
-    std::{collections::HashSet, sync::Arc},
+    std::sync::Arc,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -32,12 +30,12 @@ pub struct RegisterBody {
 pub async fn handler(
     Path(tenant_id): Path<String>,
     StateExtractor(state): StateExtractor<Arc<AppState>>,
-    Json(body): Json<RegisterBody>,
     headers: HeaderMap,
+    Json(body): Json<RegisterBody>,
 ) -> Result<Response> {
     if !authenticate_client(headers, &state.config.public_url, |client_id| {
         if let Some(client_id) = client_id {
-            &client_id == &body.client_id
+            client_id == body.client_id
         } else {
             false
         }
@@ -56,13 +54,15 @@ pub async fn handler(
         return Err(EmptyField("token".to_string()));
     }
 
-    let client_id = body
-        .client_id
-        .trim_start_matches(DECENTRALIZED_IDENTIFIER_PREFIX);
+    let mut client_id = body.client_id.to_string();
+
+    client_id = client_id
+        .trim_start_matches(DECENTRALIZED_IDENTIFIER_PREFIX)
+        .to_owned();
 
     state
         .client_store
-        .create_client(&tenant_id, client_id, Client {
+        .create_client(&tenant_id, &client_id, Client {
             push_type,
             token: body.token,
         })
