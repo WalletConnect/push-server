@@ -1,7 +1,6 @@
 use {
     crate::context::SingleTenantServerContext,
-    echo_server::handlers::register_client::RegisterBody,
-    random_string::generate,
+    echo_server::{authentication::DecodedClientId, handlers::register_client::RegisterBody},
     relay_rpc::{
         auth::{
             ed25519_dalek::Keypair,
@@ -9,33 +8,28 @@ use {
         },
         domain::ClientId,
     },
-    std::sync::Arc,
     test_context::test_context,
 };
 
 #[test_context(SingleTenantServerContext)]
 #[tokio::test]
 async fn test_registration(ctx: &mut SingleTenantServerContext) {
-    let charset = "1234567890";
-    let random_client_id = ClientId::new(Arc::from(generate(12, charset)));
+    let mut rng = StdRng::from_entropy();
+    let keypair = Keypair::generate(&mut rng);
+
+    let random_client_id = DecodedClientId(*keypair.public_key().as_bytes());
+    let client_id = ClientId::from(random_client_id);
     let payload = RegisterBody {
-        client_id: random_client_id.clone(),
+        client_id: client_id.clone(),
         push_type: "noop".to_string(),
         token: "test".to_string(),
     };
 
-    let seed: [u8; 32] = "THIS_IS_TEST_VALUE_SHOULD_NOT_BE_USED_IN_PROD"
-        .to_string()
-        .as_bytes()[..32]
-        .try_into()
-        .unwrap();
-    let mut seeded = StdRng::from_seed(seed);
-    let keypair = Keypair::generate(&mut seeded);
-
-    dbg!(ctx.server.public_addr.to_string());
-
-    let jwt = relay_rpc::auth::AuthToken::new(random_client_id.value().clone())
-        .aud(format!("127.0.0.1:{}", ctx.server.public_addr.port()))
+    let jwt = relay_rpc::auth::AuthToken::new(client_id.value().clone())
+        .aud(format!(
+            "http://127.0.0.1:{}",
+            ctx.server.public_addr.port()
+        ))
         .as_jwt(&keypair)
         .unwrap()
         .to_string();
@@ -44,12 +38,11 @@ async fn test_registration(ctx: &mut SingleTenantServerContext) {
     let client = reqwest::Client::new();
     let response = client
         .post(format!("http://{}/clients", ctx.server.public_addr))
-        .header("Authorization", jwt)
+        .header("Authorization", jwt.clone())
         .json(&payload)
         .send()
-        .await;
-    dbg!(&response);
-    let response = response.expect("Call failed");
+        .await
+        .expect("Call failed");
 
     assert!(
         response.status().is_success(),
@@ -58,12 +51,13 @@ async fn test_registration(ctx: &mut SingleTenantServerContext) {
 
     // Update token
     let payload = RegisterBody {
-        client_id: random_client_id,
+        client_id,
         push_type: "noop".to_string(),
         token: "new_token".to_string(),
     };
     let response = client
         .post(format!("http://{}/clients", ctx.server.public_addr))
+        .header("Authorization", jwt)
         .json(&payload)
         .send()
         .await
@@ -78,10 +72,23 @@ async fn test_registration(ctx: &mut SingleTenantServerContext) {
 #[test_context(SingleTenantServerContext)]
 #[tokio::test]
 async fn test_deregistration(ctx: &mut SingleTenantServerContext) {
-    let charset = "1234567890";
-    let random_client_id = ClientId::new(Arc::from(generate(12, charset)));
+    let mut rng = StdRng::from_entropy();
+    let keypair = Keypair::generate(&mut rng);
+
+    let random_client_id = DecodedClientId(*keypair.public_key().as_bytes());
+    let client_id = ClientId::from(random_client_id);
+
+    let jwt = relay_rpc::auth::AuthToken::new(client_id.value().clone())
+        .aud(format!(
+            "http://127.0.0.1:{}",
+            ctx.server.public_addr.port()
+        ))
+        .as_jwt(&keypair)
+        .unwrap()
+        .to_string();
+
     let payload = RegisterBody {
-        client_id: random_client_id.clone(),
+        client_id: client_id.clone(),
         push_type: "noop".to_string(),
         token: "test".to_string(),
     };
@@ -90,6 +97,7 @@ async fn test_deregistration(ctx: &mut SingleTenantServerContext) {
     let register_response = client
         .post(format!("http://{}/clients", ctx.server.public_addr))
         .json(&payload)
+        .header("Authorization", jwt.clone())
         .send()
         .await
         .expect("Call failed");
@@ -103,8 +111,9 @@ async fn test_deregistration(ctx: &mut SingleTenantServerContext) {
     let delete_response = client
         .delete(format!(
             "http://{}/clients/{}",
-            ctx.server.public_addr, random_client_id
+            ctx.server.public_addr, client_id
         ))
+        .header("Authorization", jwt)
         .send()
         .await
         .expect("Call failed")

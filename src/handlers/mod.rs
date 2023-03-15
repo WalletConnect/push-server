@@ -28,9 +28,7 @@ where
     F: FnOnce(Option<ClientId>) -> bool,
 {
     return if let Some(auth_header) = headers.get(axum::http::header::AUTHORIZATION) {
-        // TODO: fix unwrap
-        let header_str = auth_header.to_str().unwrap();
-        // let header_str = auth_header.to_str()?;
+        let header_str = auth_header.to_str()?;
         let client_id = Jwt(header_str.to_string()).decode(&HashSet::from([aud.to_string()]))?;
         Ok(check(Some(client_id)))
     } else {

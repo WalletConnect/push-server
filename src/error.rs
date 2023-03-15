@@ -55,6 +55,9 @@ pub enum Error {
     #[error(transparent)]
     Store(#[from] StoreError),
 
+    #[error(transparent)]
+    ToStr(#[from] axum::http::header::ToStrError),
+
     #[error("database migration failed: {0}")]
     DatabaseMigration(#[from] sqlx::migrate::MigrateError),
 

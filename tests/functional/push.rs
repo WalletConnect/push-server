@@ -1,12 +1,19 @@
 use {
     crate::context::SingleTenantServerContext,
-    echo_server::handlers::{
-        push_message::{MessagePayload, PushMessageBody},
-        register_client::RegisterBody,
+    echo_server::{
+        authentication::DecodedClientId,
+        handlers::{
+            push_message::{MessagePayload, PushMessageBody},
+            register_client::RegisterBody,
+        },
     },
-    random_string::generate,
-    relay_rpc::domain::ClientId,
-    std::sync::Arc,
+    relay_rpc::{
+        auth::{
+            ed25519_dalek::Keypair,
+            rand::{rngs::StdRng, SeedableRng},
+        },
+        domain::ClientId,
+    },
     test_context::test_context,
     uuid::Uuid,
 };
@@ -14,10 +21,23 @@ use {
 #[test_context(SingleTenantServerContext)]
 #[tokio::test]
 async fn test_push(ctx: &mut SingleTenantServerContext) {
-    let charset = "1234567890";
-    let random_client_id = ClientId::new(Arc::from(generate(12, charset)));
+    let mut rng = StdRng::from_entropy();
+    let keypair = Keypair::generate(&mut rng);
+
+    let random_client_id = DecodedClientId(*keypair.public_key().as_bytes());
+    let client_id = ClientId::from(random_client_id);
+
+    let jwt = relay_rpc::auth::AuthToken::new(client_id.value().clone())
+        .aud(format!(
+            "http://127.0.0.1:{}",
+            ctx.server.public_addr.port()
+        ))
+        .as_jwt(&keypair)
+        .unwrap()
+        .to_string();
+
     let payload = RegisterBody {
-        client_id: random_client_id.clone(),
+        client_id: client_id.clone(),
         push_type: "noop".to_string(),
         token: "test".to_string(),
     };
@@ -27,6 +47,7 @@ async fn test_push(ctx: &mut SingleTenantServerContext) {
     let response = client
         .post(format!("http://{}/clients", ctx.server.public_addr))
         .json(&payload)
+        .header("Authorization", jwt.clone())
         .send()
         .await
         .expect("Call failed");
@@ -56,7 +77,7 @@ async fn test_push(ctx: &mut SingleTenantServerContext) {
         .post(format!(
             "http://{}/clients/{}",
             ctx.server.public_addr,
-            random_client_id.clone()
+            client_id.clone()
         ))
         .json(&payload)
         .send()
@@ -75,7 +96,7 @@ async fn test_push(ctx: &mut SingleTenantServerContext) {
         .post(format!(
             "http://{}/clients/{}",
             ctx.server.public_addr,
-            random_client_id.clone()
+            client_id.clone()
         ))
         .json(&payload)
         .send()
