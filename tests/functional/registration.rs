@@ -32,7 +32,10 @@ async fn test_registration(ctx: &mut SingleTenantServerContext) {
     let mut seeded = StdRng::from_seed(seed);
     let keypair = Keypair::generate(&mut seeded);
 
+    dbg!(ctx.server.public_addr.to_string());
+
     let jwt = relay_rpc::auth::AuthToken::new(random_client_id.value().clone())
+        .aud(format!("127.0.0.1:{}", ctx.server.public_addr.port()))
         .as_jwt(&keypair)
         .unwrap()
         .to_string();
@@ -44,8 +47,9 @@ async fn test_registration(ctx: &mut SingleTenantServerContext) {
         .header("Authorization", jwt)
         .json(&payload)
         .send()
-        .await
-        .expect("Call failed");
+        .await;
+    dbg!(&response);
+    let response = response.expect("Call failed");
 
     assert!(
         response.status().is_success(),
