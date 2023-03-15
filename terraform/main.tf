@@ -142,6 +142,8 @@ module "ecs" {
   aws_otel_collector_ecr_repository_url = data.aws_ecr_repository.aws_otel_collector.repository_url
 }
 
+
+
 module "monitoring" {
   source = "./monitoring"
 

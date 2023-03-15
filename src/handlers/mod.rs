@@ -1,7 +1,10 @@
 use {
-    axum::{response::IntoResponse, Json},
+    crate::{authentication::Jwt, error::Result},
+    axum::{http::HeaderMap, response::IntoResponse, Json},
     hyper::StatusCode,
+    relay_rpc::domain::ClientId,
     serde_json::{json, Value},
+    std::{collections::HashSet, string::ToString},
 };
 
 // Push
@@ -19,6 +22,22 @@ pub mod update_apns;
 pub mod update_fcm;
 
 pub const DECENTRALIZED_IDENTIFIER_PREFIX: &str = "did:key:";
+
+pub fn authenticate_client<F>(headers: HeaderMap, aud: &str, check: F) -> Result<bool>
+where
+    F: FnOnce(Option<ClientId>) -> bool,
+{
+    return if let Some(auth_header) = headers.get(axum::http::header::AUTHORIZATION) {
+        let header_str = auth_header.to_str()?;
+        let client_id = Jwt(header_str.to_string()).decode(&HashSet::from([aud.to_string()]))?;
+        Ok(check(Some(client_id)))
+    } else {
+        // Note: Authentication is not required right now to ensure that this is a
+        // non-breaking change, eventually it will be required and this should default
+        // to returning `Err(MissingAuthentication)` or `Err(InvalidAuthentication)`
+        Ok(true)
+    };
+}
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "lowercase")]

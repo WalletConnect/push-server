@@ -9,12 +9,14 @@ use {
         extract::{Path, State as StateExtractor},
         Json,
     },
+    hyper::HeaderMap,
     std::sync::Arc,
 };
 
 pub async fn delete_handler(
     Path(id): Path<String>,
     state: StateExtractor<Arc<AppState>>,
+    headers: HeaderMap,
 ) -> Result<Response> {
     if state.is_multitenant() {
         return Err(MissingTenantId);
@@ -23,6 +25,7 @@ pub async fn delete_handler(
     crate::handlers::delete_client::handler(
         Path((state.config.default_tenant_id.clone(), id)),
         state,
+        headers,
     )
     .await
 }
@@ -46,6 +49,7 @@ pub async fn push_handler(
 
 pub async fn register_handler(
     state: StateExtractor<Arc<AppState>>,
+    headers: HeaderMap,
     body: Json<RegisterBody>,
 ) -> Result<Response> {
     if state.is_multitenant() {
@@ -55,6 +59,7 @@ pub async fn register_handler(
     crate::handlers::register_client::handler(
         Path(state.config.default_tenant_id.clone()),
         state,
+        headers,
         body,
     )
     .await

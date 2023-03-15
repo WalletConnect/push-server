@@ -21,6 +21,7 @@ use {
     tracing::{info, log::LevelFilter, warn, Level},
 };
 
+pub mod authentication;
 pub mod blob;
 pub mod config;
 pub mod error;
