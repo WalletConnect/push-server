@@ -1,5 +1,4 @@
 use {
-    super::register_client::RegisterBody,
     crate::{
         decrement_counter,
         error::{Error::InvalidAuthentication, Result},
@@ -10,8 +9,8 @@ use {
     axum::{
         extract::{Path, State as StateExtractor},
         http::HeaderMap,
-        Json,
     },
+    relay_rpc::domain::ClientId,
     std::sync::Arc,
 };
 
@@ -19,21 +18,21 @@ pub async fn handler(
     Path((tenant_id, id)): Path<(String, String)>,
     StateExtractor(state): StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
-    Json(body): Json<RegisterBody>,
 ) -> Result<Response> {
+    let id = id
+        .trim_start_matches(DECENTRALIZED_IDENTIFIER_PREFIX)
+        .to_string();
+
+    let delete_id = ClientId::new(id.clone().into());
     if !authenticate_client(headers, &state.config.public_url, |client_id| {
         if let Some(client_id) = client_id {
-            client_id == body.client_id
+            client_id == delete_id
         } else {
             false
         }
     })? {
         return Err(InvalidAuthentication);
     }
-
-    let id = id
-        .trim_start_matches(DECENTRALIZED_IDENTIFIER_PREFIX)
-        .to_string();
 
     state.client_store.delete_client(&tenant_id, &id).await?;
     info!("client ({}) deleted for tenant ({})", id, tenant_id);

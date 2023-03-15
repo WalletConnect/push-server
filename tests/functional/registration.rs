@@ -85,10 +85,9 @@ async fn test_deregistration(ctx: &mut SingleTenantServerContext) {
         .await
         .expect("Call failed");
 
-    dbg!(&delete_response);
+    let status = delete_response.status().clone();
 
-    assert!(
-        delete_response.status().is_success(),
-        "Failed to unregister client"
-    );
+    dbg!(&delete_response.text().await.unwrap());
+
+    assert!(status.is_success(), "Failed to unregister client");
 }

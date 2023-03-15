@@ -17,7 +17,6 @@ pub async fn delete_handler(
     Path(id): Path<String>,
     state: StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
-    body: Json<RegisterBody>,
 ) -> Result<Response> {
     if state.is_multitenant() {
         return Err(MissingTenantId);
@@ -27,7 +26,6 @@ pub async fn delete_handler(
         Path((state.config.default_tenant_id.clone(), id)),
         state,
         headers,
-        body,
     )
     .await
 }
