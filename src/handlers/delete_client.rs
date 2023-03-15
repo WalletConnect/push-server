@@ -24,6 +24,7 @@ pub async fn handler(
         .to_string();
 
     let client_to_be_deleted = ClientId::new(id.clone().into());
+    dbg!(&state.config.public_url);
     if !authenticate_client(headers, &state.config.public_url, |client_id| {
         if let Some(client_id) = client_id {
             client_id == client_to_be_deleted
