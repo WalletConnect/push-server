@@ -2,7 +2,13 @@ use {
     crate::context::SingleTenantServerContext,
     echo_server::handlers::register_client::RegisterBody,
     random_string::generate,
-    relay_rpc::domain::ClientId,
+    relay_rpc::{
+        auth::{
+            ed25519_dalek::Keypair,
+            rand::{rngs::StdRng, SeedableRng},
+        },
+        domain::ClientId,
+    },
     std::sync::Arc,
     test_context::test_context,
 };
@@ -18,10 +24,24 @@ async fn test_registration(ctx: &mut SingleTenantServerContext) {
         token: "test".to_string(),
     };
 
+    let seed: [u8; 32] = "THIS_IS_TEST_VALUE_SHOULD_NOT_BE_USED_IN_PROD"
+        .to_string()
+        .as_bytes()[..32]
+        .try_into()
+        .unwrap();
+    let mut seeded = StdRng::from_seed(seed);
+    let keypair = Keypair::generate(&mut seeded);
+
+    let jwt = relay_rpc::auth::AuthToken::new(random_client_id.value().clone())
+        .as_jwt(&keypair)
+        .unwrap()
+        .to_string();
+
     // Register client
     let client = reqwest::Client::new();
     let response = client
         .post(format!("http://{}/clients", ctx.server.public_addr))
+        .header("Authorization", jwt)
         .json(&payload)
         .send()
         .await
@@ -83,11 +103,8 @@ async fn test_deregistration(ctx: &mut SingleTenantServerContext) {
         ))
         .send()
         .await
-        .expect("Call failed");
+        .expect("Call failed")
+        .status();
 
-    let status = delete_response.status().clone();
-
-    dbg!(&delete_response.text().await.unwrap());
-
-    assert!(status.is_success(), "Failed to unregister client");
+    assert!(delete_response.is_success(), "Failed to unregister client");
 }
