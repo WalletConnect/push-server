@@ -23,10 +23,10 @@ pub async fn handler(
         .trim_start_matches(DECENTRALIZED_IDENTIFIER_PREFIX)
         .to_string();
 
-    let delete_id = ClientId::new(id.clone().into());
+    let client_to_be_deleted = ClientId::new(id.clone().into());
     if !authenticate_client(headers, &state.config.public_url, |client_id| {
         if let Some(client_id) = client_id {
-            client_id == delete_id
+            client_id == client_to_be_deleted
         } else {
             false
         }
