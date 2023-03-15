@@ -10,7 +10,7 @@ variable "azs" {
 
 variable "public_url" {
   type    = string
-  default = "https://echo.walletconnect.com"
+  default = "echo.walletconnect.com"
 }
 
 variable "grafana_endpoint" {
