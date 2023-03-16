@@ -1,10 +1,11 @@
 use {
-    crate::{authentication::Jwt, error::Result},
+    crate::error::Result,
     axum::{http::HeaderMap, response::IntoResponse, Json},
     hyper::StatusCode,
-    relay_rpc::domain::ClientId,
+    relay_rpc::{auth::Jwt, domain::ClientId},
     serde_json::{json, Value},
     std::{collections::HashSet, string::ToString},
+    tracing::info,
 };
 
 // Push
@@ -29,7 +30,12 @@ where
 {
     return if let Some(auth_header) = headers.get(axum::http::header::AUTHORIZATION) {
         let header_str = auth_header.to_str()?;
-        let client_id = Jwt(header_str.to_string()).decode(&HashSet::from([aud.to_string()]))?;
+        let client_id = Jwt(header_str.to_string())
+            .decode(&HashSet::from([aud.to_string()]))
+            .map_err(|e| {
+                info!("Invalid claims: {:?}", e);
+                e
+            })?;
         Ok(check(Some(client_id)))
     } else {
         // Note: Authentication is not required right now to ensure that this is a

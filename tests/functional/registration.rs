@@ -1,12 +1,12 @@
 use {
     crate::context::SingleTenantServerContext,
-    echo_server::{authentication::DecodedClientId, handlers::register_client::RegisterBody},
+    echo_server::handlers::register_client::RegisterBody,
     relay_rpc::{
         auth::{
             ed25519_dalek::Keypair,
             rand::{rngs::StdRng, SeedableRng},
         },
-        domain::ClientId,
+        domain::{ClientId, DecodedClientId},
     },
     test_context::test_context,
 };
