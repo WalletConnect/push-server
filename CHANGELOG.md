@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.20.0 - 2023-03-16
+#### Features
+- `client_id` auth (#110) - (e085617) - Harry Bairstow
+- - -
+
 ## v0.19.4 - 2023-03-01
 #### Bug Fixes
 - hotfix hyper-apln  (#112) - (9e5b40a) - Rakowskiii
