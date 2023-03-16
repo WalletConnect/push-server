@@ -7,6 +7,13 @@ authors = [
 ]
 build = "build.rs"
 
+#[patch.crates-io]
+#serde = { git = 'https://github.com/serde-rs/serde.git' }
+#serde2 = { git = 'https://github.com/example/serde.git', package = 'serde', branch = 'v2' }
+#zeroize13 = { git = 'https://github.com/serde-rs/serde.git' }
+#zeroize14 = { git = 'https://github.com/serde-rs/serde.git' }
+
+
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 axum = { version = "0.6", features = ["json", "multipart"] }
@@ -53,6 +60,13 @@ relay_rpc = { git = "https://github.com/WalletConnect/WalletConnectRust.git", ta
 jsonwebtoken = "8.1"
 data-encoding = "2.3"
 
+# Analytics
+aws-config = "0.54"
+aws-sdk-s3 = "0.24"
+parquet = { git = "https://github.com/WalletConnect/arrow-rs.git", rev = "431abf5", default-features = false, features = ["flate2"] }
+parquet_derive = { git = "https://github.com/WalletConnect/arrow-rs.git", rev = "431abf5" }
+gorgon = { git = "https://github.com/WalletConnect/gorgon.git", tag = "v0.2.1" }
+
 # Misc
 reqwest = "0.11"
 async-trait = "0.1"
@@ -63,7 +77,7 @@ chrono = "0.4"
 uuid = { version = "1.2", features = ["v4"] }
 
 [dev-dependencies]
-serial_test = "0.9"
+serial_test = "1.0.0"
 test-context = "0.1"
 futures-util = "0.3"
 random-string = "1.0"

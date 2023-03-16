@@ -55,6 +55,12 @@ pub struct Config {
 
     // FCM
     pub fcm_api_key: Option<String>,
+
+    // Analytics
+    pub analytics_s3_endpoint: Option<String>,
+    pub analytics_export_bucket: Option<String>,
+    pub analytics_geoip_db_bucket: Option<String>,
+    pub analytics_geoip_db_key: Option<String>,
 }
 
 impl Config {

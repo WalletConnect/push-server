@@ -1,5 +1,6 @@
 use {
     crate::{
+        analytics::PushAnalytics,
         config::Config,
         metrics::Metrics,
         relay::RelayClient,
@@ -29,6 +30,7 @@ pub struct AppState {
     pub config: Config,
     pub build_info: BuildInfo,
     pub metrics: Option<Metrics>,
+    pub analytics: Option<PushAnalytics>,
     pub client_store: ClientStoreArc,
     pub notification_store: NotificationStoreArc,
     pub tenant_store: TenantStoreArc,
@@ -53,6 +55,7 @@ pub fn new_state(
         config,
         build_info: build_info.clone(),
         metrics: None,
+        analytics: None,
         client_store,
         notification_store,
         tenant_store,

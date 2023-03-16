@@ -21,6 +21,7 @@ use {
     tracing::{info, log::LevelFilter, warn, Level},
 };
 
+pub mod analytics;
 pub mod authentication;
 pub mod blob;
 pub mod config;
@@ -81,6 +82,9 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         Arc::new(store.clone()),
         tenant_store,
     )?;
+
+    let analytics = analytics::initialize(&config, "TODO: Echo IP");
+    state.analytics = Some(analytics);
 
     let mut supported_providers_string = "multi-tenant".to_string();
     let is_multitenant = state.config.tenant_database_url.is_some();
