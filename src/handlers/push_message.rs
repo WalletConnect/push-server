@@ -105,10 +105,7 @@ pub async fn handler(
         &notification.id
     );
 
-    let topic: Option<Arc<str>> = match &body.payload.topic {
-        Some(t) => Some(t.clone().into()),
-        None => None,
-    };
+    let topic: Option<Arc<str>> = body.payload.topic.as_ref().map(|t| t.clone().into());
 
     provider
         .send_notification(client.token, body.payload)

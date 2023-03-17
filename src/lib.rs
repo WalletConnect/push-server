@@ -83,7 +83,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         tenant_store,
     )?;
 
-    if let Some(ip) = state.public_ip.clone() {
+    if let Some(ip) = state.public_ip {
         if state.config.analytics_enabled {
             let analytics = analytics::initialize(&state.config, ip).await?;
             state.analytics = Some(analytics);

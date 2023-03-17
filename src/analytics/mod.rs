@@ -50,13 +50,14 @@ impl PushAnalytics {
             let exporter = AwsExporter::new(AwsExporterOpts {
                 export_name: "push_messages",
                 file_extension: "parquet",
-                bucket_name: bucket_name.clone(),
-                s3_client: s3_client.clone(),
-                node_ip: node_ip.clone(),
+                // Note: Clone these values if we add more exporters
+                bucket_name,
+                s3_client,
+                node_ip,
             });
 
             Analytics::new(
-                gorgon::batcher::create_parquet_collector::<MessageInfo, _>(opts.clone(), exporter)
+                gorgon::batcher::create_parquet_collector::<MessageInfo, _>(opts, exporter)
                     .map_err(|e| Error::BatchCollector(e.to_string()))?,
             )
         };
