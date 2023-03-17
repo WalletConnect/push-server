@@ -130,7 +130,7 @@ pub async fn handler(
     // Analytics
     tokio::spawn(async move {
         if let Some(analytics) = &state.analytics {
-            let (country, continent, _) =
+            let (country, continent, region) =
                 analytics
                     .geoip
                     .lookup_geo_data(addr.ip())
@@ -140,7 +140,7 @@ pub async fn handler(
                     });
 
             let msg = MessageInfo {
-                region: None,
+                region: region.map(|r| Arc::from(r.join(", "))),
                 country,
                 continent,
                 project_id: tenant_id.into(),
