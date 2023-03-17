@@ -49,7 +49,7 @@ pub async fn handler(
 ) -> Result<Response> {
     increment_counter!(state.metrics, received_notifications);
 
-    let flags = body.payload.flags.clone();
+    let flags = body.payload.flags;
     let encrypted = body.payload.is_encrypted();
 
     let id = id
