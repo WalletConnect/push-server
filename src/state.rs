@@ -3,11 +3,12 @@ use {
         analytics::PushAnalytics,
         config::Config,
         metrics::Metrics,
+        networking,
         relay::RelayClient,
         stores::{client::ClientStore, notification::NotificationStore, tenant::TenantStore},
     },
     build_info::BuildInfo,
-    std::sync::Arc,
+    std::{net::IpAddr, sync::Arc},
 };
 
 pub type ClientStoreArc = Arc<dyn ClientStore + Send + Sync + 'static>;
@@ -35,6 +36,7 @@ pub struct AppState {
     pub notification_store: NotificationStoreArc,
     pub tenant_store: TenantStoreArc,
     pub relay_client: RelayClient,
+    pub public_ip: Option<IpAddr>,
     is_multitenant: bool,
 }
 
@@ -51,6 +53,12 @@ pub fn new_state(
     let is_multitenant = config.tenant_database_url.is_some();
     let relay_url = config.relay_url.to_string();
 
+    let public_ip = match networking::find_public_ip_addr() {
+        Ok(ip) => Some(ip),
+        // Note: Should we pass this error back up?
+        Err(_e) => None,
+    };
+
     Ok(AppState {
         config,
         build_info: build_info.clone(),
@@ -60,6 +68,7 @@ pub fn new_state(
         notification_store,
         tenant_store,
         relay_client: RelayClient::new(relay_url),
+        public_ip,
         is_multitenant,
     })
 }

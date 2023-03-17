@@ -84,6 +84,7 @@ resource "aws_ecs_task_definition" "app_task_definition" {
         { name = "OTEL_TRACES_SAMPLER", value = "traceidratio" },
         { name = "OTEL_TRACES_SAMPLER_ARG", value = tostring(var.telemetry_sample_ratio) },
 
+        { name = "ANALYTICS_ENABLED", value = "true" },
         { name = "ANALYTICS_EXPORT_BUCKET", value = var.analytics_datalake_bucket_name },
         { name = "ANALYTICS_GEOIP_DB_BUCKET", value = var.analytics_geoip_db_bucket_name },
         { name = "ANALYTICS_GEOIP_DB_KEY", value = var.analytics_geoip_db_key },

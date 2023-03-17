@@ -1,7 +1,12 @@
+pub use message_info::*;
 use {
-    crate::{config::Config, error::Result, log::prelude::*},
-    aws_sdk_s3::{Client as S3Client, Region},
+    crate::{
+        config::Config,
+        error::{Error, Result},
+        log::prelude::*,
+    },
     aws_config::meta::region::RegionProviderChain,
+    aws_sdk_s3::{Client as S3Client, Region},
     gorgon::{
         batcher::{AwsExporter, AwsExporterOpts, BatchCollectorOpts},
         geoip::{AnalyticsGeoData, GeoIpReader},
@@ -10,8 +15,6 @@ use {
     },
     std::{net::IpAddr, sync::Arc},
 };
-
-pub use {message_info::*};
 
 mod message_info;
 
@@ -52,10 +55,10 @@ impl PushAnalytics {
                 node_ip: node_ip.clone(),
             });
 
-            Analytics::new(gorgon::batcher::create_parquet_collector::<MessageInfo, _>(
-                opts.clone(),
-                exporter,
-            )?)
+            Analytics::new(
+                gorgon::batcher::create_parquet_collector::<MessageInfo, _>(opts.clone(), exporter)
+                    .map_err(|e| Error::BatchCollector(e.to_string()))?,
+            )
         };
 
         Ok(Self { messages, geoip })
@@ -94,7 +97,9 @@ pub async fn initialize(config: &Config, echo_ip: IpAddr) -> Result<PushAnalytic
         let geoip = if let (Some(bucket), Some(key)) = geoip_params {
             info!(%bucket, %key, "initializing geoip database from aws s3");
 
-            GeoIpReader::from_aws_s3(&s3_client, bucket, key).await?
+            GeoIpReader::from_aws_s3(&s3_client, bucket, key)
+                .await
+                .map_err(|e| Error::GeoIpReader(e.to_string()))?
         } else {
             info!("analytics geoip lookup is disabled");
 

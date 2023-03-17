@@ -135,6 +135,12 @@ pub enum Error {
 
     #[error("the provided authentication does not authenticate the request")]
     InvalidAuthentication,
+
+    #[error("GeoIpReader Error: {0}")]
+    GeoIpReader(String),
+
+    #[error("BatchCollector Error: {0}")]
+    BatchCollector(String),
 }
 
 impl IntoResponse for Error {

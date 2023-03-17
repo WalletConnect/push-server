@@ -1,5 +1,6 @@
 use {
     crate::{
+        analytics::MessageInfo,
         blob::ENCRYPTED_FLAG,
         error::{
             Error::{ClientNotFound, Store},
@@ -14,11 +15,11 @@ use {
         stores::StoreError,
     },
     axum::{
-        extract::{Json, Path, State as StateExtractor},
+        extract::{ConnectInfo, Json, Path, State as StateExtractor},
         http::StatusCode,
     },
     serde::{Deserialize, Serialize},
-    std::sync::Arc,
+    std::{net::SocketAddr, sync::Arc},
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
@@ -41,6 +42,7 @@ pub struct PushMessageBody {
 }
 
 pub async fn handler(
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Path((tenant_id, id)): Path<(String, String)>,
     StateExtractor(state): StateExtractor<Arc<AppState>>,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
@@ -103,6 +105,11 @@ pub async fn handler(
         &notification.id
     );
 
+    let topic: Option<Arc<str>> = match &body.payload.topic {
+        Some(t) => Some(t.clone().into()),
+        None => None,
+    };
+
     provider
         .send_notification(client.token, body.payload)
         .await?;
@@ -118,6 +125,31 @@ pub async fn handler(
         Provider::Fcm(_) => increment_counter!(state.metrics, sent_fcm_notifications),
         Provider::Apns(_) => increment_counter!(state.metrics, sent_apns_notifications),
         Provider::Noop(_) => {}
+    }
+
+    // Analytics
+    if let Some(analytics) = &state.analytics {
+        let (country, continent, _) =
+            analytics
+                .geoip
+                .lookup_geo_data(addr.ip())
+                .map_or((None, None, None), |geo| {
+                    // TODO (Harry): Figure out region mapping
+                    (geo.country, geo.continent, geo.region)
+                });
+
+        let msg = MessageInfo {
+            region: None,
+            country,
+            continent,
+            project_id: tenant_id.into(),
+            client_id: id.into(),
+            topic,
+            push_provider: client.push_type.as_str().into(),
+            encrypted: false,
+        };
+
+        analytics.messages.collect(msg);
     }
 
     Ok(Response::new_success(StatusCode::ACCEPTED))

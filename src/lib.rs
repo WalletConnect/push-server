@@ -31,6 +31,7 @@ pub mod log;
 pub mod macros;
 pub mod metrics;
 pub mod middleware;
+pub mod networking;
 pub mod providers;
 pub mod relay;
 pub mod state;
@@ -83,8 +84,12 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         tenant_store,
     )?;
 
-    let analytics = analytics::initialize(&config, "TODO: Echo IP");
-    state.analytics = Some(analytics);
+    if let Some(ip) = state.public_ip.clone() {
+        if state.config.analytics_enabled {
+            let analytics = analytics::initialize(&state.config, ip).await?;
+            state.analytics = Some(analytics);
+        }
+    }
 
     let mut supported_providers_string = "multi-tenant".to_string();
     let is_multitenant = state.config.tenant_database_url.is_some();
@@ -233,7 +238,7 @@ providers: [{}]
     let private_addr = SocketAddr::from(([0, 0, 0, 0], private_port));
 
     select! {
-        _ = axum::Server::bind(&addr).serve(app.into_make_service()) => info!("Server terminating"),
+        _ = axum::Server::bind(&addr).serve(app.into_make_service_with_connect_info::<SocketAddr>()) => info!("Server terminating"),
         _ = axum::Server::bind(&private_addr).serve(private_app.into_make_service()) => info!("Internal Server terminating"),
         _ = shutdown.recv() => info!("Shutdown signal received, killing servers"),
     }

@@ -57,6 +57,8 @@ pub struct Config {
     pub fcm_api_key: Option<String>,
 
     // Analytics
+    #[serde(default = "default_analytics_enabled")]
+    pub analytics_enabled: bool,
     pub analytics_s3_endpoint: Option<String>,
     pub analytics_export_bucket: Option<String>,
     pub analytics_geoip_db_bucket: Option<String>,
@@ -191,6 +193,10 @@ fn default_is_test() -> bool {
 
 fn default_cors_allowed_origins() -> Vec<String> {
     vec!["*".to_string()]
+}
+
+fn default_analytics_enabled() -> bool {
+    false
 }
 
 pub fn get_config() -> error::Result<Config> {
