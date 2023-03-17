@@ -6,11 +6,11 @@ use {
         state::{AppState, State},
     },
     axum::{
-        extract::{Path, State as StateExtractor},
+        extract::{ConnectInfo, Path, State as StateExtractor},
         Json,
     },
     hyper::HeaderMap,
-    std::sync::Arc,
+    std::{net::SocketAddr, sync::Arc},
 };
 
 pub async fn delete_handler(
@@ -31,6 +31,7 @@ pub async fn delete_handler(
 }
 
 pub async fn push_handler(
+    addr: ConnectInfo<SocketAddr>,
     Path(id): Path<String>,
     state: StateExtractor<Arc<AppState>>,
     valid_sig: RequireValidSignature<Json<PushMessageBody>>,
@@ -40,6 +41,7 @@ pub async fn push_handler(
     }
 
     crate::handlers::push_message::handler(
+        addr,
         Path((state.config.default_tenant_id.clone(), id)),
         state,
         valid_sig,
@@ -48,6 +50,7 @@ pub async fn push_handler(
 }
 
 pub async fn register_handler(
+    addr: ConnectInfo<SocketAddr>,
     state: StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
     body: Json<RegisterBody>,
@@ -57,6 +60,7 @@ pub async fn register_handler(
     }
 
     crate::handlers::register_client::handler(
+        addr,
         Path(state.config.default_tenant_id.clone()),
         state,
         headers,

@@ -1,5 +1,6 @@
 use {
     crate::{
+        analytics::client_info::ClientInfo,
         error::{
             Error::{EmptyField, InvalidAuthentication, ProviderNotAvailable},
             Result,
@@ -11,12 +12,12 @@ use {
         stores::client::Client,
     },
     axum::{
-        extract::{Json, Path, State as StateExtractor},
+        extract::{ConnectInfo, Json, Path, State as StateExtractor},
         http::HeaderMap,
     },
     relay_rpc::domain::ClientId,
     serde::{Deserialize, Serialize},
-    std::sync::Arc,
+    std::{net::SocketAddr, sync::Arc},
 };
 
 #[derive(Serialize, Deserialize)]
@@ -28,6 +29,7 @@ pub struct RegisterBody {
 }
 
 pub async fn handler(
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Path(tenant_id): Path<String>,
     StateExtractor(state): StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
@@ -78,6 +80,31 @@ pub async fn handler(
     );
 
     increment_counter!(state.metrics, registered_clients);
+
+    // Analytics
+    tokio::spawn(async move {
+        if let Some(analytics) = &state.analytics {
+            let (country, continent, region) =
+                analytics
+                    .geoip
+                    .lookup_geo_data(addr.ip())
+                    .map_or((None, None, None), |geo| {
+                        (geo.country, geo.continent, geo.region)
+                    });
+
+            let msg = ClientInfo {
+                region: region.map(|r| Arc::from(r.join(", "))),
+                country,
+                continent,
+                project_id: tenant_id.into(),
+                client_id: client_id.into(),
+                push_provider: body.push_type.as_str().into(),
+                registered_at: gorgon::time::now(),
+            };
+
+            analytics.client(msg);
+        }
+    });
 
     Ok(Response::default())
 }
