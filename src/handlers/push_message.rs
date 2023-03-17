@@ -135,7 +135,6 @@ pub async fn handler(
                     .geoip
                     .lookup_geo_data(addr.ip())
                     .map_or((None, None, None), |geo| {
-                        // TODO (Harry): Figure out region mapping
                         (geo.country, geo.continent, geo.region)
                     });
 
