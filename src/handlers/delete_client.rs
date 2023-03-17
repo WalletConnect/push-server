@@ -27,6 +27,10 @@ pub async fn handler(
     dbg!(&state.config.public_url);
     if !authenticate_client(headers, &state.config.public_url, |client_id| {
         if let Some(client_id) = client_id {
+            info!(
+                "client_id: {:?}, requested to delete: {:?}",
+                client_id, client_to_be_deleted
+            );
             client_id == client_to_be_deleted
         } else {
             false

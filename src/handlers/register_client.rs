@@ -35,6 +35,10 @@ pub async fn handler(
 ) -> Result<Response> {
     if !authenticate_client(headers, &state.config.public_url, |client_id| {
         if let Some(client_id) = client_id {
+            info!(
+                "client_id: {:?}, requested to register: {:?}",
+                client_id, body.client_id
+            );
             client_id == body.client_id
         } else {
             false

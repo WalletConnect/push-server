@@ -1,6 +1,6 @@
 [package]
 name = "echo-server"
-version = "0.19.4"
+version = "0.20.0"
 edition = "2021"
 authors = [
     "Harry Bairstow <harry@walletconnect.com>"
@@ -49,7 +49,7 @@ fcm = "0.9"
 ed25519-dalek = "1.0"
 
 # JWT Authentication
-relay_rpc = { git = "https://github.com/WalletConnect/WalletConnectRust.git", tag = "v0.3.0" }
+relay_rpc = { git = "https://github.com/WalletConnect/WalletConnectRust.git", ref = "ced99e7"}
 jsonwebtoken = "8.1"
 data-encoding = "2.3"
 
