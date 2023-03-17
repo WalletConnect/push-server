@@ -244,7 +244,7 @@ dependencies = [
  "http",
  "hyper",
  "ring",
- "time 0.3.17",
+ "time 0.3.20",
  "tokio",
  "tower",
  "tracing",
@@ -414,7 +414,7 @@ dependencies = [
  "percent-encoding",
  "regex",
  "sha2 0.10.6",
- "time 0.3.17",
+ "time 0.3.20",
  "tracing",
 ]
 
@@ -570,7 +570,7 @@ dependencies = [
  "itoa",
  "num-integer",
  "ryu",
- "time 0.3.17",
+ "time 0.3.20",
 ]
 
 [[package]]
@@ -3018,7 +3018,7 @@ checksum = "456c603be3e8d448b072f410900c09faf164fbce2d480456f50eea6e25f9c848"
 [[package]]
 name = "relay_rpc"
 version = "0.1.0"
-source = "git+https://github.com/WalletConnect/WalletConnectRust.git#ced99e7431176f51650d72b1662298757c7f2dc7"
+source = "git+https://github.com/WalletConnect/WalletConnectRust.git?rev=ced99e7#ced99e7431176f51650d72b1662298757c7f2dc7"
 dependencies = [
  "bs58",
  "chrono",

@@ -22,7 +22,6 @@ use {
 };
 
 pub mod analytics;
-pub mod authentication;
 pub mod blob;
 pub mod config;
 pub mod error;
