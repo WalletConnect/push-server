@@ -1,6 +1,6 @@
 use {
     crate::{
-        analytics::MessageInfo,
+        analytics::message_info::MessageInfo,
         blob::ENCRYPTED_FLAG,
         error::{
             Error::{ClientNotFound, Store},
@@ -48,6 +48,9 @@ pub async fn handler(
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<Response> {
     increment_counter!(state.metrics, received_notifications);
+
+    let flags = body.payload.flags.clone();
+    let encrypted = body.payload.is_encrypted();
 
     let id = id
         .trim_start_matches(DECENTRALIZED_IDENTIFIER_PREFIX)
@@ -125,29 +128,33 @@ pub async fn handler(
     }
 
     // Analytics
-    if let Some(analytics) = &state.analytics {
-        let (country, continent, _) =
-            analytics
-                .geoip
-                .lookup_geo_data(addr.ip())
-                .map_or((None, None, None), |geo| {
-                    // TODO (Harry): Figure out region mapping
-                    (geo.country, geo.continent, geo.region)
-                });
+    tokio::spawn(async move {
+        if let Some(analytics) = &state.analytics {
+            let (country, continent, _) =
+                analytics
+                    .geoip
+                    .lookup_geo_data(addr.ip())
+                    .map_or((None, None, None), |geo| {
+                        // TODO (Harry): Figure out region mapping
+                        (geo.country, geo.continent, geo.region)
+                    });
 
-        let msg = MessageInfo {
-            region: None,
-            country,
-            continent,
-            project_id: tenant_id.into(),
-            client_id: id.into(),
-            topic,
-            push_provider: client.push_type.as_str().into(),
-            encrypted: false,
-        };
+            let msg = MessageInfo {
+                region: None,
+                country,
+                continent,
+                project_id: tenant_id.into(),
+                client_id: id.into(),
+                topic,
+                push_provider: client.push_type.as_str().into(),
+                encrypted,
+                flags,
+                received_at: gorgon::time::now(),
+            };
 
-        analytics.messages.collect(msg);
-    }
+            analytics.message(msg);
+        }
+    });
 
     Ok(Response::new_success(StatusCode::ACCEPTED))
 }

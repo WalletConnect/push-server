@@ -1,6 +1,6 @@
-pub use message_info::*;
 use {
     crate::{
+        analytics::{client_info::ClientInfo, message_info::MessageInfo},
         config::Config,
         error::{Error, Result},
         log::prelude::*,
@@ -16,11 +16,13 @@ use {
     std::{net::IpAddr, sync::Arc},
 };
 
-mod message_info;
+pub mod client_info;
+pub mod message_info;
 
 #[derive(Clone)]
 pub struct PushAnalytics {
     pub messages: Analytics<MessageInfo>,
+    pub clients: Analytics<ClientInfo>,
     pub geoip: GeoIpReader,
 }
 
@@ -30,6 +32,7 @@ impl PushAnalytics {
 
         Self {
             messages: Analytics::new(NoopCollector),
+            clients: Analytics::new(NoopCollector),
             geoip: GeoIpReader::empty(),
         }
     }
@@ -51,22 +54,45 @@ impl PushAnalytics {
                 export_name: "push_messages",
                 file_extension: "parquet",
                 // Note: Clone these values if we add more exporters
+                bucket_name: bucket_name.clone(),
+                s3_client: s3_client.clone(),
+                node_ip: node_ip.clone(),
+            });
+
+            Analytics::new(
+                gorgon::batcher::create_parquet_collector::<MessageInfo, _>(opts.clone(), exporter)
+                    .map_err(|e| Error::BatchCollector(e.to_string()))?,
+            )
+        };
+
+        let clients = {
+            let exporter = AwsExporter::new(AwsExporterOpts {
+                export_name: "push_clients",
+                file_extension: "parquet",
                 bucket_name,
                 s3_client,
                 node_ip,
             });
 
             Analytics::new(
-                gorgon::batcher::create_parquet_collector::<MessageInfo, _>(opts, exporter)
+                gorgon::batcher::create_parquet_collector::<ClientInfo, _>(opts, exporter)
                     .map_err(|e| Error::BatchCollector(e.to_string()))?,
             )
         };
 
-        Ok(Self { messages, geoip })
+        Ok(Self {
+            messages,
+            clients,
+            geoip,
+        })
     }
 
     pub fn message(&self, data: MessageInfo) {
         self.messages.collect(data);
+    }
+
+    pub fn client(&self, data: ClientInfo) {
+        self.clients.collect(data);
     }
 
     pub fn lookup_geo_data(&self, addr: IpAddr) -> Option<AnalyticsGeoData> {

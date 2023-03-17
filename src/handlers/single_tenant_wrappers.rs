@@ -50,6 +50,7 @@ pub async fn push_handler(
 }
 
 pub async fn register_handler(
+    addr: ConnectInfo<SocketAddr>,
     state: StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
     body: Json<RegisterBody>,
@@ -59,6 +60,7 @@ pub async fn register_handler(
     }
 
     crate::handlers::register_client::handler(
+        addr,
         Path(state.config.default_tenant_id.clone()),
         state,
         headers,
