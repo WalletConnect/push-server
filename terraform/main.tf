@@ -90,6 +90,9 @@ module "database_cluster" {
 
   allow_major_version_upgrade = true
 
+  monitoring_interval             = 30
+  enabled_cloudwatch_logs_exports = ["postgresql"]
+
   serverlessv2_scaling_configuration = {
     min_capacity = 2
     max_capacity = 10
@@ -120,6 +123,9 @@ module "tenant_database_cluster" {
   apply_immediately = true
 
   allow_major_version_upgrade = true
+
+  monitoring_interval             = 30
+  enabled_cloudwatch_logs_exports = ["postgresql"]
 
   serverlessv2_scaling_configuration = {
     min_capacity = 2
@@ -162,8 +168,11 @@ module "ecs" {
   analytics_key_arn              = module.analytics.kms-key_arn
   analytics_geoip_db_bucket_name = local.geoip_db_bucket_name
   analytics_geoip_db_key         = var.geoip_db_key
-}
 
+  autoscaling_max_capacity = local.environment == "prod" ? 4 : 1
+  autoscaling_min_capacity = local.environment == "prod" ? 2 : 1
+  desired_count            = local.environment == "prod" ? 2 : 1
+}
 
 
 module "monitoring" {
