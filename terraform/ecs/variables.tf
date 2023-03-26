@@ -99,3 +99,15 @@ variable "analytics_key_arn" {
   description = "The ARN of the KMS key used to encrypt the analytics data"
   type        = string
 }
+
+variable "desired_count" {
+  type = number
+}
+
+variable "autoscaling_max_capacity" {
+  type = number
+}
+
+variable "autoscaling_min_capacity" {
+  type = number
+}
