@@ -14,12 +14,18 @@ pub mod health;
 pub mod metrics;
 pub mod push_message;
 pub mod register_client;
+#[cfg(not(multitenant))]
 pub mod single_tenant_wrappers;
 // Tenant Management
+#[cfg(multitenant)]
 pub mod create_tenant;
+#[cfg(multitenant)]
 pub mod delete_tenant;
+#[cfg(multitenant)]
 pub mod get_tenant;
+#[cfg(multitenant)]
 pub mod update_apns;
+#[cfg(multitenant)]
 pub mod update_fcm;
 
 pub const DECENTRALIZED_IDENTIFIER_PREFIX: &str = "did:key:";

@@ -1,29 +1,35 @@
 use {
     crate::{
-        error::{Error::MissingTenantId, Result},
+        error::Result,
         handlers::{push_message::PushMessageBody, register_client::RegisterBody, Response},
         middleware::validate_signature::RequireValidSignature,
-        state::{AppState, State},
+        state::AppState,
+        stores::tenant::DEFAULT_TENANT_ID,
     },
     axum::{
-        extract::{ConnectInfo, Path, State as StateExtractor},
+        extract::{Path, State as StateExtractor},
         Json,
     },
     hyper::HeaderMap,
-    std::{net::SocketAddr, sync::Arc},
+    std::sync::Arc,
 };
+#[cfg(analytics)]
+use {axum::ConnectInfo, std::net::SocketAddr};
+
+#[cfg(multitenant)]
+use crate::error::Error::MissingTenantId;
 
 pub async fn delete_handler(
     Path(id): Path<String>,
     state: StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
 ) -> Result<Response> {
-    if state.is_multitenant() {
-        return Err(MissingTenantId);
-    }
+    #[cfg(multitenant)]
+    return Err(MissingTenantId);
 
+    #[cfg(all(not(multitenant)))]
     crate::handlers::delete_client::handler(
-        Path((state.config.default_tenant_id.clone(), id)),
+        Path((DEFAULT_TENANT_ID.to_string(), id)),
         state,
         headers,
     )
@@ -31,40 +37,57 @@ pub async fn delete_handler(
 }
 
 pub async fn push_handler(
-    addr: ConnectInfo<SocketAddr>,
+    #[cfg(analytics)] addr: ConnectInfo<SocketAddr>,
     Path(id): Path<String>,
     state: StateExtractor<Arc<AppState>>,
     valid_sig: RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<Response> {
-    if state.is_multitenant() {
-        return Err(MissingTenantId);
-    }
+    #[cfg(multitenant)]
+    return Err(MissingTenantId);
 
-    crate::handlers::push_message::handler(
+    #[cfg(all(not(multitenant), analytics))]
+    return crate::handlers::push_message::handler(
         addr,
-        Path((state.config.default_tenant_id.clone(), id)),
+        Path((DEFAULT_TENANT_ID.to_string(), id)),
         state,
         valid_sig,
     )
-    .await
+    .await;
+
+    #[cfg(all(not(multitenant), not(analytics)))]
+    return crate::handlers::push_message::handler(
+        Path((DEFAULT_TENANT_ID.to_string(), id)),
+        state,
+        valid_sig,
+    )
+    .await;
 }
 
 pub async fn register_handler(
-    addr: ConnectInfo<SocketAddr>,
+    #[cfg(analytics)] addr: ConnectInfo<SocketAddr>,
     state: StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
     body: Json<RegisterBody>,
 ) -> Result<Response> {
-    if state.is_multitenant() {
-        return Err(MissingTenantId);
-    }
+    #[cfg(multitenant)]
+    return Err(MissingTenantId);
 
-    crate::handlers::register_client::handler(
+    #[cfg(all(not(multitenant), analytics))]
+    return crate::handlers::register_client::handler(
         addr,
-        Path(state.config.default_tenant_id.clone()),
+        Path(DEFAULT_TENANT_ID.to_string()),
         state,
         headers,
         body,
     )
-    .await
+    .await;
+
+    #[cfg(all(not(multitenant), not(analytics)))]
+    return crate::handlers::register_client::handler(
+        Path(DEFAULT_TENANT_ID.to_string()),
+        state,
+        headers,
+        body,
+    )
+    .await;
 }

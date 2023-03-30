@@ -40,8 +40,6 @@ RUN                 cargo chef prepare --recipe-path recipe.json
 ################################################################################
 FROM                chef AS build
 
-ARG                 release
-ENV                 RELEASE=${release:+--release}
 ENV                 TINI_VERSION v0.19.0
 
 # This is a build requirement of `opentelemetry-otlp`. Once the new version
@@ -58,10 +56,10 @@ COPY --from=plan    /app/recipe.json recipe.json
 ADD                 https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-static /tini
 RUN                 chmod +x /tini
 
-RUN                 cargo chef cook --recipe-path recipe.json ${RELEASE}
+RUN                 cargo chef cook --recipe-path recipe.json --release
 # Build the local binary
 COPY                . .
-RUN                 cargo build --bin echo-server ${RELEASE}
+RUN                 cargo build --bin echo-server --release
 
 ################################################################################
 #
@@ -74,8 +72,6 @@ ARG                 bin
 ARG                 version
 ARG                 sha
 ARG                 maintainer
-ARG                 release
-ARG                 binpath=${release:+release}
 
 LABEL               version=${version}
 LABEL               sha=${sha}
@@ -84,7 +80,7 @@ LABEL               maintainer=${maintainer}
 COPY --from=build   /tini /tini
 
 WORKDIR             /app
-COPY --from=build   /app/target/${binpath:-debug}/echo-server /usr/local/bin/echo-server
+COPY --from=build   /app/target/release/echo-server /usr/local/bin/echo-server
 RUN                 apt-get update \
                         && apt-get install -y --no-install-recommends ca-certificates libssl-dev \
                         && apt-get clean \
