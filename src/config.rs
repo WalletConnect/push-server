@@ -28,7 +28,7 @@ pub struct Config {
     pub validate_signatures: bool,
     pub database_url: String,
     #[cfg(multitenant)]
-    pub tenant_database_url: Option<String>,
+    pub tenant_database_url: String,
     #[serde(default = "default_is_test", skip)]
     /// This is an internal flag to disable logging, cannot be defined by user
     pub is_test: bool,
@@ -67,7 +67,7 @@ pub struct Config {
     #[cfg(analytics)]
     pub analytics_s3_endpoint: Option<String>,
     #[cfg(analytics)]
-    pub analytics_export_bucket: Option<String>,
+    pub analytics_export_bucket: String,
     #[cfg(analytics)]
     pub analytics_geoip_db_bucket: Option<String>,
     #[cfg(analytics)]
@@ -79,12 +79,6 @@ impl Config {
     pub fn is_valid(&self) -> error::Result<()> {
         #[cfg(multitenant)]
         {
-            if self.tenant_database_url.is_none() {
-                return Err(InvalidConfiguration(
-                    "tenant database url required".to_string(),
-                ));
-            }
-
             if self.single_tenant_supported_providers().is_empty() {
                 return Err(InvalidConfiguration(
                     "no tenant database url provided and no provider keys found".to_string(),
@@ -97,13 +91,11 @@ impl Config {
                 ));
             }
 
-            if let Some(tenant_database_url) = &self.tenant_database_url {
-                if tenant_database_url == &self.database_url {
-                    return Err(InvalidConfiguration(
-                        "`TENANT_DATABASE_URL` is equal to `DATABASE_URL`, this is not allowed"
-                            .to_string(),
-                    ));
-                }
+            if &self.tenant_database_url == &self.database_url {
+                return Err(InvalidConfiguration(
+                    "`TENANT_DATABASE_URL` is equal to `DATABASE_URL`, this is not allowed"
+                        .to_string(),
+                ));
             }
         }
 

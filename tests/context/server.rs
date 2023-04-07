@@ -1,5 +1,5 @@
 use {
-    crate::context::{DATABASE_URL, TENANT_DATABASE_URL},
+    crate::context::DATABASE_URL,
     echo_server::config::Config,
     std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4, TcpListener},
     tokio::{
@@ -8,6 +8,9 @@ use {
         time::{sleep, Duration},
     },
 };
+
+#[cfg(multitenant)]
+use crate::context::TENANT_DATABASE_URL;
 
 pub struct SingleTenantEchoServer {
     pub public_addr: SocketAddr,
@@ -36,8 +39,8 @@ impl SingleTenantEchoServer {
             relay_url: "https://relay.walletconnect.com".into(),
             validate_signatures: false,
             database_url: "postgres://postgres:root@localhost:5432/postgres".into(),
+            #[cfg(multitenant)]
             tenant_database_url: None,
-            default_tenant_id: "https://relay.walletconnect.com".into(),
             otel_exporter_otlp_endpoint: None,
             telemetry_prometheus_port: Some(get_random_port()),
             apns_certificate: None,
@@ -46,10 +49,13 @@ impl SingleTenantEchoServer {
             apns_key_id: None,
             apns_topic: None,
             fcm_api_key: None,
-            analytics_enabled: false,
+            #[cfg(analytics)]
             analytics_s3_endpoint: None,
-            analytics_export_bucket: None,
+            #[cfg(analytics)]
+            analytics_export_bucket: "export-bucket",
+            #[cfg(analytics)]
             analytics_geoip_db_bucket: None,
+            #[cfg(analytics)]
             analytics_geoip_db_key: None,
             is_test: true,
             cors_allowed_origins: vec!["*".to_string()],
@@ -88,8 +94,8 @@ impl MultiTenantEchoServer {
             relay_url: "https://relay.walletconnect.com".into(),
             validate_signatures: false,
             database_url: DATABASE_URL.into(),
+            #[cfg(multitenant)]
             tenant_database_url: Some(TENANT_DATABASE_URL.into()),
-            default_tenant_id: "9bfe94c9cbf74aaa0597094ef561f703".into(),
             otel_exporter_otlp_endpoint: None,
             telemetry_prometheus_port: Some(get_random_port()),
             apns_certificate: None,
@@ -98,10 +104,13 @@ impl MultiTenantEchoServer {
             apns_key_id: None,
             apns_topic: None,
             fcm_api_key: None,
-            analytics_enabled: false,
+            #[cfg(analytics)]
             analytics_s3_endpoint: None,
+            #[cfg(analytics)]
             analytics_export_bucket: None,
+            #[cfg(analytics)]
             analytics_geoip_db_bucket: None,
+            #[cfg(analytics)]
             analytics_geoip_db_key: None,
             is_test: true,
             cors_allowed_origins: vec!["*".to_string()],
