@@ -11,3 +11,5 @@ terraform/.terraform*
 # Integration tests
 node_modules/
 *.log
+
+.DS_store

@@ -77,6 +77,9 @@ jobs:
   build-container:
     runs-on:
       group: ubuntu-runners
+    strategy:
+      matrix:
+        file: [Dockerfile, slim.Dockerfile]
     needs:
       - release
     steps:
@@ -118,9 +121,14 @@ jobs:
           flavor: |
             latest=auto
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=${{ needs.release.outputs.version }}
+            type=semver,pattern={{version}}{{suffix}}
+            type=semver,pattern={{major}}.{{minor}}{{suffix}}
+            type=raw,value=${{ needs.release.outputs.version }}{{suffix}}
+
+      - name: Set tag suffix
+        if: contains(matrix.file, '.')
+        run: |
+          echo "::set-output name=suffix::${{ matrix.file | split: '.' | last }}"
 
       # Setup Buildkit
       - name: Set up Docker Buildx
@@ -130,6 +138,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
+          file: ${{ matrix.file }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
