@@ -12,4 +12,4 @@ terraform/.terraform*
 node_modules/
 *.log
 
-.DS_store
+.DS_Store
