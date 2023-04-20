@@ -144,7 +144,7 @@ pub enum Error {
     BatchCollector(String),
 
     #[error(transparent)]
-    FromSlice(#[from] std::array::TryFromSliceError)
+    FromSlice(#[from] std::array::TryFromSliceError),
 }
 
 impl IntoResponse for Error {
