@@ -80,7 +80,7 @@ jobs:
         with:
           environment: ${{ inputs.environment }}
 
-      - name: Deploy Terraform to Production
+      - name: Deploy Terraform to Staging
         id: tf-apply
         uses: WalletConnect/actions/terraform/apply/@1.0.0
         env:
