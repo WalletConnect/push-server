@@ -78,7 +78,7 @@ jobs:
         id: tf-init
         uses: WalletConnect/actions/terraform/init/@1.0.0
         with:
-          environment: ${{ inputs.environment }}
+          environment: "staging"
 
       - name: Deploy Terraform to Staging
         id: tf-apply
@@ -144,7 +144,7 @@ jobs:
         id: tf-init
         uses: WalletConnect/actions/terraform/init/@1.0.0
         with:
-          environment: ${{ inputs.environment }}
+          environment: "prod"
 
       - name: Deploy Terraform to Production
         id: tf-apply
