@@ -2,6 +2,16 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.23.4 - 2023-04-20
+#### Bug Fixes
+- Dockerfile - (332c1c1) - Harry Bairstow
+- missing inputs for environment in terraform - (f038502) - Harry Bairstow
+- CD action broken with terraform cloud - (48a9a4b) - Harry Bairstow
+#### Miscellaneous Chores
+- revert engine version change - (86ec9cb) - Harry Bairstow
+- CD action typo in name - (a210140) - Harry Bairstow
+- - -
+
 ## v0.23.3 - 2023-04-20
 #### Bug Fixes
 - remove incorrect `cfg` - (0cfeedb) - Harry Bairstow
