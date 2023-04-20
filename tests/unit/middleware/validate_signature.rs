@@ -1,11 +1,6 @@
 use {
     echo_server::middleware::validate_signature::signature_is_valid,
-    ed25519_dalek::{
-        ed25519::signature::Signature,
-        SigningKey,
-        VerifyingKey,
-        Signer
-    },
+    ed25519_dalek::{ed25519::signature::Signature, Signer, SigningKey, VerifyingKey},
     rand::rngs::OsRng,
 };
 
