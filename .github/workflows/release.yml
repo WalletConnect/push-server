@@ -111,16 +111,13 @@ jobs:
           logout: false
 
       - name: Set tag suffix
-        if: contains(matrix.file, '.')
         id: suffix
         run: |
-          echo "::set-output name=suffix:::$(echo "${{ matrix.file }}" | cut -d'.' -f1)"
-
-      - name: Set tag suffix (no suffix)
-        if: !contains(matrix.file, '.')
-        id: suffix
-        run: |
-          echo "::set-output name=suffix:::"
+          if [[ "${{ matrix.file }}" == *.* ]]; then
+            echo "::set-output name=suffix:::$(echo "${{ matrix.file }}" | cut -d'.' -f1)"
+          else
+            echo "::set-output name=suffix::"
+          fi
 
       - name: Docker meta
         id: meta
@@ -133,9 +130,9 @@ jobs:
           flavor: |
             latest=auto
           tags: |
-            type=semver,pattern={{version}},suffix=${{ job.suffix.suffix }}
-            type=semver,pattern={{major}}.{{minor}},suffix=${{ job.suffix.suffix }}
-            type=raw,value=${{ needs.release.outputs.version }},suffix=${{ job.suffix.suffix }}
+            type=semver,pattern={{version}},suffix=${{ steps.suffix.outputs.suffix }}
+            type=semver,pattern={{major}}.{{minor}},suffix=${{ steps.suffix.outputs.suffix }}
+            type=raw,value=${{ needs.release.outputs.version }},suffix=${{ steps.suffix.outputs.suffix }}
 
       # Setup Buildkit
       - name: Set up Docker Buildx
