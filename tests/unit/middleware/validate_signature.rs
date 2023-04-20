@@ -56,6 +56,7 @@ pub async fn invalid_signature_hex() {
     let (pub_key, _, timestamp, body) = setup();
 
     let res = signature_is_valid(
+        // Sig Decoded: invalid-signature
         "696e76616c69642d7369676e6174757265",
         &timestamp,
         &body,
