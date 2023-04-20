@@ -1,6 +1,15 @@
 # Terraform Configuration
 terraform {
   required_version = "~> 1.0"
+
+  backend "remote" {
+    hostname = "app.terraform.io"
+    organization = "wallet-connect"
+    workspaces {
+      prefix = "echo-server-"
+    }
+  }
+
   required_providers {
     assert = {
       source = "bwoznicki/assert"
@@ -21,14 +30,5 @@ terraform {
       source  = "integrations/github"
       version = "5.7.0"
     }
-  }
-
-  backend "s3" {
-    region               = "eu-central-1"
-    bucket               = "opz"
-    workspace_key_prefix = "infra/env"
-    key                  = "apps/echo-server.tfstate"
-
-    force_path_style = true
   }
 }

@@ -1,7 +1,6 @@
 use {
     crate::{state::TenantStoreArc, stores::tenant::DefaultTenantStore},
     axum::{
-        http::Method,
         routing::{delete, get, post},
         Router,
     },
@@ -14,13 +13,17 @@ use {
     std::{net::SocketAddr, str::FromStr, sync::Arc, time::Duration},
     tokio::{select, sync::broadcast},
     tower::ServiceBuilder,
-    tower_http::{
-        cors::{AllowOrigin, CorsLayer},
-        trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
-    },
+    tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
     tracing::{info, log::LevelFilter, warn, Level},
 };
+#[cfg(multitenant)]
+use {
+    http::Method,
+    tower_http::cors::{AllowOrigin, CorsLayer},
+};
 
+#[cfg(analytics)]
+pub mod analytics;
 pub mod blob;
 pub mod config;
 pub mod error;
@@ -29,6 +32,7 @@ pub mod log;
 pub mod macros;
 pub mod metrics;
 pub mod middleware;
+pub mod networking;
 pub mod providers;
 pub mod relay;
 pub mod state;
@@ -52,10 +56,12 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
     // to the root dir (the directory containing `Cargo.toml`).
     sqlx::migrate!("./migrations").run(&store).await?;
 
-    let mut tenant_store: TenantStoreArc =
-        Arc::new(DefaultTenantStore::new(Arc::new(config.clone()))?);
-    if let Some(tenant_database_url) = &config.tenant_database_url {
-        let tenant_pg_options = PgConnectOptions::from_str(tenant_database_url)?
+    #[cfg(not(multitenant))]
+    let tenant_store: TenantStoreArc = Arc::new(DefaultTenantStore::new(Arc::new(config.clone()))?);
+
+    #[cfg(multitenant)]
+    let tenant_store: TenantStoreArc = {
+        let tenant_pg_options = PgConnectOptions::from_str(&config.tenant_database_url)?
             .log_statements(LevelFilter::Debug)
             .log_slow_statements(LevelFilter::Info, Duration::from_millis(250))
             .clone();
@@ -71,8 +77,8 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             .run(&tenant_database)
             .await?;
 
-        tenant_store = Arc::new(tenant_database);
-    }
+        Arc::new(tenant_database)
+    };
 
     let mut state = state::new_state(
         config,
@@ -81,18 +87,25 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         tenant_store,
     )?;
 
-    let mut supported_providers_string = "multi-tenant".to_string();
-    let is_multitenant = state.config.tenant_database_url.is_some();
-
-    if !is_multitenant {
-        supported_providers_string = state
-            .config
-            .single_tenant_supported_providers()
-            .into_iter()
-            .map(Into::into)
-            .collect::<Vec<&str>>()
-            .join(", ");
+    #[cfg(analytics)]
+    {
+        if let Some(ip) = state.public_ip {
+            let analytics = analytics::initialize(&state.config, ip).await?;
+            state.analytics = Some(analytics);
+        }
     }
+
+    #[cfg(multitenant)]
+    let supported_providers_string = "multi-tenant".to_string();
+
+    #[cfg(not(multitenant))]
+    let supported_providers_string = state
+        .config
+        .single_tenant_supported_providers()
+        .into_iter()
+        .map(Into::into)
+        .collect::<Vec<&str>>()
+        .join(", ");
 
     // Fetch public key so it's cached for the first 6hrs
     let public_key = state.relay_client.public_key().await;
@@ -140,44 +153,31 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             ),
     );
 
-    let tenancy_routes = Router::new()
-        .route("/", post(handlers::create_tenant::handler))
-        .route(
-            "/:id",
-            get(handlers::get_tenant::handler).delete(handlers::delete_tenant::handler),
-        )
-        .route("/:id/fcm", post(handlers::update_fcm::handler))
-        .route("/:id/apns", post(handlers::update_apns::handler))
-        .layer(
-            global_middleware.clone().layer(
-                CorsLayer::new()
-                    .allow_methods([Method::GET, Method::POST, Method::DELETE])
-                    /*
-                        TOOD: switch back to using the real configuration
-                        allowed_origins
-                            .iter()
-                            .map(|v| v.parse::<HeaderValue>().unwrap())
-                            .collect::<Vec<HeaderValue>>(), */
-                    .allow_origin(AllowOrigin::any()),
-            ),
-        );
+    #[cfg(multitenant)]
+    let app = {
+        let tenancy_routes = Router::new()
+            .route("/", post(handlers::create_tenant::handler))
+            .route(
+                "/:id",
+                get(handlers::get_tenant::handler).delete(handlers::delete_tenant::handler),
+            )
+            .route("/:id/fcm", post(handlers::update_fcm::handler))
+            .route("/:id/apns", post(handlers::update_apns::handler))
+            .layer(
+                global_middleware.clone().layer(
+                    CorsLayer::new()
+                        .allow_methods([Method::GET, Method::POST, Method::DELETE])
+                        /*
+                            TODO: switch back to using the real configuration
+                            allowed_origins
+                                .iter()
+                                .map(|v| v.parse::<HeaderValue>().unwrap())
+                                .collect::<Vec<HeaderValue>>(), */
+                        .allow_origin(AllowOrigin::any()),
+                ),
+            );
 
-    let app = match is_multitenant {
-        false => Router::new()
-            .route("/health", get(handlers::health::handler))
-            .route(
-                "/clients",
-                post(handlers::single_tenant_wrappers::register_handler),
-            )
-            .route(
-                "/clients/:id",
-                delete(handlers::single_tenant_wrappers::delete_handler),
-            )
-            .route(
-                "/clients/:id",
-                post(handlers::single_tenant_wrappers::push_handler),
-            ),
-        true => Router::new()
+        Router::new()
             .route("/health", get(handlers::health::handler))
             .nest("/tenants", tenancy_routes)
             .route(
@@ -191,10 +191,28 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             .route(
                 "/:tenant_id/clients/:id",
                 post(handlers::push_message::handler),
-            ),
-    }
-    .layer(global_middleware)
-    .with_state(state_arc.clone());
+            )
+            .layer(global_middleware)
+            .with_state(state_arc.clone())
+    };
+
+    #[cfg(not(multitenant))]
+    let app = Router::new()
+        .route("/health", get(handlers::health::handler))
+        .route(
+            "/clients",
+            post(handlers::single_tenant_wrappers::register_handler),
+        )
+        .route(
+            "/clients/:id",
+            delete(handlers::single_tenant_wrappers::delete_handler),
+        )
+        .route(
+            "/clients/:id",
+            post(handlers::single_tenant_wrappers::push_handler),
+        )
+        .layer(global_middleware)
+        .with_state(state_arc.clone());
 
     let private_app = Router::new()
         .route("/metrics", get(handlers::metrics::handler))
@@ -228,7 +246,7 @@ providers: [{}]
     let private_addr = SocketAddr::from(([0, 0, 0, 0], private_port));
 
     select! {
-        _ = axum::Server::bind(&addr).serve(app.into_make_service()) => info!("Server terminating"),
+        _ = axum::Server::bind(&addr).serve(app.into_make_service_with_connect_info::<SocketAddr>()) => info!("Server terminating"),
         _ = axum::Server::bind(&private_addr).serve(private_app.into_make_service()) => info!("Internal Server terminating"),
         _ = shutdown.recv() => info!("Shutdown signal received, killing servers"),
     }

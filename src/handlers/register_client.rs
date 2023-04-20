@@ -1,33 +1,55 @@
+#[cfg(analytics)]
+use {crate::analytics::message_info::MessageInfo, axum::ConnectInfo, std::net::SocketAddr};
 use {
     crate::{
         error::{
-            Error::{EmptyField, ProviderNotAvailable},
+            Error::{EmptyField, InvalidAuthentication, ProviderNotAvailable},
             Result,
         },
-        handlers::{Response, DECENTRALIZED_IDENTIFIER_PREFIX},
+        handlers::{authenticate_client, Response, DECENTRALIZED_IDENTIFIER_PREFIX},
         increment_counter,
         log::prelude::*,
         state::AppState,
         stores::client::Client,
     },
-    axum::extract::{Json, Path, State as StateExtractor},
+    axum::{
+        extract::{Json, Path, State as StateExtractor},
+        http::HeaderMap,
+    },
+    relay_rpc::domain::ClientId,
     serde::{Deserialize, Serialize},
     std::sync::Arc,
 };
 
 #[derive(Serialize, Deserialize)]
 pub struct RegisterBody {
-    pub client_id: String,
+    pub client_id: ClientId,
     #[serde(rename = "type")]
     pub push_type: String,
     pub token: String,
 }
 
 pub async fn handler(
+    #[cfg(analytics)] ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Path(tenant_id): Path<String>,
     StateExtractor(state): StateExtractor<Arc<AppState>>,
+    headers: HeaderMap,
     Json(body): Json<RegisterBody>,
 ) -> Result<Response> {
+    if !authenticate_client(headers, &state.config.public_url, |client_id| {
+        if let Some(client_id) = client_id {
+            info!(
+                "client_id: {:?}, requested to register: {:?}",
+                client_id, body.client_id
+            );
+            client_id == body.client_id
+        } else {
+            false
+        }
+    })? {
+        return Err(InvalidAuthentication);
+    }
+
     let push_type = body.push_type.as_str().try_into()?;
     let tenant = state.tenant_store.get_tenant(&tenant_id).await?;
     let supported_providers = tenant.providers();
@@ -39,13 +61,15 @@ pub async fn handler(
         return Err(EmptyField("token".to_string()));
     }
 
-    let client_id = body
-        .client_id
-        .trim_start_matches(DECENTRALIZED_IDENTIFIER_PREFIX);
+    let mut client_id = body.client_id.to_string();
+
+    client_id = client_id
+        .trim_start_matches(DECENTRALIZED_IDENTIFIER_PREFIX)
+        .to_owned();
 
     state
         .client_store
-        .create_client(&tenant_id, client_id, Client {
+        .create_client(&tenant_id, &client_id, Client {
             push_type,
             token: body.token,
         })
@@ -57,6 +81,31 @@ pub async fn handler(
     );
 
     increment_counter!(state.metrics, registered_clients);
+
+    // Analytics
+    #[cfg(analytics)]
+    tokio::spawn(async move {
+        if let Some(analytics) = &state.analytics {
+            let (country, continent, region) = analytics
+                .geoip
+                .lookup_geo_data(addr.ip())
+                .map_or((None, None, None), |geo| {
+                    (geo.country, geo.continent, geo.region)
+                });
+
+            let msg = ClientInfo {
+                region: region.map(|r| Arc::from(r.join(", "))),
+                country,
+                continent,
+                project_id: tenant_id.into(),
+                client_id: client_id.into(),
+                push_provider: body.push_type.as_str().into(),
+                registered_at: gorgon::time::now(),
+            };
+
+            analytics.client(msg);
+        }
+    });
 
     Ok(Response::default())
 }

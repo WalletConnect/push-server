@@ -2,12 +2,16 @@ use {
     crate::{
         config::Config,
         metrics::Metrics,
+        networking,
         relay::RelayClient,
         stores::{client::ClientStore, notification::NotificationStore, tenant::TenantStore},
     },
     build_info::BuildInfo,
-    std::sync::Arc,
+    std::{net::IpAddr, sync::Arc},
 };
+
+#[cfg(analytics)]
+use crate::analytics::PushAnalytics;
 
 pub type ClientStoreArc = Arc<dyn ClientStore + Send + Sync + 'static>;
 pub type NotificationStoreArc = Arc<dyn NotificationStore + Send + Sync + 'static>;
@@ -29,10 +33,13 @@ pub struct AppState {
     pub config: Config,
     pub build_info: BuildInfo,
     pub metrics: Option<Metrics>,
+    #[cfg(analytics)]
+    pub analytics: Option<PushAnalytics>,
     pub client_store: ClientStoreArc,
     pub notification_store: NotificationStoreArc,
     pub tenant_store: TenantStoreArc,
     pub relay_client: RelayClient,
+    pub public_ip: Option<IpAddr>,
     is_multitenant: bool,
 }
 
@@ -46,17 +53,31 @@ pub fn new_state(
 ) -> crate::error::Result<AppState> {
     let build_info: &BuildInfo = build_info();
 
-    let is_multitenant = config.tenant_database_url.is_some();
+    #[cfg(multitenant)]
+    let is_multitenant = true;
+
+    #[cfg(not(multitenant))]
+    let is_multitenant = false;
+
     let relay_url = config.relay_url.to_string();
+
+    let public_ip = match networking::find_public_ip_addr() {
+        Ok(ip) => Some(ip),
+        // Note: Should we pass this error back up?
+        Err(_e) => None,
+    };
 
     Ok(AppState {
         config,
         build_info: build_info.clone(),
         metrics: None,
+        #[cfg(analytics)]
+        analytics: None,
         client_store,
         notification_store,
         tenant_store,
         relay_client: RelayClient::new(relay_url),
+        public_ip,
         is_multitenant,
     })
 }

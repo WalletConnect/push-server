@@ -1,6 +1,6 @@
 use {
     chrono::{DateTime, Duration, Utc},
-    ed25519_dalek::PublicKey,
+    ed25519_dalek::VerifyingKey,
     std::ops::Add,
 };
 
@@ -10,7 +10,7 @@ const PUBLIC_KEY_TTL_HOURS: i64 = 6;
 pub struct RelayClient {
     http_client: reqwest::Client,
     base_url: String,
-    public_key: Option<PublicKey>,
+    public_key: Option<VerifyingKey>,
     public_key_last_fetched: DateTime<Utc>,
 }
 
@@ -25,7 +25,7 @@ impl RelayClient {
     }
 
     /// Fetches the public key with a TTL
-    pub async fn public_key(&mut self) -> crate::error::Result<PublicKey> {
+    pub async fn public_key(&mut self) -> crate::error::Result<VerifyingKey> {
         if let Some(public_key) = self.public_key {
             // TTL Not exceeded
             if self
@@ -43,7 +43,7 @@ impl RelayClient {
         Ok(public_key)
     }
 
-    async fn fetch_public_key(&self) -> crate::error::Result<PublicKey> {
+    async fn fetch_public_key(&self) -> crate::error::Result<VerifyingKey> {
         let response = self
             .http_client
             .get(self.get_url("public-key"))
@@ -51,7 +51,8 @@ impl RelayClient {
             .await?;
         let body = response.text().await?;
         let key_bytes = hex::decode(body)?;
-        let public_key = PublicKey::from_bytes(&key_bytes)?;
+        let public_key =
+            VerifyingKey::from_bytes(<&[u8; 32]>::try_from(key_bytes.as_slice()).unwrap())?;
         Ok(public_key)
     }
 

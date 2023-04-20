@@ -1,5 +1,6 @@
 pub mod apns;
 pub mod fcm;
+#[cfg(any(debug_assertions, test))]
 pub mod noop;
 
 use {

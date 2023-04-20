@@ -77,11 +77,17 @@ resource "aws_ecs_task_definition" "app_task_definition" {
         { name = "TENANT_DATABASE_URL", value = var.tenant_database_url },
         { name = "CORS_ALLOWED_ORIGINS", value = var.allowed_origins },
         { name = "TELEMETRY_PROMETHEUS_PORT", value = local.prometheus_port },
+
         { name = "OTEL_SERVICE_NAME", value = var.app_name },
         { name = "OTEL_RESOURCE_ATTRIBUTES", value = "environment=${var.environment},region=${var.region},version=${var.image_version}" },
         { name = "OTEL_EXPORTER_OTLP_ENDPOINT", value = "http://localhost:4317" },
         { name = "OTEL_TRACES_SAMPLER", value = "traceidratio" },
-        { name = "OTEL_TRACES_SAMPLER_ARG", value = tostring(var.telemetry_sample_ratio) }
+        { name = "OTEL_TRACES_SAMPLER_ARG", value = tostring(var.telemetry_sample_ratio) },
+
+        { name = "ANALYTICS_ENABLED", value = "true" },
+        { name = "ANALYTICS_EXPORT_BUCKET", value = var.analytics_datalake_bucket_name },
+        { name = "ANALYTICS_GEOIP_DB_BUCKET", value = var.analytics_geoip_db_bucket_name },
+        { name = "ANALYTICS_GEOIP_DB_KEY", value = var.analytics_geoip_db_key },
       ],
       dependsOn = [
         { containerName = "aws-otel-collector", condition = "START" }
@@ -132,7 +138,7 @@ resource "aws_ecs_service" "app_service" {
   cluster         = aws_ecs_cluster.app_cluster.id
   task_definition = aws_ecs_task_definition.app_task_definition.arn
   launch_type     = "FARGATE"
-  desired_count   = 2
+  desired_count   = var.desired_count
 
   # Wait for the service deployment to succeed
   wait_for_steady_state = true
@@ -163,8 +169,6 @@ resource "aws_lb" "application_load_balancer" {
 
   security_groups = [aws_security_group.lb_ingress.id]
 }
-
-
 
 resource "aws_lb_target_group" "target_group" {
   name        = "${var.app_name}-target-group"
@@ -230,78 +234,6 @@ resource "aws_route53_record" "dns_load_balancer" {
   }
 }
 
-# IAM
-resource "aws_iam_role" "ecs_task_execution_role" {
-  name               = "${var.app_name}-ecs-task-execution-role"
-  assume_role_policy = data.aws_iam_policy_document.assume_role_policy.json
-}
-
-data "aws_iam_policy_document" "assume_role_policy" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["ecs-tasks.amazonaws.com"]
-    }
-  }
-}
-
-resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
-  role       = aws_iam_role.ecs_task_execution_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-}
-
-resource "aws_iam_role_policy_attachment" "prometheus_write_policy" {
-  role       = aws_iam_role.ecs_task_execution_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonPrometheusRemoteWriteAccess"
-}
-
-resource "aws_iam_role_policy_attachment" "cloudwatch_write_policy" {
-  role       = aws_iam_role.ecs_task_execution_role.name
-  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
-}
-
-resource "aws_iam_role_policy_attachment" "ssm_read_only_policy" {
-  role       = aws_iam_role.ecs_task_execution_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
-}
-
-resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_xray_policy" {
-  role       = aws_iam_role.ecs_task_execution_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
-}
-
-data "aws_iam_policy_document" "otel" {
-  statement {
-    actions = [
-      "logs:PutLogEvents",
-      "logs:CreateLogGroup",
-      "logs:CreateLogStream",
-      "logs:DescribeLogStreams",
-      "logs:DescribeLogGroups",
-      "xray:PutTraceSegments",
-      "xray:PutTelemetryRecords",
-      "xray:GetSamplingRules",
-      "xray:GetSamplingTargets",
-      "xray:GetSamplingStatisticSummaries",
-      "ssm:GetParameters",
-    ]
-    resources = [
-      "*"
-    ]
-  }
-}
-resource "aws_iam_policy" "otel" {
-  name   = "${var.app_name}-otel"
-  path   = "/"
-  policy = data.aws_iam_policy_document.otel.json
-}
-resource "aws_iam_role_policy_attachment" "ecs_task_execution_fetch_ghcr_secret_policy" {
-  role       = aws_iam_role.ecs_task_execution_role.name
-  policy_arn = aws_iam_policy.otel.arn
-}
-
 # Security Groups
 resource "aws_security_group" "app_ingress" {
   name        = "${var.app_name}-ingress-to-app"
@@ -363,4 +295,52 @@ resource "aws_security_group" "lb_ingress" {
   lifecycle {
     create_before_destroy = true
   }
+}
+
+# Autoscaling
+# We can scale by
+# ECSServiceAverageCPUUtilization, ECSServiceAverageMemoryUtilization, and ALBRequestCountPerTarget
+# out of the box or use custom metrics
+resource "aws_appautoscaling_target" "ecs_target" {
+  max_capacity       = var.autoscaling_max_capacity
+  min_capacity       = var.autoscaling_min_capacity
+  resource_id        = "service/${aws_ecs_cluster.app_cluster.name}/${aws_ecs_service.app_service.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
+}
+
+resource "aws_appautoscaling_policy" "cpu_scaling" {
+  name               = "${var.app_name}-application-scaling-policy-cpu"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.ecs_target.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_target.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_target.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageCPUUtilization"
+    }
+    target_value       = 30
+    scale_in_cooldown  = 180
+    scale_out_cooldown = 180
+  }
+  depends_on = [aws_appautoscaling_target.ecs_target]
+}
+
+resource "aws_appautoscaling_policy" "memory_scaling" {
+  name               = "${var.app_name}-application-scaling-policy-memory"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.ecs_target.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_target.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_target.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageMemoryUtilization"
+    }
+    target_value       = 30
+    scale_in_cooldown  = 180
+    scale_out_cooldown = 180
+  }
+  depends_on = [aws_appautoscaling_target.ecs_target]
 }

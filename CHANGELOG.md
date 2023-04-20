@@ -2,6 +2,23 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.21.0 - 2023-03-17
+#### Features
+- Analytics (#114) - (2e7c538) - Harry Bairstow
+- added tracing of JWT claims verification failure (#113) - (83ac3bb) - Rakowskiii
+- - -
+
+## v0.20.0 - 2023-03-16
+#### Features
+- `client_id` auth (#110) - (e085617) - Harry Bairstow
+- - -
+
+## v0.19.4 - 2023-03-01
+#### Bug Fixes
+- hotfix hyper-apln  (#112) - (9e5b40a) - Rakowskiii
+- FCM counter name - (944fd93) - Harry Bairstow
+- - -
+
 ## v0.19.3 - 2023-02-20
 #### Bug Fixes
 - APNS Store Logic & Tests (#107) - (4e1575b) - Harry Bairstow

@@ -1,9 +1,9 @@
-#[cfg(any(debug_assertions, test))]
-use async_trait::async_trait;
-use {crate::handlers::push_message::MessagePayload, std::collections::HashMap, tracing::span};
-
-#[cfg(any(debug_assertions, test))]
-use crate::providers::PushProvider;
+use {
+    crate::{handlers::push_message::MessagePayload, providers::PushProvider},
+    async_trait::async_trait,
+    std::collections::HashMap,
+    tracing::span,
+};
 
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
 pub struct NoopProvider {
@@ -11,7 +11,6 @@ pub struct NoopProvider {
     notifications: HashMap<String, Vec<MessagePayload>>,
 }
 
-#[cfg(any(debug_assertions, test))]
 impl NoopProvider {
     pub fn new() -> Self {
         Default::default()
@@ -19,7 +18,6 @@ impl NoopProvider {
 }
 
 #[async_trait]
-#[cfg(any(debug_assertions, test))]
 impl PushProvider for NoopProvider {
     async fn send_notification(
         &mut self,
@@ -39,7 +37,6 @@ impl PushProvider for NoopProvider {
 }
 
 // Utils
-#[cfg(any(debug_assertions, test))]
 impl NoopProvider {
     /// Insert empty notifications for a new token
     fn bootstrap(&mut self, token: String) {
