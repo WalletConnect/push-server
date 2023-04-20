@@ -1,6 +1,6 @@
 use {
     echo_server::middleware::validate_signature::signature_is_valid,
-    ed25519_dalek::{ed25519::signature::Signature, Signer, SigningKey, VerifyingKey},
+    ed25519_dalek::{Signer, SigningKey, VerifyingKey},
     rand::rngs::OsRng,
 };
 
@@ -15,10 +15,10 @@ fn setup() -> (VerifyingKey, String, String, String) {
 
     let sig_body = format!("{}.{}.{}", timestamp, body.len(), body);
     let sig = keypair.sign(sig_body.as_bytes());
-    let sig_hex = hex::encode(sig.as_bytes());
+    let sig_hex = hex::encode(sig.to_bytes());
 
     (
-        keypair.public,
+        keypair.verifying_key(),
         sig_hex,
         timestamp.to_string(),
         body.to_string(),

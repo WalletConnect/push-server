@@ -142,6 +142,9 @@ pub enum Error {
 
     #[error("BatchCollector Error: {0}")]
     BatchCollector(String),
+
+    #[error(transparent)]
+    FromSlice(#[from] std::array::TryFromSliceError)
 }
 
 impl IntoResponse for Error {

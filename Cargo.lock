@@ -1270,7 +1270,7 @@ dependencies = [
  "parquet_derive",
  "pnet_datalink",
  "prometheus",
- "rand 0.7.3",
+ "rand 0.8.5",
  "random-string",
  "relay_rpc",
  "reqwest",
