@@ -186,8 +186,10 @@ fn default_validate_signatures() -> bool {
     true
 }
 
+pub const RELAY_URL: &str = "https://relay.walletconnect.com";
+
 fn default_relay_url() -> String {
-    "https://relay.walletconnect.com".to_string()
+    RELAY_URL.to_string()
 }
 
 fn default_is_test() -> bool {

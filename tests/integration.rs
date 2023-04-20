@@ -2,9 +2,9 @@
 // mod providers;
 // mod store; // Comment this out for now
 mod context;
+#[cfg(feature = "functional_tests")]
 mod functional;
-mod messages;
-mod store;
+mod unit;
 
 pub type ErrorResult<T> = Result<T, TestError>;
 

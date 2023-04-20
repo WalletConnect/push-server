@@ -1,16 +1,4 @@
-use {crate::context::SingleTenantServerContext, test_context::test_context};
-
-mod push;
-mod registration;
-#[cfg(multitenant)]
-mod tenancy;
-
-#[test_context(SingleTenantServerContext)]
-#[tokio::test]
-async fn test_health(ctx: &mut SingleTenantServerContext) {
-    let body = reqwest::get(format!("http://{}/health", ctx.server.public_addr))
-        .await
-        .expect("Failed to call /health")
-        .status();
-    assert!(body.is_success());
-}
+/// Functional tests that cover Echo Server when running with a database and all
+/// other expectations as a complete system
+mod handlers;
+mod stores;

@@ -7,7 +7,7 @@ use {
 
 #[test_context(MultiTenantServerContext)]
 #[tokio::test]
-async fn test_tenant(ctx: &mut MultiTenantServerContext) {
+async fn tenant(ctx: &mut MultiTenantServerContext) {
     let charset = "1234567890";
     let random_tenant_id = generate(12, charset);
     let payload = TenantRegisterBody {

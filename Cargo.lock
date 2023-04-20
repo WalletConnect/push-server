@@ -943,6 +943,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
 
 [[package]]
+name = "convert_case"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ec182b0ca2f35d8fc196cf3404988fd8b8c739a4d270ff118a398feb0cbec1ca"
+dependencies = [
+ "unicode-segmentation",
+]
+
+[[package]]
 name = "core-foundation"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1162,7 +1171,7 @@ version = "0.99.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4fb810d30a7c1953f91334de7244731fc3f3c10d7fe163338a35b9f640960321"
 dependencies = [
- "convert_case",
+ "convert_case 0.4.0",
  "proc-macro2",
  "quote",
  "rustc_version",
@@ -1251,6 +1260,7 @@ dependencies = [
  "hex",
  "hyper",
  "ipnet",
+ "is-variant-derive",
  "jsonwebtoken",
  "once_cell",
  "opentelemetry",
@@ -1260,6 +1270,7 @@ dependencies = [
  "parquet_derive",
  "pnet_datalink",
  "prometheus",
+ "rand 0.8.5",
  "random-string",
  "relay_rpc",
  "reqwest",
@@ -1319,6 +1330,7 @@ checksum = "798f704d128510932661a3489b08e3f4c934a01d61c5def59ae7b8e48f19665a"
 dependencies = [
  "curve25519-dalek 4.0.0-rc.2",
  "ed25519 2.2.1",
+ "rand_core 0.6.4",
  "serde",
  "sha2 0.10.6",
  "zeroize",
@@ -1959,6 +1971,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f84f1612606f3753f205a4e9a2efd6fe5b4c573a6269b2cc6c3003d44a0d127"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "is-variant-derive"
+version = "0.1.0"
+dependencies = [
+ "convert_case 0.6.0",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

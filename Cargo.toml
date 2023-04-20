@@ -6,8 +6,11 @@ authors = [
     "Harry Bairstow <harry@walletconnect.com>"
 ]
 build = "build.rs"
+resolver = "2"
 
 [features]
+# Used to enable functional tests
+functional_tests = []
 # Multi-tenancy mode
 multitenant = []
 # Enable analytics
@@ -74,15 +77,18 @@ hex = "0.4"
 base64 = "0.21"
 chrono = "0.4"
 uuid = { version = "1.2", features = ["v4"] }
+is-variant-derive = { path = "crates/is-variant-derive" }
 once_cell = "1.15"
 pnet_datalink = "0.31"
 ipnet = "2.5"
 
 [dev-dependencies]
-serial_test = "1.0.0"
+serial_test = "1.0"
 test-context = "0.1"
 futures-util = "0.3"
 random-string = "1.0"
+rand = "0.8"
+ed25519-dalek = { version = "2.0.0-rc.2", features = ["rand_core"] }
 
 [build-dependencies]
 build-info-build = "0.0"
