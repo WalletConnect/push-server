@@ -2,6 +2,22 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.22.0 - 2023-04-20
+#### Bug Fixes
+- invalid workflow format - (c079248) - Harry Bairstow
+- invalid workflow format - (7b66fd8) - Harry Bairstow
+- invalid workflow format - (ab33159) - Harry Bairstow
+- Update ed25519-dalek to 2.0.0-rc.2 and resolve breaking changes (#111) - (0a5f45c) - WC
+#### Features
+- add terraform cloud support to actions (#117) - (964bfb7) - Harry Bairstow
+- more tests & tidy existing tests (#108) - (1ae2be4) - Harry Bairstow
+- migrate multitenant and analytics to features (#116) - (7f77003) - Harry Bairstow
+- Monitoring (#115) - (85b8c48) - Harry Bairstow
+#### Miscellaneous Chores
+- format terraform - (f8bf800) - Harry Bairstow
+- migrate state - (fea7edc) - Harry Bairstow
+- - -
+
 ## v0.21.0 - 2023-03-17
 #### Features
 - Analytics (#114) - (2e7c538) - Harry Bairstow
