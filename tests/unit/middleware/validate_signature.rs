@@ -1,14 +1,19 @@
 use {
     echo_server::middleware::validate_signature::signature_is_valid,
-    ed25519_dalek::{ed25519::signature::Signature, Keypair, PublicKey, Signer},
+    ed25519_dalek::{
+        ed25519::signature::Signature,
+        SigningKey,
+        VerifyingKey,
+        Signer
+    },
     rand::rngs::OsRng,
 };
 
 /// Setup for tests by creating a public key and returning a signature,
 /// timestamp and body
-fn setup() -> (PublicKey, String, String, String) {
+fn setup() -> (VerifyingKey, String, String, String) {
     let mut csprng = OsRng {};
-    let keypair: Keypair = Keypair::generate(&mut csprng);
+    let keypair: SigningKey = SigningKey::generate(&mut csprng);
 
     let body = "example_body";
     let timestamp = "1692442800";

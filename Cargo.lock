@@ -1330,6 +1330,7 @@ checksum = "798f704d128510932661a3489b08e3f4c934a01d61c5def59ae7b8e48f19665a"
 dependencies = [
  "curve25519-dalek 4.0.0-rc.2",
  "ed25519 2.2.1",
+ "rand_core 0.6.4",
  "serde",
  "sha2 0.10.6",
  "zeroize",
