@@ -11,7 +11,7 @@ use {
     },
     async_trait::async_trait,
     axum::{body, extract::FromRequest, http::Request},
-    ed25519_dalek::{Signature, Verifier, VerifyingKey},
+    ed25519_dalek::{Signature, VerifyingKey},
     tracing::span,
 };
 
@@ -91,5 +91,5 @@ pub async fn signature_is_valid(
     let sig_bytes = hex::decode(signature)?;
     let sig = Signature::try_from(sig_bytes.as_slice())?;
 
-    Ok(public_key.verify(sig_body.as_bytes(), &sig).is_ok())
+    Ok(public_key.verify_strict(sig_body.as_bytes(), &sig).is_ok())
 }
