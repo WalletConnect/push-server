@@ -1,6 +1,6 @@
 [package]
 name = "echo-server"
-version = "0.23.3"
+version = "0.23.4"
 edition = "2021"
 authors = [
     "Harry Bairstow <harry@walletconnect.com>"
