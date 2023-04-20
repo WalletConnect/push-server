@@ -27,9 +27,8 @@ pub struct Config {
     #[serde(default = "default_validate_signatures")]
     pub validate_signatures: bool,
     pub database_url: String,
-    pub tenant_database_url: Option<String>,
-    #[serde(default = "default_tenant_id")]
-    pub default_tenant_id: String,
+    #[cfg(multitenant)]
+    pub tenant_database_url: String,
     #[serde(default = "default_is_test", skip)]
     /// This is an internal flag to disable logging, cannot be defined by user
     pub is_test: bool,
@@ -43,48 +42,56 @@ pub struct Config {
     pub telemetry_prometheus_port: Option<u16>,
 
     // APNS
+    #[cfg(not(multitenant))]
     pub apns_type: Option<ApnsType>,
+    #[cfg(not(multitenant))]
     pub apns_topic: Option<String>,
 
+    #[cfg(not(multitenant))]
     pub apns_certificate: Option<String>,
+    #[cfg(not(multitenant))]
     pub apns_certificate_password: Option<String>,
 
+    #[cfg(not(multitenant))]
     pub apns_pkcs8_pem: Option<String>,
+    #[cfg(not(multitenant))]
     pub apns_key_id: Option<String>,
+    #[cfg(not(multitenant))]
     pub apns_team_id: Option<String>,
 
     // FCM
+    #[cfg(not(multitenant))]
     pub fcm_api_key: Option<String>,
 
     // Analytics
-    #[serde(default = "default_analytics_enabled")]
-    pub analytics_enabled: bool,
+    #[cfg(analytics)]
     pub analytics_s3_endpoint: Option<String>,
-    pub analytics_export_bucket: Option<String>,
+    #[cfg(analytics)]
+    pub analytics_export_bucket: String,
+    #[cfg(analytics)]
     pub analytics_geoip_db_bucket: Option<String>,
+    #[cfg(analytics)]
     pub analytics_geoip_db_key: Option<String>,
 }
 
 impl Config {
     /// Run validations against config and throw error
     pub fn is_valid(&self) -> error::Result<()> {
-        if self.tenant_database_url.is_none() && self.single_tenant_supported_providers().is_empty()
+        #[cfg(multitenant)]
         {
-            return Err(InvalidConfiguration(
-                "no tenant database url provided and no provider keys found".to_string(),
-            ));
-        }
+            if self.single_tenant_supported_providers().is_empty() {
+                return Err(InvalidConfiguration(
+                    "no tenant database url provided and no provider keys found".to_string(),
+                ));
+            }
 
-        if !self.single_tenant_supported_providers().is_empty()
-            && self.tenant_database_url.is_some()
-        {
-            return Err(InvalidConfiguration(
-                "tenant database and providers keys found in config".to_string(),
-            ));
-        }
+            if !self.single_tenant_supported_providers().is_empty() {
+                return Err(InvalidConfiguration(
+                    "tenant database and providers keys found in config".to_string(),
+                ));
+            }
 
-        if let Some(tenant_database_url) = &self.tenant_database_url {
-            if tenant_database_url == &self.database_url {
+            if &self.tenant_database_url == &self.database_url {
                 return Err(InvalidConfiguration(
                     "`TENANT_DATABASE_URL` is equal to `DATABASE_URL`, this is not allowed"
                         .to_string(),
@@ -102,6 +109,7 @@ impl Config {
         Ok(())
     }
 
+    #[cfg(not(multitenant))]
     pub fn single_tenant_supported_providers(&self) -> Vec<ProviderKind> {
         let mut supported = vec![];
 
@@ -116,13 +124,12 @@ impl Config {
 
         // Only available in debug/testing
         #[cfg(any(debug_assertions, test))]
-        if self.tenant_database_url.is_none() {
-            supported.push(ProviderKind::Noop);
-        }
+        supported.push(ProviderKind::Noop);
 
         supported
     }
 
+    #[cfg(not(multitenant))]
     pub fn get_apns_type(&self) -> Result<ApnsType, Error> {
         if let Some(apns_type) = &self.apns_type {
             // Check if APNS config is correct
@@ -183,20 +190,12 @@ fn default_relay_url() -> String {
     "https://relay.walletconnect.com".to_string()
 }
 
-fn default_tenant_id() -> String {
-    "0000-0000-0000-0000".to_string()
-}
-
 fn default_is_test() -> bool {
     false
 }
 
 fn default_cors_allowed_origins() -> Vec<String> {
     vec!["*".to_string()]
-}
-
-fn default_analytics_enabled() -> bool {
-    false
 }
 
 pub fn get_config() -> error::Result<Config> {

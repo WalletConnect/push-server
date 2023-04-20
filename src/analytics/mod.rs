@@ -101,40 +101,37 @@ impl PushAnalytics {
 }
 
 pub async fn initialize(config: &Config, echo_ip: IpAddr) -> Result<PushAnalytics> {
-    if let Some(export_bucket) = config.analytics_export_bucket.as_deref() {
-        let region_provider = RegionProviderChain::first_try(Region::new("eu-central-1"));
-        let shared_config = aws_config::from_env().region(region_provider).load().await;
+    let export_bucket = config.analytics_export_bucket.as_deref();
+    let region_provider = RegionProviderChain::first_try(Region::new("eu-central-1"));
+    let shared_config = aws_config::from_env().region(region_provider).load().await;
 
-        let aws_config = if let Some(s3_endpoint) = &config.analytics_s3_endpoint {
-            info!(%s3_endpoint, "initializing analytics with custom s3 endpoint");
+    let aws_config = if let Some(s3_endpoint) = &config.analytics_s3_endpoint {
+        info!(%s3_endpoint, "initializing analytics with custom s3 endpoint");
 
-            aws_sdk_s3::config::Builder::from(&shared_config)
-                .endpoint_url(s3_endpoint)
-                .build()
-        } else {
-            aws_sdk_s3::config::Builder::from(&shared_config).build()
-        };
-
-        let s3_client = S3Client::from_conf(aws_config);
-        let geoip_params = (
-            &config.analytics_geoip_db_bucket,
-            &config.analytics_geoip_db_key,
-        );
-
-        let geoip = if let (Some(bucket), Some(key)) = geoip_params {
-            info!(%bucket, %key, "initializing geoip database from aws s3");
-
-            GeoIpReader::from_aws_s3(&s3_client, bucket, key)
-                .await
-                .map_err(|e| Error::GeoIpReader(e.to_string()))?
-        } else {
-            info!("analytics geoip lookup is disabled");
-
-            GeoIpReader::empty()
-        };
-
-        PushAnalytics::with_aws_export(s3_client, export_bucket, echo_ip, geoip)
+        aws_sdk_s3::config::Builder::from(&shared_config)
+            .endpoint_url(s3_endpoint)
+            .build()
     } else {
-        Ok(PushAnalytics::with_noop_export())
-    }
+        aws_sdk_s3::config::Builder::from(&shared_config).build()
+    };
+
+    let s3_client = S3Client::from_conf(aws_config);
+    let geoip_params = (
+        &config.analytics_geoip_db_bucket,
+        &config.analytics_geoip_db_key,
+    );
+
+    let geoip = if let (Some(bucket), Some(key)) = geoip_params {
+        info!(%bucket, %key, "initializing geoip database from aws s3");
+
+        GeoIpReader::from_aws_s3(&s3_client, bucket, key)
+            .await
+            .map_err(|e| Error::GeoIpReader(e.to_string()))?
+    } else {
+        info!("analytics geoip lookup is disabled");
+
+        GeoIpReader::empty()
+    };
+
+    PushAnalytics::with_aws_export(s3_client, export_bucket, echo_ip, geoip)
 }

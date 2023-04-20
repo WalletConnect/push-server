@@ -7,6 +7,12 @@ authors = [
 ]
 build = "build.rs"
 
+[features]
+# Multi-tenancy mode
+multitenant = []
+# Enable analytics
+analytics = []
+
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 axum = { version = "0.6", features = ["json", "multipart", "tokio"] }

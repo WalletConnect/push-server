@@ -1,6 +1,7 @@
+#[cfg(analytics)]
+use {crate::analytics::message_info::MessageInfo, axum::ConnectInfo, std::net::SocketAddr};
 use {
     crate::{
-        analytics::client_info::ClientInfo,
         error::{
             Error::{EmptyField, InvalidAuthentication, ProviderNotAvailable},
             Result,
@@ -12,12 +13,12 @@ use {
         stores::client::Client,
     },
     axum::{
-        extract::{ConnectInfo, Json, Path, State as StateExtractor},
+        extract::{Json, Path, State as StateExtractor},
         http::HeaderMap,
     },
     relay_rpc::domain::ClientId,
     serde::{Deserialize, Serialize},
-    std::{net::SocketAddr, sync::Arc},
+    std::sync::Arc,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -29,7 +30,7 @@ pub struct RegisterBody {
 }
 
 pub async fn handler(
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    #[cfg(analytics)] ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Path(tenant_id): Path<String>,
     StateExtractor(state): StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
@@ -82,6 +83,7 @@ pub async fn handler(
     increment_counter!(state.metrics, registered_clients);
 
     // Analytics
+    #[cfg(analytics)]
     tokio::spawn(async move {
         if let Some(analytics) = &state.analytics {
             let (country, continent, region) = analytics

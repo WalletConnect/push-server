@@ -1,6 +1,7 @@
+#[cfg(analytics)]
+use {crate::analytics::message_info::MessageInfo, axum::ConnectInfo, std::net::SocketAddr};
 use {
     crate::{
-        analytics::message_info::MessageInfo,
         blob::ENCRYPTED_FLAG,
         error::{
             Error::{ClientNotFound, Store},
@@ -15,11 +16,11 @@ use {
         stores::StoreError,
     },
     axum::{
-        extract::{ConnectInfo, Json, Path, State as StateExtractor},
+        extract::{Json, Path, State as StateExtractor},
         http::StatusCode,
     },
     serde::{Deserialize, Serialize},
-    std::{net::SocketAddr, sync::Arc},
+    std::sync::Arc,
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
@@ -42,15 +43,15 @@ pub struct PushMessageBody {
 }
 
 pub async fn handler(
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    #[cfg(analytics)] ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Path((tenant_id, id)): Path<(String, String)>,
     StateExtractor(state): StateExtractor<Arc<AppState>>,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<Response> {
     increment_counter!(state.metrics, received_notifications);
 
-    let flags = body.payload.flags;
-    let encrypted = body.payload.is_encrypted();
+    #[cfg(analytics)]
+    let (flags, encrypted) = (body.payload.flags, body.payload.is_encrypted());
 
     let id = id
         .trim_start_matches(DECENTRALIZED_IDENTIFIER_PREFIX)
@@ -108,6 +109,7 @@ pub async fn handler(
         &notification.id
     );
 
+    #[cfg(analytics)]
     let topic: Option<Arc<str>> = body.payload.topic.as_ref().map(|t| t.clone().into());
 
     provider
@@ -124,10 +126,12 @@ pub async fn handler(
     match provider {
         Provider::Fcm(_) => increment_counter!(state.metrics, sent_fcm_notifications),
         Provider::Apns(_) => increment_counter!(state.metrics, sent_apns_notifications),
+        #[cfg(any(debug_assertions, test))]
         Provider::Noop(_) => {}
     }
 
     // Analytics
+    #[cfg(analytics)]
     tokio::spawn(async move {
         if let Some(analytics) = &state.analytics {
             let (country, continent, region) = analytics

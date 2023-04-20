@@ -9,8 +9,7 @@ use {
         providers::{
             apns::ApnsProvider,
             fcm::FcmProvider,
-            noop::NoopProvider,
-            Provider::{self, Apns, Fcm, Noop},
+            Provider::{self, Apns, Fcm},
             ProviderKind,
         },
     },
@@ -22,8 +21,13 @@ use {
     std::{io::BufReader, sync::Arc},
 };
 
+#[cfg(any(debug_assertions, test))]
+use crate::providers::{noop::NoopProvider, Provider::Noop};
+
 const APNS_TYPE_CERTIFICATE: &str = "certificate";
 const APNS_TYPE_TOKEN: &str = "token";
+
+pub const DEFAULT_TENANT_ID: &str = "0000-0000-0000-0000";
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, sqlx::Type)]
 #[sqlx(type_name = "apns_type")]
@@ -374,7 +378,7 @@ pub struct DefaultTenantStore(Tenant);
 impl DefaultTenantStore {
     pub fn new(config: Arc<Config>) -> Result<DefaultTenantStore> {
         Ok(DefaultTenantStore(Tenant {
-            id: config.default_tenant_id.clone(),
+            id: DEFAULT_TENANT_ID.to_string(),
             fcm_api_key: config.fcm_api_key.clone(),
             apns_type: config.apns_type,
             apns_topic: config.apns_topic.clone(),
