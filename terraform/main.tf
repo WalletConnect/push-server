@@ -71,7 +71,7 @@ module "database_cluster" {
 
   name           = "${local.environment}-${local.app_name}-database"
   engine         = "aurora-postgresql"
-  engine_version = "13.6"
+  engine_version = "13.8"
   engine_mode    = "provisioned"
   instance_class = "db.serverless"
   instances = {
@@ -105,7 +105,7 @@ module "tenant_database_cluster" {
 
   name           = "${local.environment}-${local.app_name}-tenant-database"
   engine         = "aurora-postgresql"
-  engine_version = "13.6"
+  engine_version = "13.8"
   engine_mode    = "provisioned"
   instance_class = "db.serverless"
   instances = {
