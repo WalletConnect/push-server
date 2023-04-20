@@ -127,8 +127,7 @@ jobs:
 
       - name: Set tag suffix
         if: contains(matrix.file, '.')
-        run: |
-          echo "::set-output name=suffix::${{ matrix.file | split: '.' | last }}"
+        run: echo "::set-output name=suffix::${{ matrix.file | split: '.' | last }}"
 
       # Setup Buildkit
       - name: Set up Docker Buildx
