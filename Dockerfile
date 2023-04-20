@@ -45,10 +45,10 @@ COPY --from=plan    /app/crates ./crates
 ADD                 https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-static /tini
 RUN                 chmod +x /tini
 
-RUN                 cargo chef cook --recipe-path recipe.json --release
+RUN                 cargo chef cook --recipe-path recipe.json --release --features multitenant,analytics
 # Build the local binary
 COPY                . .
-RUN                 cargo build --bin echo-server --release --all-features
+RUN                 cargo build --bin echo-server --release --features multitenant,analytics
 
 ################################################################################
 #
