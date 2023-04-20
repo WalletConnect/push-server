@@ -48,7 +48,7 @@ RUN                 chmod +x /tini
 RUN                 cargo chef cook --recipe-path recipe.json --release
 # Build the local binary
 COPY                . .
-RUN                 cargo build --bin echo-server --release --features multitenant,analytics
+RUN                 cargo build --bin echo-server --release --all-features
 
 ################################################################################
 #
