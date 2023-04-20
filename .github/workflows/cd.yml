@@ -39,6 +39,7 @@ jobs:
           version=$(echo "${{ steps.get.outputs.result }}" | sed 's/v//g')
           echo "version=$version" >> $GITHUB_OUTPUT
 
+
   deploy-infra-staging:
     runs-on: ubuntu-latest
     environment:
@@ -50,22 +51,51 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
-      - id: deploy-staging
-        uses: WalletConnect/actions/actions/deploy-terraform/@master
-        env:
-          TF_VAR_tenant_database_url: ${{ secrets.TENANT_DATABASE_URL }}
+      - name: Get Grafana details
+        id: grafana-get-details
+        uses: WalletConnect/actions/aws/grafana/get-details/@1.0.0
+
+      - name: Get Grafana key
+        id: grafana-get-key
+        uses: WalletConnect/actions/aws/grafana/get-key/@1.0.0
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-central-1
-          environment: staging
-          onepassword-api-key: ${{ secrets.OP_CONNECT_TOKEN }}
-          app-name: ${{ github.event.repository.name }}
+          key-prefix: ${{ github.event.repository.name }}
+          workspace-id: ${{ steps.grafana-get-details.outputs.workspace-id }}
+
+      - name: Init Terraform
+        id: tf-init
+        uses: WalletConnect/actions/terraform/init/@1.0.0
+        with:
+          environment: ${{ inputs.environment }}
+
+      - name: Deploy Terraform to Production
+        id: tf-apply
+        uses: WalletConnect/actions/terraform/apply/@1.0.0
+        env:
+          GRAFANA_AUTH: ${{ steps.grafana-get-key.outputs.key }}
+          TF_VAR_grafana_endpoint: ${{ steps.grafana-get-details.outputs.endpoint }}
+        with:
+          environment: "staging"
+
+      - name: Delete Grafana key
+        id: grafana-delete-key
+        uses: WalletConnect/actions/aws/grafana/delete-key/@1.0.0
+        if: ${{ success() || failure() || cancelled() }} # don't use always() since it creates non-cancellable jobs
+        with:
+          key-name: ${{ steps.grafana-get-key.outputs.key-name }}
+          workspace-id: ${{ steps.grafana-get-details.outputs.workspace-id }}
 
   validate_staging:
     needs: [deploy-infra-staging]
@@ -87,14 +117,48 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - id: deploy-staging
-        uses: WalletConnect/actions/actions/deploy-terraform/@master
-        env:
-          TF_VAR_tenant_database_url: ${{ secrets.TENANT_DATABASE_URL }}
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-central-1
-          environment: prod
-          onepassword-api-key: ${{ secrets.OP_CONNECT_TOKEN }}
-          app-name: ${{ github.event.repository.name }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Get Grafana details
+        id: grafana-get-details
+        uses: WalletConnect/actions/aws/grafana/get-details/@1.0.0
+
+      - name: Get Grafana key
+        id: grafana-get-key
+        uses: WalletConnect/actions/aws/grafana/get-key/@1.0.0
+        with:
+          key-prefix: ${{ github.event.repository.name }}
+          workspace-id: ${{ steps.grafana-get-details.outputs.workspace-id }}
+
+      - name: Init Terraform
+        id: tf-init
+        uses: WalletConnect/actions/terraform/init/@1.0.0
+        with:
+          environment: ${{ inputs.environment }}
+
+      - name: Deploy Terraform to Production
+        id: tf-apply
+        uses: WalletConnect/actions/terraform/apply/@1.0.0
+        env:
+          GRAFANA_AUTH: ${{ steps.grafana-get-key.outputs.key }}
+          TF_VAR_grafana_endpoint: ${{ steps.grafana-get-details.outputs.endpoint }}
+        with:
+          environment: "prod"
+
+      - name: Delete Grafana key
+        id: grafana-delete-key
+        uses: WalletConnect/actions/aws/grafana/delete-key/@1.0.0
+        if: ${{ success() || failure() || cancelled() }} # don't use always() since it creates non-cancellable jobs
+        with:
+          key-name: ${{ steps.grafana-get-key.outputs.key-name }}
+          workspace-id: ${{ steps.grafana-get-details.outputs.workspace-id }}
