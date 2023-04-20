@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.23.1 - 2023-04-20
+#### Bug Fixes
+- images don't copy crates - (92871a2) - Harry Bairstow
+- - -
+
 ## v0.23.0 - 2023-04-20
 #### Bug Fixes
 - image suffixes - (22850b3) - Harry Bairstow
