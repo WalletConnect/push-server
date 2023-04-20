@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.23.0 - 2023-04-20
+#### Bug Fixes
+- image suffixes - (22850b3) - Harry Bairstow
+- image suffixes - (084c8ac) - Harry Bairstow
+#### Features
+- proper suffix for images - (c049e3c) - Harry Bairstow
+- - -
+
 ## v0.22.0 - 2023-04-20
 #### Bug Fixes
 - invalid workflow format - (c079248) - Harry Bairstow
