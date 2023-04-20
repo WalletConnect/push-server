@@ -1238,7 +1238,7 @@ checksum = "03d8c417d7a8cb362e0c37e5d815f5eb7c37f79ff93707329d5a194e42e54ca0"
 
 [[package]]
 name = "echo-server"
-version = "0.23.0"
+version = "0.23.1"
 dependencies = [
  "a2",
  "async-trait",
