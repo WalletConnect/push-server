@@ -18,6 +18,7 @@ FROM                chef AS plan
 WORKDIR             /app
 COPY                Cargo.lock Cargo.toml ./
 COPY                src ./src
+COPY                crates ./crates
 RUN                 cargo chef prepare --recipe-path recipe.json
 
 ################################################################################
