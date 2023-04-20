@@ -3,7 +3,7 @@ terraform {
   required_version = "~> 1.0"
 
   backend "remote" {
-    hostname = "app.terraform.io"
+    hostname     = "app.terraform.io"
     organization = "wallet-connect"
     workspaces {
       prefix = "echo-server-"
