@@ -39,6 +39,7 @@ RUN                 apt-get update \
 WORKDIR             /app
 # Cache dependencies
 COPY --from=plan    /app/recipe.json recipe.json
+COPY --from=plan    /app/crates ./crates
 
 # Install init to be used in runtime container
 ADD                 https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-static /tini
