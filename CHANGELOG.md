@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.23.5 - 2023-04-20
+#### Bug Fixes
+- docker features in cook command - (c1eb66e) - Harry Bairstow
+#### Miscellaneous Chores
+- **(docker)** features in cook command - (dca5e72) - Harry Bairstow
+- merge - (3c743ef) - Harry Bairstow
+- - -
+
 ## v0.23.4 - 2023-04-20
 #### Bug Fixes
 - Dockerfile - (332c1c1) - Harry Bairstow
