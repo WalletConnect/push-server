@@ -5,10 +5,14 @@ use {
             Error,
             Error::{InvalidConfiguration, NoApnsConfigured},
         },
-        providers::ProviderKind,
         stores::tenant::ApnsType,
     },
     serde::Deserialize,
+};
+
+#[cfg(not(feature = "multitenant"))]
+use crate::{
+    providers::ProviderKind,
 };
 
 #[derive(Deserialize, Debug, Clone, Eq, PartialEq)]
@@ -27,7 +31,7 @@ pub struct Config {
     #[serde(default = "default_validate_signatures")]
     pub validate_signatures: bool,
     pub database_url: String,
-    #[cfg(multitenant)]
+    #[cfg(feature = "multitenant")]
     pub tenant_database_url: String,
     #[serde(default = "default_is_test", skip)]
     /// This is an internal flag to disable logging, cannot be defined by user
@@ -42,55 +46,43 @@ pub struct Config {
     pub telemetry_prometheus_port: Option<u16>,
 
     // APNS
-    #[cfg(not(multitenant))]
+    #[cfg(not(feature = "multitenant"))]
     pub apns_type: Option<ApnsType>,
-    #[cfg(not(multitenant))]
+    #[cfg(not(feature = "multitenant"))]
     pub apns_topic: Option<String>,
 
-    #[cfg(not(multitenant))]
+    #[cfg(not(feature = "multitenant"))]
     pub apns_certificate: Option<String>,
-    #[cfg(not(multitenant))]
+    #[cfg(not(feature = "multitenant"))]
     pub apns_certificate_password: Option<String>,
 
-    #[cfg(not(multitenant))]
+    #[cfg(not(feature = "multitenant"))]
     pub apns_pkcs8_pem: Option<String>,
-    #[cfg(not(multitenant))]
+    #[cfg(not(feature = "multitenant"))]
     pub apns_key_id: Option<String>,
-    #[cfg(not(multitenant))]
+    #[cfg(not(feature = "multitenant"))]
     pub apns_team_id: Option<String>,
 
     // FCM
-    #[cfg(not(multitenant))]
+    #[cfg(not(feature = "multitenant"))]
     pub fcm_api_key: Option<String>,
 
     // Analytics
-    #[cfg(analytics)]
+    #[cfg(feature = "analytics")]
     pub analytics_s3_endpoint: Option<String>,
-    #[cfg(analytics)]
+    #[cfg(feature = "analytics")]
     pub analytics_export_bucket: String,
-    #[cfg(analytics)]
+    #[cfg(feature = "analytics")]
     pub analytics_geoip_db_bucket: Option<String>,
-    #[cfg(analytics)]
+    #[cfg(feature = "analytics")]
     pub analytics_geoip_db_key: Option<String>,
 }
 
 impl Config {
     /// Run validations against config and throw error
     pub fn is_valid(&self) -> error::Result<()> {
-        #[cfg(multitenant)]
+        #[cfg(feature = "multitenant")]
         {
-            if self.single_tenant_supported_providers().is_empty() {
-                return Err(InvalidConfiguration(
-                    "no tenant database url provided and no provider keys found".to_string(),
-                ));
-            }
-
-            if !self.single_tenant_supported_providers().is_empty() {
-                return Err(InvalidConfiguration(
-                    "tenant database and providers keys found in config".to_string(),
-                ));
-            }
-
             if &self.tenant_database_url == &self.database_url {
                 return Err(InvalidConfiguration(
                     "`TENANT_DATABASE_URL` is equal to `DATABASE_URL`, this is not allowed"
@@ -109,7 +101,7 @@ impl Config {
         Ok(())
     }
 
-    #[cfg(not(multitenant))]
+    #[cfg(not(feature = "multitenant"))]
     pub fn single_tenant_supported_providers(&self) -> Vec<ProviderKind> {
         let mut supported = vec![];
 
@@ -129,8 +121,8 @@ impl Config {
         supported
     }
 
-    #[cfg(not(multitenant))]
     pub fn get_apns_type(&self) -> Result<ApnsType, Error> {
+        #[cfg(not(feature = "multitenant"))]
         if let Some(apns_type) = &self.apns_type {
             // Check if APNS config is correct
             let _ = match apns_type {

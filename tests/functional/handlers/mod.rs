@@ -3,7 +3,7 @@ use {crate::context::SingleTenantServerContext, test_context::test_context};
 
 mod push;
 mod registration;
-#[cfg(multitenancy)]
+#[cfg(feature = "multitenant")]
 mod tenancy;
 
 #[test_context(SingleTenantServerContext)]

@@ -9,7 +9,7 @@ use {
     },
 };
 
-#[cfg(multitenant)]
+#[cfg(feature = "multitenant")]
 use crate::context::TENANT_DATABASE_URL;
 
 pub struct SingleTenantEchoServer {
@@ -39,7 +39,7 @@ impl SingleTenantEchoServer {
             relay_url: "https://relay.walletconnect.com".into(),
             validate_signatures: false,
             database_url: "postgres://postgres:root@localhost:5432/postgres".into(),
-            #[cfg(multitenant)]
+            #[cfg(feature = "multitenant")]
             tenant_database_url: None,
             otel_exporter_otlp_endpoint: None,
             telemetry_prometheus_port: Some(get_random_port()),
@@ -49,13 +49,13 @@ impl SingleTenantEchoServer {
             apns_key_id: None,
             apns_topic: None,
             fcm_api_key: None,
-            #[cfg(analytics)]
+            #[cfg(feature = "analytics")]
             analytics_s3_endpoint: None,
-            #[cfg(analytics)]
+            #[cfg(feature = "analytics")]
             analytics_export_bucket: "export-bucket",
-            #[cfg(analytics)]
+            #[cfg(feature = "analytics")]
             analytics_geoip_db_bucket: None,
-            #[cfg(analytics)]
+            #[cfg(feature = "analytics")]
             analytics_geoip_db_key: None,
             is_test: true,
             cors_allowed_origins: vec!["*".to_string()],
@@ -94,7 +94,7 @@ impl MultiTenantEchoServer {
             relay_url: "https://relay.walletconnect.com".into(),
             validate_signatures: false,
             database_url: DATABASE_URL.into(),
-            #[cfg(multitenant)]
+            #[cfg(feature = "multitenant")]
             tenant_database_url: Some(TENANT_DATABASE_URL.into()),
             otel_exporter_otlp_endpoint: None,
             telemetry_prometheus_port: Some(get_random_port()),
@@ -104,13 +104,13 @@ impl MultiTenantEchoServer {
             apns_key_id: None,
             apns_topic: None,
             fcm_api_key: None,
-            #[cfg(analytics)]
+            #[cfg(feature = "analytics")]
             analytics_s3_endpoint: None,
-            #[cfg(analytics)]
+            #[cfg(feature = "analytics")]
             analytics_export_bucket: None,
-            #[cfg(analytics)]
+            #[cfg(feature = "analytics")]
             analytics_geoip_db_bucket: None,
-            #[cfg(analytics)]
+            #[cfg(feature = "analytics")]
             analytics_geoip_db_key: None,
             is_test: true,
             cors_allowed_origins: vec!["*".to_string()],

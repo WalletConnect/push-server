@@ -13,10 +13,10 @@ use {
     hyper::HeaderMap,
     std::sync::Arc,
 };
-#[cfg(analytics)]
+#[cfg(feature = "analytics")]
 use {axum::ConnectInfo, std::net::SocketAddr};
 
-#[cfg(multitenant)]
+#[cfg(feature = "multitenant")]
 use crate::error::Error::MissingTenantId;
 
 pub async fn delete_handler(
@@ -24,10 +24,10 @@ pub async fn delete_handler(
     state: StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
 ) -> Result<Response> {
-    #[cfg(multitenant)]
+    #[cfg(feature = "multitenant")]
     return Err(MissingTenantId);
 
-    #[cfg(all(not(multitenant)))]
+    #[cfg(all(not(feature = "multitenant")))]
     crate::handlers::delete_client::handler(
         Path((DEFAULT_TENANT_ID.to_string(), id)),
         state,
@@ -37,15 +37,15 @@ pub async fn delete_handler(
 }
 
 pub async fn push_handler(
-    #[cfg(analytics)] addr: ConnectInfo<SocketAddr>,
+    #[cfg(feature = "analytics")] addr: ConnectInfo<SocketAddr>,
     Path(id): Path<String>,
     state: StateExtractor<Arc<AppState>>,
     valid_sig: RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<Response> {
-    #[cfg(multitenant)]
+    #[cfg(feature = "multitenant")]
     return Err(MissingTenantId);
 
-    #[cfg(all(not(multitenant), analytics))]
+    #[cfg(all(not(feature = "multitenant"), analytics))]
     return crate::handlers::push_message::handler(
         addr,
         Path((DEFAULT_TENANT_ID.to_string(), id)),
@@ -54,7 +54,7 @@ pub async fn push_handler(
     )
     .await;
 
-    #[cfg(all(not(multitenant), not(analytics)))]
+    #[cfg(all(not(feature = "multitenant"), not(feature = "analytics")))]
     return crate::handlers::push_message::handler(
         Path((DEFAULT_TENANT_ID.to_string(), id)),
         state,
@@ -64,15 +64,15 @@ pub async fn push_handler(
 }
 
 pub async fn register_handler(
-    #[cfg(analytics)] addr: ConnectInfo<SocketAddr>,
+    #[cfg(feature = "analytics")] addr: ConnectInfo<SocketAddr>,
     state: StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
     body: Json<RegisterBody>,
 ) -> Result<Response> {
-    #[cfg(multitenant)]
+    #[cfg(feature = "multitenant")]
     return Err(MissingTenantId);
 
-    #[cfg(all(not(multitenant), analytics))]
+    #[cfg(all(not(feature = "multitenant"), analytics))]
     return crate::handlers::register_client::handler(
         addr,
         Path(DEFAULT_TENANT_ID.to_string()),
@@ -82,7 +82,7 @@ pub async fn register_handler(
     )
     .await;
 
-    #[cfg(all(not(multitenant), not(analytics)))]
+    #[cfg(all(not(feature = "multitenant"), not(feature = "analytics")))]
     return crate::handlers::register_client::handler(
         Path(DEFAULT_TENANT_ID.to_string()),
         state,

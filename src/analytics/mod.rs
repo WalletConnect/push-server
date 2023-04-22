@@ -101,7 +101,7 @@ impl PushAnalytics {
 }
 
 pub async fn initialize(config: &Config, echo_ip: IpAddr) -> Result<PushAnalytics> {
-    let export_bucket = config.analytics_export_bucket.as_deref();
+    let export_bucket = config.analytics_export_bucket.clone();
     let region_provider = RegionProviderChain::first_try(Region::new("eu-central-1"));
     let shared_config = aws_config::from_env().region(region_provider).load().await;
 
@@ -133,5 +133,5 @@ pub async fn initialize(config: &Config, echo_ip: IpAddr) -> Result<PushAnalytic
         GeoIpReader::empty()
     };
 
-    PushAnalytics::with_aws_export(s3_client, export_bucket, echo_ip, geoip)
+    PushAnalytics::with_aws_export(s3_client, &export_bucket, echo_ip, geoip)
 }

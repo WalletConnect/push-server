@@ -1,6 +1,5 @@
 use {
     crate::{
-        config::Config,
         error::{
             self,
             Error::{InvalidTenantId, ProviderNotAvailable},
@@ -18,7 +17,13 @@ use {
     chrono::{DateTime, Utc},
     serde::{Deserialize, Serialize},
     sqlx::{Executor, PgPool},
-    std::{io::BufReader, sync::Arc},
+    std::{io::BufReader, },
+};
+
+#[cfg(not(feature = "multitenant"))]
+use {
+    sync::Arc,
+    config::Config,
 };
 
 #[cfg(any(debug_assertions, test))]
@@ -373,8 +378,10 @@ impl TenantStore for PgPool {
     }
 }
 
+#[cfg(not(feature = "multitenant"))]
 pub struct DefaultTenantStore(Tenant);
 
+#[cfg(not(feature = "multitenant"))]
 impl DefaultTenantStore {
     pub fn new(config: Arc<Config>) -> Result<DefaultTenantStore> {
         Ok(DefaultTenantStore(Tenant {
@@ -394,6 +401,7 @@ impl DefaultTenantStore {
 }
 
 #[async_trait]
+#[cfg(not(feature = "multitenant"))]
 impl TenantStore for DefaultTenantStore {
     async fn get_tenant(&self, _id: &str) -> Result<Tenant> {
         Ok(self.0.clone())

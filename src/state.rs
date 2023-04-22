@@ -10,7 +10,7 @@ use {
     std::{net::IpAddr, sync::Arc},
 };
 
-#[cfg(analytics)]
+#[cfg(feature = "analytics")]
 use crate::analytics::PushAnalytics;
 
 pub type ClientStoreArc = Arc<dyn ClientStore + Send + Sync + 'static>;
@@ -33,7 +33,7 @@ pub struct AppState {
     pub config: Config,
     pub build_info: BuildInfo,
     pub metrics: Option<Metrics>,
-    #[cfg(analytics)]
+    #[cfg(feature = "analytics")]
     pub analytics: Option<PushAnalytics>,
     pub client_store: ClientStoreArc,
     pub notification_store: NotificationStoreArc,
@@ -53,10 +53,10 @@ pub fn new_state(
 ) -> crate::error::Result<AppState> {
     let build_info: &BuildInfo = build_info();
 
-    #[cfg(multitenant)]
+    #[cfg(feature = "multitenant")]
     let is_multitenant = true;
 
-    #[cfg(not(multitenant))]
+    #[cfg(not(feature = "multitenant"))]
     let is_multitenant = false;
 
     let relay_url = config.relay_url.to_string();
@@ -71,7 +71,7 @@ pub fn new_state(
         config,
         build_info: build_info.clone(),
         metrics: None,
-        #[cfg(analytics)]
+        #[cfg(feature = "analytics")]
         analytics: None,
         client_store,
         notification_store,

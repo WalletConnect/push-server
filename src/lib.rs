@@ -1,5 +1,5 @@
 use {
-    crate::{state::TenantStoreArc, stores::tenant::DefaultTenantStore},
+    crate::{state::TenantStoreArc},
     axum::{
         routing::{delete, get, post},
         Router,
@@ -16,13 +16,15 @@ use {
     tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
     tracing::{info, log::LevelFilter, warn, Level},
 };
-#[cfg(multitenant)]
+#[cfg(feature = "multitenant")]
 use {
-    http::Method,
+    hyper::http::Method,
     tower_http::cors::{AllowOrigin, CorsLayer},
 };
+#[cfg(not(feature = "multitenant"))]
+use crate::stores::tenant::DefaultTenantStore;
 
-#[cfg(analytics)]
+#[cfg(feature = "analytics")]
 pub mod analytics;
 pub mod blob;
 pub mod config;
@@ -56,10 +58,10 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
     // to the root dir (the directory containing `Cargo.toml`).
     sqlx::migrate!("./migrations").run(&store).await?;
 
-    #[cfg(not(multitenant))]
+    #[cfg(not(feature = "multitenant"))]
     let tenant_store: TenantStoreArc = Arc::new(DefaultTenantStore::new(Arc::new(config.clone()))?);
 
-    #[cfg(multitenant)]
+    #[cfg(feature = "multitenant")]
     let tenant_store: TenantStoreArc = {
         let tenant_pg_options = PgConnectOptions::from_str(&config.tenant_database_url)?
             .log_statements(LevelFilter::Debug)
@@ -87,7 +89,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         tenant_store,
     )?;
 
-    #[cfg(analytics)]
+    #[cfg(feature = "analytics")]
     {
         if let Some(ip) = state.public_ip {
             let analytics = analytics::initialize(&state.config, ip).await?;
@@ -95,10 +97,10 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         }
     }
 
-    #[cfg(multitenant)]
+    #[cfg(feature = "multitenant")]
     let supported_providers_string = "multi-tenant".to_string();
 
-    #[cfg(not(multitenant))]
+    #[cfg(not(feature = "multitenant"))]
     let supported_providers_string = state
         .config
         .single_tenant_supported_providers()
@@ -153,7 +155,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             ),
     );
 
-    #[cfg(multitenant)]
+    #[cfg(feature = "multitenant")]
     let app = {
         let tenancy_routes = Router::new()
             .route("/", post(handlers::create_tenant::handler))
@@ -196,7 +198,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             .with_state(state_arc.clone())
     };
 
-    #[cfg(not(multitenant))]
+    #[cfg(not(feature = "multitenant"))]
     let app = Router::new()
         .route("/health", get(handlers::health::handler))
         .route(
