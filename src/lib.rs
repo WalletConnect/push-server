@@ -1,5 +1,9 @@
 use {
-    crate::state::TenantStoreArc,
+    crate::{
+        log::prelude::*,
+        request_id::{GenericRequestId, X_REQUEST_ID},
+        state::TenantStoreArc,
+    },
     axum::{
         routing::{delete, get, post},
         Router,
@@ -13,7 +17,10 @@ use {
     std::{net::SocketAddr, str::FromStr, sync::Arc, time::Duration},
     tokio::{select, sync::broadcast},
     tower::ServiceBuilder,
-    tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
+    tower_http::{
+        request_id::{PropagateRequestIdLayer, SetRequestIdLayer},
+        trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
+    },
     tracing::{info, log::LevelFilter, warn, Level},
 };
 #[cfg(feature = "multitenant")]
@@ -38,6 +45,7 @@ pub mod middleware;
 pub mod networking;
 pub mod providers;
 pub mod relay;
+pub mod request_id;
 pub mod state;
 pub mod stores;
 
@@ -145,16 +153,24 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
 
     let state_arc = Arc::new(state);
 
-    let global_middleware = ServiceBuilder::new().layer(
-        TraceLayer::new_for_http()
-            .make_span_with(DefaultMakeSpan::new().include_headers(true))
-            .on_request(DefaultOnRequest::new().level(Level::INFO))
-            .on_response(
-                DefaultOnResponse::new()
-                    .level(Level::INFO)
-                    .include_headers(true),
-            ),
-    );
+    let global_middleware = ServiceBuilder::new()
+        // set `x-request-id` header on all requests
+        .layer(SetRequestIdLayer::new(
+            X_REQUEST_ID.clone(),
+            GenericRequestId::default(),
+        ))
+        // propagate `x-request-id` headers from request to response
+        .layer(PropagateRequestIdLayer::new(X_REQUEST_ID.clone()))
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(DefaultMakeSpan::new().include_headers(true))
+                .on_request(DefaultOnRequest::new().level(Level::DEBUG))
+                .on_response(
+                    DefaultOnResponse::new()
+                        .level(Level::DEBUG)
+                        .include_headers(true),
+                ),
+        );
 
     #[cfg(feature = "multitenant")]
     let app = {
@@ -243,6 +259,8 @@ providers: [{}]
         );
 
         println!("{header}");
+    } else {
+        debug!("Online and listening at http://0.0.0.0:{}", port.clone())
     }
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
