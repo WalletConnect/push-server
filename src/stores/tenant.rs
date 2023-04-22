@@ -1,3 +1,5 @@
+#[cfg(not(feature = "multitenant"))]
+use {crate::config::Config, std::sync::Arc};
 use {
     crate::{
         error::{
@@ -19,8 +21,6 @@ use {
     sqlx::{Executor, PgPool},
     std::io::BufReader,
 };
-#[cfg(not(feature = "multitenant"))]
-use {crate::config::Config, std::sync::Arc};
 
 #[cfg(any(debug_assertions, test))]
 use crate::providers::{noop::NoopProvider, Provider::Noop};
