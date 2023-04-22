@@ -1,13 +1,13 @@
 use {
-    crate::context::MultiTenantServerContext,
+    crate::context::EchoServerContext,
     echo_server::handlers::create_tenant::TenantRegisterBody,
     random_string::generate,
     test_context::test_context,
 };
 
-#[test_context(MultiTenantServerContext)]
+#[test_context(EchoServerContext)]
 #[tokio::test]
-async fn tenant(ctx: &mut MultiTenantServerContext) {
+async fn tenant(ctx: &mut EchoServerContext) {
     let charset = "1234567890";
     let random_tenant_id = generate(12, charset);
     let payload = TenantRegisterBody {
