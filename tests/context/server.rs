@@ -39,28 +39,36 @@ impl SingleTenantEchoServer {
             relay_url: "https://relay.walletconnect.com".into(),
             validate_signatures: false,
             database_url: "postgres://postgres:root@localhost:5432/postgres".into(),
-            #[cfg(feature = "multitenant")]
-            tenant_database_url: None,
             otel_exporter_otlp_endpoint: None,
             telemetry_prometheus_port: Some(get_random_port()),
+            #[cfg(not(feature = "multitenant"))]
+            apns_type: None,
+            #[cfg(not(feature = "multitenant"))]
             apns_certificate: None,
+            #[cfg(not(feature = "multitenant"))]
             apns_certificate_password: None,
+            #[cfg(not(feature = "multitenant"))]
             apns_pkcs8_pem: None,
+            #[cfg(not(feature = "multitenant"))]
+            apns_team_id: None,
+            #[cfg(not(feature = "multitenant"))]
             apns_key_id: None,
+            #[cfg(not(feature = "multitenant"))]
             apns_topic: None,
+            #[cfg(not(feature = "multitenant"))]
             fcm_api_key: None,
             #[cfg(feature = "analytics")]
             analytics_s3_endpoint: None,
             #[cfg(feature = "analytics")]
-            analytics_export_bucket: "export-bucket",
+            analytics_export_bucket: "export-bucket".to_string(),
             #[cfg(feature = "analytics")]
             analytics_geoip_db_bucket: None,
             #[cfg(feature = "analytics")]
             analytics_geoip_db_key: None,
             is_test: true,
             cors_allowed_origins: vec!["*".to_string()],
-            apns_type: None,
-            apns_team_id: None,
+            #[cfg(feature = "multitenant")]
+            tenant_database_url: "".to_string(),
         };
         let (public_addr, signal, is_shutdown) = start_server(config).await;
         Self {
@@ -95,27 +103,35 @@ impl MultiTenantEchoServer {
             validate_signatures: false,
             database_url: DATABASE_URL.into(),
             #[cfg(feature = "multitenant")]
-            tenant_database_url: Some(TENANT_DATABASE_URL.into()),
+            tenant_database_url: TENANT_DATABASE_URL.into(),
             otel_exporter_otlp_endpoint: None,
             telemetry_prometheus_port: Some(get_random_port()),
+            #[cfg(not(feature = "multitenant"))]
+            apns_type: None,
+            #[cfg(not(feature = "multitenant"))]
             apns_certificate: None,
+            #[cfg(not(feature = "multitenant"))]
             apns_certificate_password: None,
+            #[cfg(not(feature = "multitenant"))]
             apns_pkcs8_pem: None,
+            #[cfg(not(feature = "multitenant"))]
+            apns_team_id: None,
+            #[cfg(not(feature = "multitenant"))]
             apns_key_id: None,
+            #[cfg(not(feature = "multitenant"))]
             apns_topic: None,
+            #[cfg(not(feature = "multitenant"))]
             fcm_api_key: None,
             #[cfg(feature = "analytics")]
             analytics_s3_endpoint: None,
             #[cfg(feature = "analytics")]
-            analytics_export_bucket: None,
+            analytics_export_bucket: "example-bucket".to_string(),
             #[cfg(feature = "analytics")]
             analytics_geoip_db_bucket: None,
             #[cfg(feature = "analytics")]
             analytics_geoip_db_key: None,
             is_test: true,
             cors_allowed_origins: vec!["*".to_string()],
-            apns_type: None,
-            apns_team_id: None,
         };
         let (public_addr, signal, is_shutdown) = start_server(config).await;
 
