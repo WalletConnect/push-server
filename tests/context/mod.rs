@@ -1,5 +1,5 @@
 use {
-    self::server::{MultiTenantEchoServer, SingleTenantEchoServer},
+    self::server::{EchoServer},
     async_trait::async_trait,
     echo_server::state::{ClientStoreArc, NotificationStoreArc, TenantStoreArc},
     sqlx::{Pool, Postgres},
@@ -13,12 +13,8 @@ mod stores;
 pub const DATABASE_URL: &str = "postgres://postgres:root@localhost:5432/postgres";
 pub const TENANT_DATABASE_URL: &str = "postgres://postgres:root@localhost:5433/postgres";
 
-pub struct SingleTenantServerContext {
-    pub server: SingleTenantEchoServer,
-}
-
-pub struct MultiTenantServerContext {
-    pub server: MultiTenantEchoServer,
+pub struct EchoServerContext {
+    pub server: EchoServer,
 }
 
 pub struct StoreContext {
@@ -31,21 +27,9 @@ pub struct StoreContext {
 }
 
 #[async_trait]
-impl AsyncTestContext for SingleTenantServerContext {
+impl AsyncTestContext for EchoServerContext {
     async fn setup() -> Self {
-        let server = SingleTenantEchoServer::start().await;
-        Self { server }
-    }
-
-    async fn teardown(mut self) {
-        self.server.shutdown().await;
-    }
-}
-
-#[async_trait]
-impl AsyncTestContext for MultiTenantServerContext {
-    async fn setup() -> Self {
-        let server = MultiTenantEchoServer::start().await;
+        let server = EchoServer::start().await;
         Self { server }
     }
 

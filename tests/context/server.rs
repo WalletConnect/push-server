@@ -12,13 +12,7 @@ use {
 #[cfg(feature = "multitenant")]
 use crate::context::TENANT_DATABASE_URL;
 
-pub struct SingleTenantEchoServer {
-    pub public_addr: SocketAddr,
-    shutdown_signal: tokio::sync::broadcast::Sender<()>,
-    is_shutdown: bool,
-}
-
-pub struct MultiTenantEchoServer {
+pub struct EchoServer {
     pub public_addr: SocketAddr,
     shutdown_signal: tokio::sync::broadcast::Sender<()>,
     is_shutdown: bool,
@@ -27,70 +21,7 @@ pub struct MultiTenantEchoServer {
 #[derive(Debug, thiserror::Error)]
 pub enum Error {}
 
-impl SingleTenantEchoServer {
-    pub async fn start() -> Self {
-        let public_port = get_random_port();
-        let config: Config = Config {
-            port: public_port,
-            public_url: format!("http://127.0.0.1:{public_port}"),
-            log_level: "info,echo-server=info".into(),
-            log_level_otel: "info,echo-server=trace".into(),
-            disable_header: true,
-            relay_url: "https://relay.walletconnect.com".into(),
-            validate_signatures: false,
-            database_url: "postgres://postgres:root@localhost:5432/postgres".into(),
-            otel_exporter_otlp_endpoint: None,
-            telemetry_prometheus_port: Some(get_random_port()),
-            #[cfg(not(feature = "multitenant"))]
-            apns_type: None,
-            #[cfg(not(feature = "multitenant"))]
-            apns_certificate: None,
-            #[cfg(not(feature = "multitenant"))]
-            apns_certificate_password: None,
-            #[cfg(not(feature = "multitenant"))]
-            apns_pkcs8_pem: None,
-            #[cfg(not(feature = "multitenant"))]
-            apns_team_id: None,
-            #[cfg(not(feature = "multitenant"))]
-            apns_key_id: None,
-            #[cfg(not(feature = "multitenant"))]
-            apns_topic: None,
-            #[cfg(not(feature = "multitenant"))]
-            fcm_api_key: None,
-            #[cfg(feature = "analytics")]
-            analytics_s3_endpoint: None,
-            #[cfg(feature = "analytics")]
-            analytics_export_bucket: "export-bucket".to_string(),
-            #[cfg(feature = "analytics")]
-            analytics_geoip_db_bucket: None,
-            #[cfg(feature = "analytics")]
-            analytics_geoip_db_key: None,
-            is_test: true,
-            cors_allowed_origins: vec!["*".to_string()],
-            #[cfg(feature = "multitenant")]
-            tenant_database_url: "".to_string(),
-        };
-        let (public_addr, signal, is_shutdown) = start_server(config).await;
-        Self {
-            public_addr,
-            shutdown_signal: signal,
-            is_shutdown,
-        }
-    }
-
-    pub async fn shutdown(&mut self) {
-        if self.is_shutdown {
-            return;
-        }
-        self.is_shutdown = true;
-        let _ = self.shutdown_signal.send(());
-        wait_for_server_to_shutdown(self.public_addr.port())
-            .await
-            .unwrap();
-    }
-}
-
-impl MultiTenantEchoServer {
+impl EchoServer {
     pub async fn start() -> Self {
         let public_port = get_random_port();
         let config: Config = Config {

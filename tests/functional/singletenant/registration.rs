@@ -1,5 +1,5 @@
 use {
-    crate::context::SingleTenantServerContext,
+    crate::context::EchoServerContext,
     echo_server::handlers::register_client::RegisterBody,
     relay_rpc::{
         auth::{
@@ -11,9 +11,9 @@ use {
     test_context::test_context,
 };
 
-#[test_context(SingleTenantServerContext)]
+#[test_context(EchoServerContext)]
 #[tokio::test]
-async fn test_registration(ctx: &mut SingleTenantServerContext) {
+async fn test_registration(ctx: &mut EchoServerContext) {
     let mut rng = StdRng::from_entropy();
     let keypair = Keypair::generate(&mut rng);
 
@@ -69,9 +69,9 @@ async fn test_registration(ctx: &mut SingleTenantServerContext) {
     );
 }
 
-#[test_context(SingleTenantServerContext)]
+#[test_context(EchoServerContext)]
 #[tokio::test]
-async fn test_deregistration(ctx: &mut SingleTenantServerContext) {
+async fn test_deregistration(ctx: &mut EchoServerContext) {
     let mut rng = StdRng::from_entropy();
     let keypair = Keypair::generate(&mut rng);
 

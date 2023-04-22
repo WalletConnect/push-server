@@ -1,5 +1,5 @@
 use {
-    crate::context::SingleTenantServerContext,
+    crate::context::EchoServerContext,
     echo_server::handlers::{
         push_message::{MessagePayload, PushMessageBody},
         register_client::RegisterBody,
@@ -15,9 +15,9 @@ use {
     uuid::Uuid,
 };
 
-#[test_context(SingleTenantServerContext)]
+#[test_context(EchoServerContext)]
 #[tokio::test]
-async fn test_push(ctx: &mut SingleTenantServerContext) {
+async fn test_push(ctx: &mut EchoServerContext) {
     let mut rng = StdRng::from_entropy();
     let keypair = Keypair::generate(&mut rng);
 
