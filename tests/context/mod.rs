@@ -1,5 +1,5 @@
 use {
-    self::server::{EchoServer},
+    self::server::EchoServer,
     async_trait::async_trait,
     echo_server::state::{ClientStoreArc, NotificationStoreArc, TenantStoreArc},
     sqlx::{Pool, Postgres},
