@@ -1,5 +1,5 @@
 use {
-    crate::{state::TenantStoreArc},
+    crate::state::TenantStoreArc,
     axum::{
         routing::{delete, get, post},
         Router,
@@ -21,6 +21,7 @@ use {
     hyper::http::Method,
     tower_http::cors::{AllowOrigin, CorsLayer},
 };
+
 #[cfg(not(feature = "multitenant"))]
 use crate::stores::tenant::DefaultTenantStore;
 

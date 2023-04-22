@@ -17,14 +17,10 @@ use {
     chrono::{DateTime, Utc},
     serde::{Deserialize, Serialize},
     sqlx::{Executor, PgPool},
-    std::{io::BufReader, },
+    std::io::BufReader,
 };
-
 #[cfg(not(feature = "multitenant"))]
-use {
-    sync::Arc,
-    config::Config,
-};
+use {config::Config, sync::Arc};
 
 #[cfg(any(debug_assertions, test))]
 use crate::providers::{noop::NoopProvider, Provider::Noop};

@@ -1,5 +1,9 @@
 #[cfg(feature = "analytics")]
-use {crate::analytics::message_info::MessageInfo, axum::extract::ConnectInfo, std::net::SocketAddr};
+use {
+    crate::analytics::message_info::MessageInfo,
+    axum::extract::ConnectInfo,
+    std::net::SocketAddr,
+};
 use {
     crate::{
         blob::ENCRYPTED_FLAG,

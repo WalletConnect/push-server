@@ -11,9 +11,7 @@ use {
 };
 
 #[cfg(not(feature = "multitenant"))]
-use crate::{
-    providers::ProviderKind,
-};
+use crate::providers::ProviderKind;
 
 #[derive(Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct Config {

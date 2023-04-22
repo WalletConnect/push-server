@@ -1,5 +1,5 @@
 #[cfg(feature = "analytics")]
-use {axum::extract::ConnectInfo, std::net::SocketAddr, crate::analytics::client_info::ClientInfo};
+use {crate::analytics::client_info::ClientInfo, axum::extract::ConnectInfo, std::net::SocketAddr};
 use {
     crate::{
         error::{
