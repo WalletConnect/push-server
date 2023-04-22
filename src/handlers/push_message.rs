@@ -1,5 +1,9 @@
-#[cfg(analytics)]
-use {crate::analytics::message_info::MessageInfo, axum::ConnectInfo, std::net::SocketAddr};
+#[cfg(feature = "analytics")]
+use {
+    crate::analytics::message_info::MessageInfo,
+    axum::extract::ConnectInfo,
+    std::net::SocketAddr,
+};
 use {
     crate::{
         blob::ENCRYPTED_FLAG,
@@ -43,14 +47,14 @@ pub struct PushMessageBody {
 }
 
 pub async fn handler(
-    #[cfg(analytics)] ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    #[cfg(feature = "analytics")] ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Path((tenant_id, id)): Path<(String, String)>,
     StateExtractor(state): StateExtractor<Arc<AppState>>,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<Response> {
     increment_counter!(state.metrics, received_notifications);
 
-    #[cfg(analytics)]
+    #[cfg(feature = "analytics")]
     let (flags, encrypted) = (body.payload.flags, body.payload.is_encrypted());
 
     let id = id
@@ -109,7 +113,7 @@ pub async fn handler(
         &notification.id
     );
 
-    #[cfg(analytics)]
+    #[cfg(feature = "analytics")]
     let topic: Option<Arc<str>> = body.payload.topic.as_ref().map(|t| t.clone().into());
 
     provider
@@ -131,7 +135,7 @@ pub async fn handler(
     }
 
     // Analytics
-    #[cfg(analytics)]
+    #[cfg(feature = "analytics")]
     tokio::spawn(async move {
         if let Some(analytics) = &state.analytics {
             let (country, continent, region) = analytics

@@ -8,10 +8,11 @@ pub async fn handler(ExtractState(state): ExtractState<Arc<AppState>>) -> impl I
     (
         StatusCode::OK,
         format!(
-            "OK, echo-server v{}\nmultitenant: {}\ntelemetry: {}",
+            "OK, echo-server v{}\nmultitenant: {}\ntelemetry: {}\nfeatures: {}",
             state.build_info.crate_info.version,
             state.is_multitenant(),
-            state.metrics.is_some()
+            state.metrics.is_some(),
+            state.build_info.crate_info.enabled_features.join(",")
         ),
     )
 }

@@ -1,5 +1,5 @@
-#[cfg(analytics)]
-use {crate::analytics::message_info::MessageInfo, axum::ConnectInfo, std::net::SocketAddr};
+#[cfg(feature = "analytics")]
+use {crate::analytics::client_info::ClientInfo, axum::extract::ConnectInfo, std::net::SocketAddr};
 use {
     crate::{
         error::{
@@ -30,7 +30,7 @@ pub struct RegisterBody {
 }
 
 pub async fn handler(
-    #[cfg(analytics)] ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    #[cfg(feature = "analytics")] ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Path(tenant_id): Path<String>,
     StateExtractor(state): StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
@@ -83,7 +83,7 @@ pub async fn handler(
     increment_counter!(state.metrics, registered_clients);
 
     // Analytics
-    #[cfg(analytics)]
+    #[cfg(feature = "analytics")]
     tokio::spawn(async move {
         if let Some(analytics) = &state.analytics {
             let (country, continent, region) = analytics

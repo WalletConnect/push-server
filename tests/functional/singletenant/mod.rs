@@ -1,14 +1,12 @@
 /// Tests against the handlers
-use {crate::context::SingleTenantServerContext, test_context::test_context};
+use {crate::context::EchoServerContext, test_context::test_context};
 
 mod push;
 mod registration;
-#[cfg(multitenancy)]
-mod tenancy;
 
-#[test_context(SingleTenantServerContext)]
+#[test_context(EchoServerContext)]
 #[tokio::test]
-async fn test_health(ctx: &mut SingleTenantServerContext) {
+async fn test_health(ctx: &mut EchoServerContext) {
     let body = reqwest::get(format!("http://{}/health", ctx.server.public_addr))
         .await
         .expect("Failed to call /health")
