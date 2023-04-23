@@ -159,8 +159,6 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             X_REQUEST_ID.clone(),
             GenericRequestId::default(),
         ))
-        // propagate `x-request-id` headers from request to response
-        .layer(PropagateRequestIdLayer::new(X_REQUEST_ID.clone()))
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(DefaultMakeSpan::new().include_headers(true))
@@ -170,7 +168,8 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
                         .level(Level::DEBUG)
                         .include_headers(true),
                 ),
-        );
+        )
+        .layer(PropagateRequestIdLayer::new(X_REQUEST_ID.clone()));
 
     #[cfg(feature = "multitenant")]
     let app = {

@@ -9,6 +9,7 @@ use {
         handlers::{authenticate_client, Response, DECENTRALIZED_IDENTIFIER_PREFIX},
         increment_counter,
         log::prelude::*,
+        request_id::get_req_id,
         state::AppState,
         stores::client::Client,
     },
@@ -36,17 +37,36 @@ pub async fn handler(
     headers: HeaderMap,
     Json(body): Json<RegisterBody>,
 ) -> Result<Response> {
+    let request_id = get_req_id(&headers);
+
     if !authenticate_client(headers, &state.config.public_url, |client_id| {
         if let Some(client_id) = client_id {
-            info!(
-                "client_id: {:?}, requested to register: {:?}",
-                client_id, body.client_id
+            debug!(
+                %request_id,
+                %tenant_id,
+                requested_client_id = %body.client_id,
+                token_client_id = %client_id,
+                "client_id authentication checking"
             );
             client_id == body.client_id
         } else {
+            debug!(
+                %request_id,
+                %tenant_id,
+                requested_client_id = %body.client_id,
+                token_client_id = "unknown",
+                "client_id verification failed: missing client_id"
+            );
             false
         }
     })? {
+        debug!(
+            %request_id,
+            %tenant_id,
+            requested_client_id = %body.client_id,
+            token_client_id = "unknown",
+            "client_id verification failed: invalid client_id"
+        );
         return Err(InvalidAuthentication);
     }
 
@@ -76,8 +96,8 @@ pub async fn handler(
         .await?;
 
     info!(
-        "client registered for tenant ({}) using {}",
-        tenant_id, body.push_type
+        %request_id,
+        %tenant_id, %client_id, %push_type, "registered client"
     );
 
     increment_counter!(state.metrics, registered_clients);
@@ -92,6 +112,14 @@ pub async fn handler(
                 .map_or((None, None, None), |geo| {
                     (geo.country, geo.continent, geo.region)
                 });
+
+            debug!(
+                %request_id,
+                %tenant_id,
+                %client_id,
+                ip = %addr.ip(),
+                "loaded geo data"
+            );
 
             let msg = ClientInfo {
                 region: region.map(|r| Arc::from(r.join(", "))),

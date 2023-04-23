@@ -5,11 +5,10 @@ use {
     },
     axum::{
         extract::State as ExtractState,
-        http::{Request, StatusCode},
+        http::{HeaderMap, StatusCode},
         response::IntoResponse,
         Json,
     },
-    hyper::Body,
     serde::Serialize,
     std::sync::Arc,
 };
@@ -31,7 +30,7 @@ struct HealthResponse {
 
 pub async fn handler(
     ExtractState(state): ExtractState<Arc<AppState>>,
-    req: Request<Body>,
+    headers: HeaderMap,
 ) -> impl IntoResponse {
     (
         StatusCode::OK,
@@ -43,7 +42,7 @@ pub async fn handler(
                 metrics: state.metrics.is_some(),
             },
             features_enabled: state.build_info.crate_info.enabled_features.clone(),
-            request_id: get_req_id(&req),
+            request_id: get_req_id(&headers),
         }),
     )
 }

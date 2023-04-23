@@ -10,6 +10,7 @@ use {
         providers::{apns::ApnsProvider, fcm::FcmProvider},
     },
     async_trait::async_trait,
+    std::fmt::{Display, Formatter},
     tracing::span,
 };
 
@@ -51,6 +52,12 @@ impl ProviderKind {
             #[cfg(any(debug_assertions, test))]
             Self::Noop => PROVIDER_NOOP,
         }
+    }
+}
+
+impl Display for ProviderKind {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
     }
 }
 

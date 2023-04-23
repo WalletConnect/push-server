@@ -1,5 +1,5 @@
 use {
-    axum::http::{HeaderName, HeaderValue, Request},
+    axum::http::{HeaderMap, HeaderName, HeaderValue, Request},
     tower_http::request_id::{MakeRequestId, RequestId},
     uuid::Uuid,
 };
@@ -18,9 +18,8 @@ impl MakeRequestId for GenericRequestId {
     }
 }
 
-pub fn get_req_id<B>(req: &Request<B>) -> String {
+pub fn get_req_id(req: &HeaderMap) -> String {
     req
-        .headers()
         .get(X_REQUEST_ID)
         // Unknown Missing
         .unwrap_or(&HeaderValue::from_static("unknown-m"))

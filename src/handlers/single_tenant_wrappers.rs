@@ -40,6 +40,7 @@ pub async fn push_handler(
     #[cfg(feature = "analytics")] addr: ConnectInfo<SocketAddr>,
     Path(id): Path<String>,
     state: StateExtractor<Arc<AppState>>,
+    headers: HeaderMap,
     valid_sig: RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<Response> {
     #[cfg(feature = "multitenant")]
@@ -58,6 +59,7 @@ pub async fn push_handler(
     return crate::handlers::push_message::handler(
         Path((DEFAULT_TENANT_ID.to_string(), id)),
         state,
+        headers,
         valid_sig,
     )
     .await;

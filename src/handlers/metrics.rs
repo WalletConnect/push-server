@@ -1,16 +1,18 @@
 use {
-    crate::{error::Result, request_id::get_req_id, state::AppState},
-    axum::{extract::State, http::StatusCode},
-    hyper::{Body, Request},
+    crate::{error::Result, log::prelude::*, request_id::get_req_id, state::AppState},
+    axum::{
+        extract::State,
+        http::{HeaderMap, StatusCode},
+    },
     std::sync::Arc,
     tracing::debug,
 };
 
 pub async fn handler(
     State(state): State<Arc<AppState>>,
-    req: Request<Body>,
+    headers: HeaderMap,
 ) -> Result<(StatusCode, String)> {
-    let req_id = get_req_id(&req);
+    let req_id = get_req_id(&headers);
 
     if let Some(metrics) = &state.metrics {
         let exported = metrics.export()?;
@@ -20,7 +22,7 @@ pub async fn handler(
         Ok((StatusCode::OK, exported))
     } else {
         // No Metrics!
-        warning!(
+        warn!(
             request_id = req_id,
             "request for metrics while they are disabled"
         );
