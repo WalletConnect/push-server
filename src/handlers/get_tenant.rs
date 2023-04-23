@@ -1,7 +1,15 @@
 use {
-    crate::{error::Error, providers::ProviderKind, state::AppState, stores::tenant::ApnsType},
+    crate::{
+        error::Error,
+        log::prelude::*,
+        providers::ProviderKind,
+        request_id::get_req_id,
+        state::AppState,
+        stores::tenant::ApnsType,
+    },
     axum::{
         extract::{Path, State},
+        http::HeaderMap,
         Json,
     },
     serde::Serialize,
@@ -19,7 +27,9 @@ pub struct GetTenantResponse {
 pub async fn handler(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
+    headers: HeaderMap,
 ) -> Result<Json<GetTenantResponse>, Error> {
+    let request_id = get_req_id(&headers);
     let tenant = state.tenant_store.get_tenant(&id).await?;
 
     let providers = tenant.providers();
@@ -35,6 +45,12 @@ pub async fn handler(
         res.apns_topic = tenant.apns_topic;
         res.apns_type = tenant.apns_type;
     }
+
+    info!(
+        %request_id,
+        tenant_id = %id,
+        "requested tenant"
+    );
 
     Ok(Json(res))
 }

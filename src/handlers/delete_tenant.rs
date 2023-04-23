@@ -1,7 +1,14 @@
 use {
-    crate::{decrement_counter, error::Error, state::AppState},
+    crate::{
+        decrement_counter,
+        error::Error,
+        log::prelude::*,
+        request_id::get_req_id,
+        state::AppState,
+    },
     axum::{
         extract::{Path, State},
+        http::HeaderMap,
         Json,
     },
     serde::Serialize,
@@ -16,10 +23,19 @@ pub struct DeleteTenantResponse {
 pub async fn handler(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
+    headers: HeaderMap,
 ) -> Result<Json<DeleteTenantResponse>, Error> {
+    let req_id = get_req_id(&headers);
+
     state.tenant_store.delete_tenant(&id).await?;
 
     decrement_counter!(state.metrics, registered_tenants);
+
+    info!(
+        request_id = %req_id,
+        tenant_id = %id,
+        "deleted tenant"
+    );
 
     Ok(Json(DeleteTenantResponse { success: true }))
 }

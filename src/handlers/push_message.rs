@@ -177,7 +177,7 @@ pub async fn handler(
             debug!(
                 %request_id,
                 %tenant_id,
-                %client_id,
+                client_id = %id,
                 ip = %addr.ip(),
                 "loaded geo data"
             );
