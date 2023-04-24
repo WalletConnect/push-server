@@ -18,20 +18,73 @@ concurrency:
   cancel-in-progress: ${{ github.event.type == 'PullRequest' }}
 
 jobs:
-  fmt:
+  check-fmt:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - id: fmt
-        uses: WalletConnect/actions/actions/fmt-check-terraform/@master
 
-  plan:
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Init Terraform
+        id: tf-init
+        uses: WalletConnect/actions/terraform/init/@1.0.0
+        with:
+          environment: staging
+
+      - name: Check Terraform Formatting
+        id: tf-fmt
+        uses: WalletConnect/actions/terraform/check-fmt/@1.0.0
+
+  get-version:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.clean_version.outputs.version }}
+    steps:
+      #TODO: Authenticate to avoid API rate limit exceeded errors.
+      - name: Get latest release for image version
+        id: latest_release
+        uses: pozetroninc/github-action-get-latest-release@master
+        with:
+          repository: ${{ github.repository }}
+          excludes: draft
+
+      - name: Get release value
+        id: get_value
+        uses: actions/github-script@v6
+        env:
+          LATEST_TAG: ${{ steps.latest_release.outputs.release }}
+        with:
+          result-encoding: string
+          script: |
+            if (context.eventName == "release") {
+              return context.payload.release.tag_name
+            } else {
+              return process.env.LATEST_TAG
+            }
+
+      - name: Clean version
+        id: clean_version
+        run: |
+          version=$(echo "${{ steps.get_value.outputs.result }}" | sed 's/v//g')
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+  plan-staging:
+    if: github.event_name == 'pull_request'
+    needs:
+      - get-version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      pull-requests: 'write'
     environment:
-      name: staging
-      url: https://staging.relay.walletconnect.com/health
+      name: infra/staging
+      url: https://staging.history.walletconnect.com/health
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -56,24 +109,25 @@ jobs:
         id: grafana-get-key
         uses: WalletConnect/actions/aws/grafana/get-key/@1.0.0
         with:
-          key-prefix: ${{ github.event.repository.name }}
+          key-prefix: ${{ github.event.repository.name }}-staging
           workspace-id: ${{ steps.grafana-get-details.outputs.workspace-id }}
 
       - name: Init Terraform
         id: tf-init
         uses: WalletConnect/actions/terraform/init/@1.0.0
         with:
-          environment: "prod"
+          environment: staging
 
-      - name: Deploy Terraform to Production
-        id: plan
+      - name: Run Terraform Plan
+        id: tf-plan-staging
         uses: WalletConnect/actions/terraform/plan/@1.0.0
         env:
           GRAFANA_AUTH: ${{ steps.grafana-get-key.outputs.key }}
           TF_VAR_grafana_endpoint: ${{ steps.grafana-get-details.outputs.endpoint }}
           TF_VAR_cloud_api_key: ${{ secrets.CLOUD_API_KEY }}
         with:
-          environment: "prod"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          environment: staging
 
       - name: Delete Grafana key
         id: grafana-delete-key
@@ -82,35 +136,3 @@ jobs:
         with:
           key-name: ${{ steps.grafana-get-key.outputs.key-name }}
           workspace-id: ${{ steps.grafana-get-details.outputs.workspace-id }}
-
-      - uses: actions/upload-artifact@v3
-        with:
-          name: plan.tfplan
-          path: ${{ steps.plan.outputs.plan-file }}
-      - uses: actions/upload-artifact@v3
-        with:
-          name: plan.txt
-          path: ${{ steps.plan.outputs.output-file }}
-      - name: Add Plan to PR
-        uses: actions/github-script@v6
-        env:
-          PLAN: "terraform\n${{ steps.plan.outputs.plan }}"
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const output = `<details><summary>Show Plan</summary>
-
-            \`\`\`\n
-            ${process.env.PLAN}
-            \`\`\`
-
-            </details>
-
-            *Action: \`${{ github.event_name }}\`*`;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
