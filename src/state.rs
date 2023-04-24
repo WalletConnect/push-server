@@ -1,3 +1,5 @@
+#[cfg(feature = "cloud")]
+use cerberus::registry::RegistryHttpClient;
 use {
     crate::{
         config::Config,
@@ -5,15 +7,15 @@ use {
         networking,
         relay::RelayClient,
         stores::{client::ClientStore, notification::NotificationStore, tenant::TenantStore},
-        supabase::GoTrueClient,
     },
     build_info::BuildInfo,
-    cerberus::registry::RegistryHttpClient,
     std::{net::IpAddr, sync::Arc},
 };
 
 #[cfg(feature = "analytics")]
 use crate::analytics::PushAnalytics;
+#[cfg(feature = "multitenant")]
+use crate::supabase::GoTrueClient;
 
 pub type ClientStoreArc = Arc<dyn ClientStore + Send + Sync + 'static>;
 pub type NotificationStoreArc = Arc<dyn NotificationStore + Send + Sync + 'static>;

@@ -181,18 +181,16 @@ pub async fn validate_tenant_request(
         } else {
             Err(InvalidAuthentication)
         }
+    } else if let Some(project_fetched) = registry_client.project_data(&project_id).await? {
+        validate_tenant_request(
+            registry_client,
+            gotrue_client,
+            headers,
+            project_id,
+            Some(project_fetched),
+        )
+        .await
     } else {
-        if let Some(project_fetched) = registry_client.project_data(&project_id).await? {
-            validate_tenant_request(
-                registry_client,
-                gotrue_client,
-                headers,
-                project_id,
-                Some(project_fetched),
-            )
-            .await
-        } else {
-            Err(InvalidProjectId(project_id.to_string()))
-        }
+        Err(InvalidProjectId(project_id.to_string()))
     }
 }
