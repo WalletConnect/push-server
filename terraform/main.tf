@@ -169,6 +169,9 @@ module "ecs" {
   analytics_geoip_db_bucket_name = local.geoip_db_bucket_name
   analytics_geoip_db_key         = var.geoip_db_key
 
+  cloud_api_key = var.cloud_api_key
+  cloud_api_url = "https://registry.walletconnect.com/"
+
   autoscaling_max_capacity = local.environment == "prod" ? 4 : 1
   autoscaling_min_capacity = local.environment == "prod" ? 2 : 1
   desired_count            = local.environment == "prod" ? 2 : 1

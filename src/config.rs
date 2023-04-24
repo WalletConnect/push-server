@@ -74,6 +74,12 @@ pub struct Config {
     pub analytics_geoip_db_bucket: Option<String>,
     #[cfg(feature = "analytics")]
     pub analytics_geoip_db_key: Option<String>,
+
+    // Cloud
+    #[cfg(feature = "cloud")]
+    pub cloud_api_url: String,
+    #[cfg(feature = "cloud")]
+    pub cloud_api_key: String,
 }
 
 impl Config {

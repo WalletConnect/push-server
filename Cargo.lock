@@ -877,6 +877,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "cerberus"
+version = "0.2.0"
+source = "git+https://github.com/WalletConnect/cerberus.git?tag=v0.4.0#ea9c41e5a1a678ce2c047a12b8c4d2f7de5f7d45"
+dependencies = [
+ "async-trait",
+ "once_cell",
+ "regex",
+ "reqwest",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1249,6 +1262,7 @@ dependencies = [
  "base64 0.21.0",
  "build-info",
  "build-info-build",
+ "cerberus",
  "chrono",
  "data-encoding",
  "dotenv",
