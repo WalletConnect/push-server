@@ -43,7 +43,7 @@ jobs:
         id: plan
         uses: WalletConnect/actions/actions/plan-terraform/@master
         env:
-          TF_VAR_tenant_database_url: ${{ secrets.TENANT_DATABASE_URL }}
+          TF_VAR_cloud_api_key: ${{ secrets.CLOUD_API_KEY }}
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
