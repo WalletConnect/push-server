@@ -5,6 +5,7 @@ use {
         networking,
         relay::RelayClient,
         stores::{client::ClientStore, notification::NotificationStore, tenant::TenantStore},
+        supabase::GoTrueClient,
     },
     build_info::BuildInfo,
     cerberus::registry::RegistryHttpClient,
@@ -44,6 +45,8 @@ pub struct AppState {
     pub relay_client: RelayClient,
     #[cfg(feature = "cloud")]
     pub registry_client: RegistryHttpClient,
+    #[cfg(feature = "multitenant")]
+    pub gotrue_client: GoTrueClient,
     pub public_ip: Option<IpAddr>,
     is_multitenant: bool,
 }
@@ -69,6 +72,9 @@ pub fn new_state(
     #[cfg(feature = "cloud")]
     let (cloud_url, cloud_api_key) = (config.cloud_api_url.clone(), config.cloud_api_key.clone());
 
+    #[cfg(feature = "multitenant")]
+    let jwt_secret = config.jwt_secret.clone();
+
     let public_ip = match networking::find_public_ip_addr() {
         Ok(ip) => Some(ip),
         // Note: Should we pass this error back up?
@@ -87,6 +93,8 @@ pub fn new_state(
         relay_client: RelayClient::new(relay_url),
         #[cfg(feature = "cloud")]
         registry_client: RegistryHttpClient::new(cloud_url, cloud_api_key.as_str())?,
+        #[cfg(feature = "multitenant")]
+        gotrue_client: GoTrueClient::new(jwt_secret),
         public_ip,
         is_multitenant,
     })

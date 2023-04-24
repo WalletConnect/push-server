@@ -1,6 +1,20 @@
 use {
-    crate::error::Result,
-    axum::{http::HeaderMap, response::IntoResponse, Json},
+    crate::{
+        error::{
+            Error::{InvalidAuthentication, InvalidProjectId},
+            Result,
+        },
+        supabase::GoTrueClient,
+    },
+    axum::{
+        http::{header::AUTHORIZATION, HeaderMap},
+        response::IntoResponse,
+        Json,
+    },
+    cerberus::{
+        project::ProjectData,
+        registry::{RegistryClient, RegistryHttpClient},
+    },
     hyper::StatusCode,
     relay_rpc::{auth::Jwt, domain::ClientId},
     serde_json::{json, Value},
@@ -132,5 +146,54 @@ impl From<Response> for Json<Value> {
 impl Default for Response {
     fn default() -> Self {
         Response::new_success(StatusCode::OK)
+    }
+}
+
+pub async fn validate_tenant_request(
+    registry_client: &RegistryHttpClient,
+    gotrue_client: &GoTrueClient,
+    headers: &HeaderMap,
+    project: Option<ProjectData>,
+) -> Result<bool> {
+    if let Some(project) = project {
+        if let Some(token_value) = headers.get(AUTHORIZATION) {
+            Ok(
+                match gotrue_client.is_valid_token(token_value.to_str()?.to_string()) {
+                    Ok(token_data) => {
+                        #[cfg(feature = "cloud")]
+                        let valid_token = {
+                            if let Some(project_data) = project {
+                                Ok(token_data.claims.sub == project_data.creator)
+                            } else {
+                                Err(InvalidAuthentication)
+                            }
+                        }?;
+
+                        #[cfg(not(feature = "cloud"))]
+                        let valid_token = true;
+
+                        if !valid_token {
+                            Err(InvalidAuthentication)
+                        } else {
+                            Ok(true)
+                        }
+                    }
+                    Err(_) => Err(InvalidAuthentication),
+                }?,
+            )
+        } else {
+            Err(InvalidAuthentication)
+        }
+    } else {
+        if let Some(project_fetched) = registry_client.project_data(&project_id).await? {
+            validate_tenant_request(
+                registry_client,
+                gotrue_client,
+                headers,
+                Some(project_fetched),
+            )
+        } else {
+            Err(InvalidProjectId(project_id.to_string()))
+        }
     }
 }

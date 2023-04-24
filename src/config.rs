@@ -29,8 +29,6 @@ pub struct Config {
     #[serde(default = "default_validate_signatures")]
     pub validate_signatures: bool,
     pub database_url: String,
-    #[cfg(feature = "multitenant")]
-    pub tenant_database_url: String,
     #[serde(default = "default_is_test", skip)]
     /// This is an internal flag to disable logging, cannot be defined by user
     pub is_test: bool,
@@ -64,6 +62,12 @@ pub struct Config {
     // FCM
     #[cfg(not(feature = "multitenant"))]
     pub fcm_api_key: Option<String>,
+
+    // Multi-tenancy
+    #[cfg(feature = "multitenant")]
+    pub tenant_database_url: String,
+    #[cfg(feature = "multitenant")]
+    pub jwt_secret: String,
 
     // Analytics
     #[cfg(feature = "analytics")]

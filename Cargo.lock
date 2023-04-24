@@ -879,7 +879,7 @@ dependencies = [
 [[package]]
 name = "cerberus"
 version = "0.2.0"
-source = "git+https://github.com/WalletConnect/cerberus.git?tag=v0.4.0#ea9c41e5a1a678ce2c047a12b8c4d2f7de5f7d45"
+source = "git+https://github.com/WalletConnect/cerberus.git?branch=feat/harry/creator#6fa2fe36a9d4122c4df0fda9d2284a95ba3f82b3"
 dependencies = [
  "async-trait",
  "once_cell",
@@ -1251,7 +1251,7 @@ checksum = "03d8c417d7a8cb362e0c37e5d815f5eb7c37f79ff93707329d5a194e42e54ca0"
 
 [[package]]
 name = "echo-server"
-version = "0.23.6"
+version = "0.24.0"
 dependencies = [
  "a2",
  "async-trait",

@@ -120,3 +120,8 @@ variable "cloud_api_key" {
 variable "cloud_api_url" {
   type = string
 }
+
+variable "jwt_secret" {
+  type      = string
+  sensitive = true
+}

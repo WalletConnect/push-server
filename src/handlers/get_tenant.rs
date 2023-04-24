@@ -1,6 +1,7 @@
 use {
     crate::{
         error::Error,
+        handlers::validate_tenant_request,
         log::prelude::*,
         providers::ProviderKind,
         request_id::get_req_id,
@@ -30,6 +31,9 @@ pub async fn handler(
     headers: HeaderMap,
 ) -> Result<Json<GetTenantResponse>, Error> {
     let request_id = get_req_id(&headers);
+
+    validate_tenant_request(&state.registry_client, &state.gotrue_client, &headers, None)?;
+
     let tenant = state.tenant_store.get_tenant(&id).await?;
 
     let providers = tenant.providers();
