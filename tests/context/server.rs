@@ -35,6 +35,8 @@ impl EchoServer {
             database_url: DATABASE_URL.into(),
             #[cfg(feature = "multitenant")]
             tenant_database_url: TENANT_DATABASE_URL.into(),
+            #[cfg(feature = "multitenant")]
+            jwt_secret: "n/a".to_string(),
             otel_exporter_otlp_endpoint: None,
             telemetry_prometheus_port: Some(get_random_port()),
             #[cfg(not(feature = "multitenant"))]
