@@ -16,12 +16,13 @@ use {
         log::prelude::*,
         middleware::validate_signature::RequireValidSignature,
         providers::{Provider, PushProvider},
+        request_id::get_req_id,
         state::AppState,
         stores::StoreError,
     },
     axum::{
         extract::{Json, Path, State as StateExtractor},
-        http::StatusCode,
+        http::{HeaderMap, StatusCode},
     },
     serde::{Deserialize, Serialize},
     std::sync::Arc,
@@ -50,8 +51,11 @@ pub async fn handler(
     #[cfg(feature = "analytics")] ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Path((tenant_id, id)): Path<(String, String)>,
     StateExtractor(state): StateExtractor<Arc<AppState>>,
+    headers: HeaderMap,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<Response> {
+    let request_id = get_req_id(&headers);
+
     increment_counter!(state.metrics, received_notifications);
 
     #[cfg(feature = "analytics")]
@@ -66,16 +70,26 @@ pub async fn handler(
         Err(StoreError::NotFound(_, _)) => Err(ClientNotFound),
         Err(e) => Err(Store(e)),
     }?;
-    info!("fetched client ({}) for tenant ({})", &id, &tenant_id);
 
-    if let Ok(_notification) = state
+    debug!(
+        %request_id,
+        %tenant_id,
+        client_id = %id,
+        "fetched client to send notification"
+    );
+
+    if let Ok(notification) = state
         .notification_store
         .get_notification(&body.id, &tenant_id)
         .await
     {
-        info!(
-            "notification ({}) already received for client ({})",
-            body.id, id
+        warn!(
+            %request_id,
+            %tenant_id,
+            client_id = %id,
+            notification_id = %notification.id,
+            last_recieved_at = %notification.last_received_at,
+            "notification has already been received"
         );
         return Ok(Response::new_success(StatusCode::OK));
     }
@@ -85,32 +99,44 @@ pub async fn handler(
         .create_or_update_notification(&body.id, &tenant_id, &id, &body.payload)
         .await?;
     info!(
-        "stored notification ({}) for tenant ({})",
-        &notification.id, &tenant_id
+        %request_id,
+        %tenant_id,
+        client_id = %id,
+        notification_id = %notification.id,
+        "stored notification",
     );
 
     // TODO make better by only ignoring if previously executed successfully
     // If notification received more than once then discard
     if notification.previous_payloads.len() > 1 {
-        info!(
-            "notification ({}) already received for client ({})",
-            body.id, id
+        warn!(
+            %request_id,
+            %tenant_id,
+            client_id = %id,
+            notification_id = %notification.id,
+            last_recieved_at = %notification.last_received_at,
+            "notification has already been processed"
         );
         return Ok(Response::new_success(StatusCode::OK));
     }
 
     let tenant = state.tenant_store.get_tenant(&tenant_id).await?;
-    info!(
-        "fetched tenant ({}) during notification ({})",
-        &tenant_id, &notification.id
+    debug!(
+        %request_id,
+        %tenant_id,
+        client_id = %id,
+        notification_id = %notification.id,
+        "fetched tenant"
     );
 
     let mut provider = tenant.provider(&client.push_type)?;
-    info!(
-        "fetched provider ({}) for tenant ({}) during notification ({})",
-        client.push_type.as_str(),
-        &tenant_id,
-        &notification.id
+    debug!(
+        %request_id,
+        %tenant_id,
+        client_id = %id,
+        notification_id = %notification.id,
+        push_type = client.push_type.as_str(),
+        "fetched provider"
     );
 
     #[cfg(feature = "analytics")]
@@ -119,11 +145,14 @@ pub async fn handler(
     provider
         .send_notification(client.token, body.payload)
         .await?;
+
     info!(
-        "sent notification to provider ({}) for tenant ({}) during notification ({})",
-        client.push_type.as_str(),
-        &tenant_id,
-        &notification.id
+        %request_id,
+        %tenant_id,
+        client_id = %id,
+        notification_id = %notification.id,
+        push_type = client.push_type.as_str(),
+        "sent notification"
     );
 
     // Provider specific metrics
@@ -144,6 +173,14 @@ pub async fn handler(
                 .map_or((None, None, None), |geo| {
                     (geo.country, geo.continent, geo.region)
                 });
+
+            debug!(
+                %request_id,
+                %tenant_id,
+                client_id = %id,
+                ip = %addr.ip(),
+                "loaded geo data"
+            );
 
             let msg = MessageInfo {
                 region: region.map(|r| Arc::from(r.join(", "))),

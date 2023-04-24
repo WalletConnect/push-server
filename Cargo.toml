@@ -20,7 +20,7 @@ analytics = []
 tokio = { version = "1", features = ["full"] }
 axum = { version = "0.6", features = ["json", "multipart", "tokio"] }
 tower = "0.4"
-tower-http = { version = "0.3", features = ["trace", "cors"] }
+tower-http = { version = "0.4", features = ["trace", "cors", "request-id", "propagate-header"] }
 hyper = "0.14"
 
 # Database
