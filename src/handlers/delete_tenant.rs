@@ -1,7 +1,7 @@
 use {
     crate::{
         decrement_counter,
-        error::{Error, Error::InvalidAuthentication},
+        error::Error,
         handlers::validate_tenant_request,
         log::prelude::*,
         request_id::get_req_id,
@@ -9,10 +9,9 @@ use {
     },
     axum::{
         extract::{Path, State},
-        http::{header::AUTHORIZATION, HeaderMap},
+        http::HeaderMap,
         Json,
     },
-    cerberus::registry::RegistryClient,
     serde::Serialize,
     std::sync::Arc,
 };
@@ -29,7 +28,14 @@ pub async fn handler(
 ) -> Result<Json<DeleteTenantResponse>, Error> {
     let req_id = get_req_id(&headers);
 
-    validate_tenant_request(&state.registry_client, &state.gotrue_client, &headers, None)?;
+    validate_tenant_request(
+        &state.registry_client,
+        &state.gotrue_client,
+        &headers,
+        id.clone(),
+        None,
+    )
+    .await?;
 
     state.tenant_store.delete_tenant(&id).await?;
 

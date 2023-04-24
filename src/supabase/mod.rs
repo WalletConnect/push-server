@@ -1,14 +1,17 @@
 use {
     crate::error::Result,
     jsonwebtoken::{Algorithm, DecodingKey, TokenData, Validation},
+    serde::{Deserialize, Serialize},
 };
 
+#[derive(Serialize, Deserialize)]
 pub struct GoTrueClaims {
     pub sub: String,
     pub aud: String,
     pub role: String,
 }
 
+#[derive(Clone)]
 pub struct GoTrueClient {
     decoding_key: DecodingKey,
     validation: Validation,

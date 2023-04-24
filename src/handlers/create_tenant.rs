@@ -1,20 +1,13 @@
 use {
     crate::{
-        error::{
-            Error,
-            Error::{InvalidAuthentication, InvalidProjectId},
-        },
+        error::{Error, Error::InvalidProjectId},
         handlers::validate_tenant_request,
         increment_counter,
         request_id::get_req_id,
         state::AppState,
         stores::tenant::TenantUpdateParams,
     },
-    axum::{
-        extract::State,
-        http::{header::AUTHORIZATION, HeaderMap},
-        Json,
-    },
+    axum::{extract::State, http::HeaderMap, Json},
     cerberus::registry::RegistryClient,
     serde::{Deserialize, Serialize},
     std::sync::Arc,
@@ -68,8 +61,10 @@ pub async fn handler(
             &state.registry_client,
             &state.gotrue_client,
             &headers,
+            body.id.clone(),
             Some(project),
-        )?;
+        )
+        .await?;
     } else {
         return Err(InvalidProjectId(body.id));
     }

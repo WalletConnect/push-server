@@ -84,6 +84,7 @@ once_cell = "1.15"
 pnet_datalink = "0.31"
 ipnet = "2.5"
 cerberus = { git = "https://github.com/WalletConnect/cerberus.git", branch = "feat/harry/creator" }
+async-recursion = "1.0.4"
 
 [dev-dependencies]
 serial_test = "1.0"

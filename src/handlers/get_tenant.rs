@@ -32,7 +32,14 @@ pub async fn handler(
 ) -> Result<Json<GetTenantResponse>, Error> {
     let request_id = get_req_id(&headers);
 
-    validate_tenant_request(&state.registry_client, &state.gotrue_client, &headers, None)?;
+    validate_tenant_request(
+        &state.registry_client,
+        &state.gotrue_client,
+        &headers,
+        id.clone(),
+        None,
+    )
+    .await?;
 
     let tenant = state.tenant_store.get_tenant(&id).await?;
 

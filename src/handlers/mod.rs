@@ -6,6 +6,7 @@ use {
         },
         supabase::GoTrueClient,
     },
+    async_recursion::async_recursion,
     axum::{
         http::{header::AUTHORIZATION, HeaderMap},
         response::IntoResponse,
@@ -149,10 +150,12 @@ impl Default for Response {
     }
 }
 
+#[async_recursion]
 pub async fn validate_tenant_request(
     registry_client: &RegistryHttpClient,
     gotrue_client: &GoTrueClient,
     headers: &HeaderMap,
+    project_id: String,
     project: Option<ProjectData>,
 ) -> Result<bool> {
     if let Some(project) = project {
@@ -161,13 +164,7 @@ pub async fn validate_tenant_request(
                 match gotrue_client.is_valid_token(token_value.to_str()?.to_string()) {
                     Ok(token_data) => {
                         #[cfg(feature = "cloud")]
-                        let valid_token = {
-                            if let Some(project_data) = project {
-                                Ok(token_data.claims.sub == project_data.creator)
-                            } else {
-                                Err(InvalidAuthentication)
-                            }
-                        }?;
+                        let valid_token = token_data.claims.sub == project.creator;
 
                         #[cfg(not(feature = "cloud"))]
                         let valid_token = true;
@@ -190,8 +187,10 @@ pub async fn validate_tenant_request(
                 registry_client,
                 gotrue_client,
                 headers,
+                project_id,
                 Some(project_fetched),
             )
+            .await
         } else {
             Err(InvalidProjectId(project_id.to_string()))
         }
