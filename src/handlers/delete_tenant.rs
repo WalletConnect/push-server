@@ -28,6 +28,7 @@ pub async fn handler(
 ) -> Result<Json<DeleteTenantResponse>, Error> {
     let req_id = get_req_id(&headers);
 
+    #[cfg(feature = "cloud")]
     validate_tenant_request(
         &state.registry_client,
         &state.gotrue_client,
@@ -36,6 +37,9 @@ pub async fn handler(
         None,
     )
     .await?;
+
+    #[cfg(not(feature = "cloud"))]
+    validate_tenant_request(&state.gotrue_client, &headers)?;
 
     state.tenant_store.delete_tenant(&id).await?;
 

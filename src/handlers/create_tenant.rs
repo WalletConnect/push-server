@@ -8,11 +8,13 @@ use {
         stores::tenant::TenantUpdateParams,
     },
     axum::{extract::State, http::HeaderMap, Json},
-    cerberus::registry::RegistryClient,
     serde::{Deserialize, Serialize},
     std::sync::Arc,
     tracing::info,
 };
+
+#[cfg(feature = "cloud")]
+use cerberus::registry::RegistryClient;
 
 #[derive(Serialize, Deserialize)]
 pub struct TenantRegisterBody {
@@ -56,6 +58,7 @@ pub async fn handler(
         return Err(InvalidProjectId(body.id));
     }
 
+    #[cfg(feature = "cloud")]
     if let Some(project) = project {
         validate_tenant_request(
             &state.registry_client,
@@ -68,6 +71,9 @@ pub async fn handler(
     } else {
         return Err(InvalidProjectId(body.id));
     }
+
+    #[cfg(not(feature = "cloud"))]
+    validate_tenant_request(&state.gotrue_client, &headers)?;
 
     let params = TenantUpdateParams { id: body.id };
 

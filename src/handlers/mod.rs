@@ -1,20 +1,21 @@
+#[cfg(feature = "cloud")]
+use {
+    crate::error::Error::InvalidProjectId,
+    async_recursion::async_recursion,
+    cerberus::{
+        project::ProjectData,
+        registry::{RegistryClient, RegistryHttpClient},
+    },
+};
 use {
     crate::{
-        error::{
-            Error::{InvalidAuthentication, InvalidProjectId},
-            Result,
-        },
+        error::{Error::InvalidAuthentication, Result},
         supabase::GoTrueClient,
     },
-    async_recursion::async_recursion,
     axum::{
         http::{header::AUTHORIZATION, HeaderMap},
         response::IntoResponse,
         Json,
-    },
-    cerberus::{
-        project::ProjectData,
-        registry::{RegistryClient, RegistryHttpClient},
     },
     hyper::StatusCode,
     relay_rpc::{auth::Jwt, domain::ClientId},
@@ -151,6 +152,7 @@ impl Default for Response {
 }
 
 #[async_recursion]
+#[cfg(feature = "cloud")]
 pub async fn validate_tenant_request(
     registry_client: &RegistryHttpClient,
     gotrue_client: &GoTrueClient,
@@ -192,5 +194,21 @@ pub async fn validate_tenant_request(
         .await
     } else {
         Err(InvalidProjectId(project_id.to_string()))
+    }
+}
+
+#[cfg(not(feature = "cloud"))]
+pub fn validate_tenant_request(gotrue_client: &GoTrueClient, headers: &HeaderMap) -> Result<bool> {
+    if let Some(token_data) = headers.get(AUTHORIZATION) {
+        if gotrue_client
+            .is_valid_token(token_data.to_str()?.to_string())
+            .is_ok()
+        {
+            Ok(true)
+        } else {
+            Err(InvalidAuthentication)
+        }
+    } else {
+        Err(InvalidAuthentication)
     }
 }

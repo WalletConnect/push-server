@@ -32,6 +32,7 @@ pub async fn handler(
 ) -> Result<Json<GetTenantResponse>, Error> {
     let request_id = get_req_id(&headers);
 
+    #[cfg(feature = "cloud")]
     validate_tenant_request(
         &state.registry_client,
         &state.gotrue_client,
@@ -40,6 +41,9 @@ pub async fn handler(
         None,
     )
     .await?;
+
+    #[cfg(not(feature = "cloud"))]
+    validate_tenant_request(&state.gotrue_client, &headers)?;
 
     let tenant = state.tenant_store.get_tenant(&id).await?;
 
