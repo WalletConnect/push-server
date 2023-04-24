@@ -4,7 +4,7 @@ use {
     uuid::Uuid,
 };
 
-pub const X_REQUEST_ID: HeaderName = HeaderName::from_static("x-request-id");
+pub static X_REQUEST_ID: HeaderName = HeaderName::from_static("x-request-id");
 
 #[derive(Clone, Default)]
 pub struct GenericRequestId;
@@ -20,7 +20,7 @@ impl MakeRequestId for GenericRequestId {
 
 pub fn get_req_id(req: &HeaderMap) -> String {
     req
-        .get(X_REQUEST_ID)
+        .get(X_REQUEST_ID.clone())
         // Unknown Missing
         .unwrap_or(&HeaderValue::from_static("unknown-m"))
         .to_str()
