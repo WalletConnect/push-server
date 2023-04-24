@@ -35,21 +35,54 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-      - name: Run Terraform Plan
-        id: plan
-        uses: WalletConnect/actions/actions/plan-terraform/@master
-        env:
-          TF_VAR_cloud_api_key: ${{ secrets.CLOUD_API_KEY }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-central-1
-          environment: staging
-          app-name: ${{ github.event.repository.name }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Get Grafana details
+        id: grafana-get-details
+        uses: WalletConnect/actions/aws/grafana/get-details/@1.0.0
+
+      - name: Get Grafana key
+        id: grafana-get-key
+        uses: WalletConnect/actions/aws/grafana/get-key/@1.0.0
+        with:
+          key-prefix: ${{ github.event.repository.name }}
+          workspace-id: ${{ steps.grafana-get-details.outputs.workspace-id }}
+
+      - name: Init Terraform
+        id: tf-init
+        uses: WalletConnect/actions/terraform/init/@1.0.0
+        with:
+          environment: "prod"
+
+      - name: Deploy Terraform to Production
+        id: plan
+        uses: WalletConnect/actions/terraform/plan/@1.0.0
+        env:
+          GRAFANA_AUTH: ${{ steps.grafana-get-key.outputs.key }}
+          TF_VAR_grafana_endpoint: ${{ steps.grafana-get-details.outputs.endpoint }}
+          TF_VAR_cloud_api_key: ${{ secrets.CLOUD_API_KEY }}
+        with:
+          environment: "prod"
+
+      - name: Delete Grafana key
+        id: grafana-delete-key
+        uses: WalletConnect/actions/aws/grafana/delete-key/@1.0.0
+        if: ${{ success() || failure() || cancelled() }} # don't use always() since it creates non-cancellable jobs
+        with:
+          key-name: ${{ steps.grafana-get-key.outputs.key-name }}
+          workspace-id: ${{ steps.grafana-get-details.outputs.workspace-id }}
+
       - uses: actions/upload-artifact@v3
         with:
           name: plan.tfplan
