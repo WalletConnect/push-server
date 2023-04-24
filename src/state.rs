@@ -7,6 +7,7 @@ use {
         stores::{client::ClientStore, notification::NotificationStore, tenant::TenantStore},
     },
     build_info::BuildInfo,
+    cerberus::registry::RegistryHttpClient,
     std::{net::IpAddr, sync::Arc},
 };
 
@@ -24,6 +25,8 @@ pub trait State {
     fn notification_store(&self) -> NotificationStoreArc;
     fn tenant_store(&self) -> TenantStoreArc;
     fn relay_client(&self) -> RelayClient;
+    #[cfg(feature = "cloud")]
+    fn registry_client(&self) -> RegistryHttpClient;
     fn is_multitenant(&self) -> bool;
     fn validate_signatures(&self) -> bool;
 }
@@ -39,6 +42,8 @@ pub struct AppState {
     pub notification_store: NotificationStoreArc,
     pub tenant_store: TenantStoreArc,
     pub relay_client: RelayClient,
+    #[cfg(feature = "cloud")]
+    pub registry_client: RegistryHttpClient,
     pub public_ip: Option<IpAddr>,
     is_multitenant: bool,
 }
@@ -61,6 +66,9 @@ pub fn new_state(
 
     let relay_url = config.relay_url.to_string();
 
+    #[cfg(feature = "cloud")]
+    let (cloud_url, cloud_api_key) = (config.cloud_api_url.clone(), config.cloud_api_key.clone());
+
     let public_ip = match networking::find_public_ip_addr() {
         Ok(ip) => Some(ip),
         // Note: Should we pass this error back up?
@@ -77,6 +85,8 @@ pub fn new_state(
         notification_store,
         tenant_store,
         relay_client: RelayClient::new(relay_url),
+        #[cfg(feature = "cloud")]
+        registry_client: RegistryHttpClient::new(cloud_url, cloud_api_key.as_str())?,
         public_ip,
         is_multitenant,
     })
@@ -111,6 +121,11 @@ impl State for Arc<AppState> {
 
     fn relay_client(&self) -> RelayClient {
         self.relay_client.clone()
+    }
+
+    #[cfg(feature = "cloud")]
+    fn registry_client(&self) -> RegistryHttpClient {
+        self.registry_client.clone()
     }
 
     fn is_multitenant(&self) -> bool {

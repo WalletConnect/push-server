@@ -141,6 +141,12 @@ pub enum Error {
 
     #[error("BatchCollector Error: {0}")]
     BatchCollector(String),
+
+    #[error(transparent)]
+    Registry(#[from] cerberus::registry::RegistryError),
+
+    #[error("Invalid Project ID: {0}")]
+    InvalidProjectId(String),
 }
 
 impl IntoResponse for Error {
@@ -325,6 +331,20 @@ impl IntoResponse for Error {
                     }
                 ],
             ),
+            Error::InvalidProjectId(id) => crate::handlers::Response::new_failure(
+                StatusCode::BAD_REQUEST,
+                vec![ResponseError {
+                    name: "project_id".to_string(),
+                    message: format!("the provided project id ({}) is not valid", id),
+                }],
+                vec![
+                    ErrorField {
+                        field: "id".to_string(),
+                        description: "invalid project id".to_string(),
+                        location: ErrorLocation::Body,
+                    }
+                ],
+           ),
             e => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
                 ResponseError {
                     name: "unknown_error".to_string(),

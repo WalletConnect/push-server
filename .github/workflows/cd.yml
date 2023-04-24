@@ -86,6 +86,7 @@ jobs:
         env:
           GRAFANA_AUTH: ${{ steps.grafana-get-key.outputs.key }}
           TF_VAR_grafana_endpoint: ${{ steps.grafana-get-details.outputs.endpoint }}
+          TF_VAR_cloud_api_key: ${{ secrets.CLOUD_API_KEY }}
         with:
           environment: "staging"
 
@@ -152,6 +153,7 @@ jobs:
         env:
           GRAFANA_AUTH: ${{ steps.grafana-get-key.outputs.key }}
           TF_VAR_grafana_endpoint: ${{ steps.grafana-get-details.outputs.endpoint }}
+          TF_VAR_cloud_api_key: ${{ secrets.CLOUD_API_KEY }}
         with:
           environment: "prod"
 

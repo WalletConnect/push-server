@@ -1,12 +1,13 @@
 use {
     crate::{
-        error::Error,
+        error::{Error, Error::InvalidProjectId},
         increment_counter,
         request_id::get_req_id,
         state::AppState,
         stores::tenant::TenantUpdateParams,
     },
     axum::{extract::State, http::HeaderMap, Json},
+    cerberus::registry::RegistryClient,
     serde::{Deserialize, Serialize},
     std::sync::Arc,
     tracing::info,
@@ -31,8 +32,30 @@ pub async fn handler(
 ) -> Result<Json<TenantRegisterResponse>, Error> {
     let req_id = get_req_id(&headers);
 
+    #[cfg(feature = "cloud")]
+    let (valid_id, project) = {
+        let project_id = body.id.clone();
+
+        let response = state.registry_client.project_data(&project_id).await?;
+
+        if let Some(project) = response {
+            // TODO potentially more validation in future
+            // Project passed forwards for JWT verification later
+            (project.is_enabled, Some(project))
+        } else {
+            (false, None)
+        }
+    };
+
+    // When not using the cloud app all Ids are valid
+    #[cfg(not(feature = "cloud"))]
+    let valid_id = true;
+
+    if !valid_id {
+        return Err(InvalidProjectId(body.id));
+    }
+
     // TODO authentication
-    // TODO validation
 
     let params = TenantUpdateParams { id: body.id };
 

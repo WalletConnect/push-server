@@ -27,3 +27,8 @@ variable "geoip_db_key" {
   type        = string
   default     = "GeoLite2-City.mmdb"
 }
+
+variable "cloud_api_key" {
+  type      = string
+  sensitive = true
+}

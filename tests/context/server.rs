@@ -63,6 +63,10 @@ impl EchoServer {
             analytics_geoip_db_key: None,
             is_test: true,
             cors_allowed_origins: vec!["*".to_string()],
+            #[cfg(feature = "cloud")]
+            cloud_api_url: "https://example.com".to_string(),
+            #[cfg(feature = "cloud")]
+            cloud_api_key: "n/a".to_string(),
         };
         let (public_addr, signal, is_shutdown) = start_server(config).await;
 
