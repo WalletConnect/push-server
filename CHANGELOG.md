@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.24.0 - 2023-04-24
+#### Features
+- `project_id` validation (#122) - (f4cf08d) - Harry Bairstow
+- logging (#119) - (aee046c) - Harry Bairstow
+- - -
+
 ## v0.23.6 - 2023-04-22
 #### Bug Fixes
 - incorrect `cfg` usage (#118) - (9a2d0e9) - Harry Bairstow
