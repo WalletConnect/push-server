@@ -146,7 +146,7 @@ pub enum Error {
     Registry(#[from] cerberus::registry::RegistryError),
 
     #[error("Invalid Project ID: {0}")]
-    InvalidProjectId(String)
+    InvalidProjectId(String),
 }
 
 impl IntoResponse for Error {

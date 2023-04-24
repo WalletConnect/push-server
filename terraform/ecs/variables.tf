@@ -118,5 +118,5 @@ variable "cloud_api_key" {
 }
 
 variable "cloud_api_url" {
-  type      = string
+  type = string
 }

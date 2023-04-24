@@ -1,18 +1,17 @@
-use cerberus::registry::RegistryClient;
 use {
     crate::{
-        error::Error,
+        error::{Error, Error::InvalidProjectId},
         increment_counter,
         request_id::get_req_id,
         state::AppState,
         stores::tenant::TenantUpdateParams,
     },
     axum::{extract::State, http::HeaderMap, Json},
+    cerberus::registry::RegistryClient,
     serde::{Deserialize, Serialize},
     std::sync::Arc,
     tracing::info,
 };
-use crate::error::Error::InvalidProjectId;
 
 #[derive(Serialize, Deserialize)]
 pub struct TenantRegisterBody {
@@ -49,7 +48,8 @@ pub async fn handler(
     };
 
     // When not using the cloud app all Ids are valid
-    #[cfg(not(feature = "cloud"))] let valid_id = true;
+    #[cfg(not(feature = "cloud"))]
+    let valid_id = true;
 
     if !valid_id {
         return Err(InvalidProjectId(body.id));

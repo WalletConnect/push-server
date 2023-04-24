@@ -1,4 +1,3 @@
-use cerberus::registry::RegistryHttpClient;
 use {
     crate::{
         config::Config,
@@ -8,6 +7,7 @@ use {
         stores::{client::ClientStore, notification::NotificationStore, tenant::TenantStore},
     },
     build_info::BuildInfo,
+    cerberus::registry::RegistryHttpClient,
     std::{net::IpAddr, sync::Arc},
 };
 
