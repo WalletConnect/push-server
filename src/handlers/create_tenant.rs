@@ -1,3 +1,5 @@
+#[cfg(feature = "cloud")]
+use cerberus::registry::RegistryClient;
 use {
     crate::{
         error::{Error, Error::InvalidProjectId},
@@ -12,9 +14,6 @@ use {
     std::sync::Arc,
     tracing::info,
 };
-
-#[cfg(feature = "cloud")]
-use cerberus::registry::RegistryClient;
 
 #[derive(Serialize, Deserialize)]
 pub struct TenantRegisterBody {
