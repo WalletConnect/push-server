@@ -10,7 +10,7 @@ use {
 
 // Push
 pub mod delete_client;
-pub mod health;
+pub mod info;
 pub mod metrics;
 pub mod push_message;
 pub mod register_client;
@@ -23,6 +23,7 @@ pub mod create_tenant;
 pub mod delete_tenant;
 #[cfg(feature = "multitenant")]
 pub mod get_tenant;
+pub mod health;
 #[cfg(feature = "multitenant")]
 pub mod update_apns;
 #[cfg(feature = "multitenant")]
