@@ -162,24 +162,24 @@ pub async fn validate_tenant_request(
 ) -> Result<bool> {
     if let Some(project) = project {
         if let Some(token_value) = headers.get(AUTHORIZATION) {
-            Ok(
-                match gotrue_client.is_valid_token(token_value.to_str()?.to_string().replace("Bearer ", "")) {
-                    Ok(token_data) => {
-                        #[cfg(feature = "cloud")]
-                        let valid_token = token_data.claims.sub == project.creator;
+            Ok(match gotrue_client
+                .is_valid_token(token_value.to_str()?.to_string().replace("Bearer ", ""))
+            {
+                Ok(token_data) => {
+                    #[cfg(feature = "cloud")]
+                    let valid_token = token_data.claims.sub == project.creator;
 
-                        #[cfg(not(feature = "cloud"))]
-                        let valid_token = true;
+                    #[cfg(not(feature = "cloud"))]
+                    let valid_token = true;
 
-                        if !valid_token {
-                            Err(InvalidAuthentication)
-                        } else {
-                            Ok(true)
-                        }
+                    if !valid_token {
+                        Err(InvalidAuthentication)
+                    } else {
+                        Ok(true)
                     }
-                    Err(_) => Err(InvalidAuthentication),
-                }?,
-            )
+                }
+                Err(_) => Err(InvalidAuthentication),
+            }?)
         } else {
             Err(InvalidAuthentication)
         }
