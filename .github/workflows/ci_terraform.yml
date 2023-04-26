@@ -82,8 +82,8 @@ jobs:
       contents: 'read'
       pull-requests: 'write'
     environment:
-      name: infra/staging
-      url: https://staging.history.walletconnect.com/health
+      name: staging
+      url: https://staging.echo.walletconnect.com/health
 
     steps:
       - name: Checkout
