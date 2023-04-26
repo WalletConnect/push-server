@@ -163,7 +163,7 @@ pub async fn validate_tenant_request(
     if let Some(project) = project {
         if let Some(token_value) = headers.get(AUTHORIZATION) {
             Ok(
-                match gotrue_client.is_valid_token(token_value.to_str()?.to_string()) {
+                match gotrue_client.is_valid_token(token_value.to_str()?.to_string().replace("Bearer ", "")) {
                     Ok(token_data) => {
                         #[cfg(feature = "cloud")]
                         let valid_token = token_data.claims.sub == project.creator;
@@ -201,7 +201,7 @@ pub async fn validate_tenant_request(
 pub fn validate_tenant_request(gotrue_client: &GoTrueClient, headers: &HeaderMap) -> Result<bool> {
     if let Some(token_data) = headers.get(AUTHORIZATION) {
         if gotrue_client
-            .is_valid_token(token_data.to_str()?.to_string())
+            .is_valid_token(token_data.to_str()?.to_string().replace("Bearer ", ""))
             .is_ok()
         {
             Ok(true)
