@@ -44,7 +44,7 @@ pub async fn handler(
     if let Err(e) = verification_res {
         error!(
             request_id = %req_id,
-            tenant_id = %tenant.id,
+            tenant_id = %id,
             err = ?e,
             "JWT verification failed"
         );

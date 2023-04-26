@@ -71,7 +71,7 @@ pub async fn handler(
         {
             error!(
                 request_id = %req_id,
-                tenant_id = %tenant.id,
+                tenant_id = %body.id,
                 err = ?e,
                 "JWT verification failed"
             );
@@ -85,7 +85,7 @@ pub async fn handler(
     if let Err(e) = validate_tenant_request(&state.gotrue_client, &headers) {
         error!(
             request_id = %req_id,
-            tenant_id = %tenant.id,
+            tenant_id = %body.id,
             err = ?e,
             "JWT verification failed"
         );
