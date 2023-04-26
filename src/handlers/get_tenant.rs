@@ -33,17 +33,27 @@ pub async fn handler(
     let request_id = get_req_id(&headers);
 
     #[cfg(feature = "cloud")]
-    validate_tenant_request(
+    let verification_res = validate_tenant_request(
         &state.registry_client,
         &state.gotrue_client,
         &headers,
         id.clone(),
         None,
     )
-    .await?;
+    .await;
 
     #[cfg(not(feature = "cloud"))]
-    validate_tenant_request(&state.gotrue_client, &headers)?;
+    let verification_res = validate_tenant_request(&state.gotrue_client, &headers);
+
+    if let Err(e) = verification_res {
+        error!(
+            request_id = %req_id,
+            tenant_id = %tenant.id,
+            err = ?e,
+            "JWT verification failed"
+        );
+        return Err(e);
+    }
 
     let tenant = state.tenant_store.get_tenant(&id).await?;
 

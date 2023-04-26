@@ -5,6 +5,7 @@ use {
         error::{Error, Error::InvalidProjectId},
         handlers::validate_tenant_request,
         increment_counter,
+        log::prelude::*,
         request_id::get_req_id,
         state::AppState,
         stores::tenant::TenantUpdateParams,
@@ -59,20 +60,37 @@ pub async fn handler(
 
     #[cfg(feature = "cloud")]
     if let Some(project) = project {
-        validate_tenant_request(
+        if let Err(e) = validate_tenant_request(
             &state.registry_client,
             &state.gotrue_client,
             &headers,
             body.id.clone(),
             Some(project),
         )
-        .await?;
+        .await
+        {
+            error!(
+                request_id = %req_id,
+                tenant_id = %tenant.id,
+                err = ?e,
+                "JWT verification failed"
+            );
+            return Err(e);
+        }
     } else {
         return Err(InvalidProjectId(body.id));
     }
 
     #[cfg(not(feature = "cloud"))]
-    validate_tenant_request(&state.gotrue_client, &headers)?;
+    if let Err(e) = validate_tenant_request(&state.gotrue_client, &headers) {
+        error!(
+            request_id = %req_id,
+            tenant_id = %tenant.id,
+            err = ?e,
+            "JWT verification failed"
+        );
+        return Err(e);
+    }
 
     let params = TenantUpdateParams { id: body.id };
 
