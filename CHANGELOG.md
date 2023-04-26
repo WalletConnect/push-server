@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.24.1 - 2023-04-26
+#### Bug Fixes
+- have `/health` and `/info` endpoints (#125) - (0fb0804) - Harry Bairstow
+- - -
+
 ## v0.24.0 - 2023-04-24
 #### Features
 - `project_id` validation (#122) - (f4cf08d) - Harry Bairstow
