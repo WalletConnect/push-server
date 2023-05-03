@@ -2,6 +2,7 @@ use {
     crate::{
         decrement_counter,
         error::Error,
+        handlers::validate_tenant_request,
         log::prelude::*,
         request_id::get_req_id,
         state::AppState,
@@ -26,6 +27,29 @@ pub async fn handler(
     headers: HeaderMap,
 ) -> Result<Json<DeleteTenantResponse>, Error> {
     let req_id = get_req_id(&headers);
+
+    #[cfg(feature = "cloud")]
+    let verification_res = validate_tenant_request(
+        &state.registry_client,
+        &state.gotrue_client,
+        &headers,
+        id.clone(),
+        None,
+    )
+    .await;
+
+    #[cfg(not(feature = "cloud"))]
+    let verification_res = validate_tenant_request(&state.gotrue_client, &headers);
+
+    if let Err(e) = verification_res {
+        error!(
+            request_id = %req_id,
+            tenant_id = %id,
+            err = ?e,
+            "JWT verification failed"
+        );
+        return Err(e);
+    }
 
     state.tenant_store.delete_tenant(&id).await?;
 

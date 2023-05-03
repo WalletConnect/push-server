@@ -48,6 +48,7 @@ pub mod relay;
 pub mod request_id;
 pub mod state;
 pub mod stores;
+pub mod supabase;
 
 pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> error::Result<()> {
     // Check config is valid and then throw the error if its not

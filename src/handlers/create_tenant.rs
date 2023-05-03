@@ -1,13 +1,16 @@
+#[cfg(feature = "cloud")]
+use cerberus::registry::RegistryClient;
 use {
     crate::{
         error::{Error, Error::InvalidProjectId},
+        handlers::validate_tenant_request,
         increment_counter,
+        log::prelude::*,
         request_id::get_req_id,
         state::AppState,
         stores::tenant::TenantUpdateParams,
     },
     axum::{extract::State, http::HeaderMap, Json},
-    cerberus::registry::RegistryClient,
     serde::{Deserialize, Serialize},
     std::sync::Arc,
     tracing::info,
@@ -55,7 +58,39 @@ pub async fn handler(
         return Err(InvalidProjectId(body.id));
     }
 
-    // TODO authentication
+    #[cfg(feature = "cloud")]
+    if let Some(project) = project {
+        if let Err(e) = validate_tenant_request(
+            &state.registry_client,
+            &state.gotrue_client,
+            &headers,
+            body.id.clone(),
+            Some(project),
+        )
+        .await
+        {
+            error!(
+                request_id = %req_id,
+                tenant_id = %body.id,
+                err = ?e,
+                "JWT verification failed"
+            );
+            return Err(e);
+        }
+    } else {
+        return Err(InvalidProjectId(body.id));
+    }
+
+    #[cfg(not(feature = "cloud"))]
+    if let Err(e) = validate_tenant_request(&state.gotrue_client, &headers) {
+        error!(
+            request_id = %req_id,
+            tenant_id = %body.id,
+            err = ?e,
+            "JWT verification failed"
+        );
+        return Err(e);
+    }
 
     let params = TenantUpdateParams { id: body.id };
 

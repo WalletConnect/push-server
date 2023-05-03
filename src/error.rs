@@ -147,6 +147,9 @@ pub enum Error {
 
     #[error("Invalid Project ID: {0}")]
     InvalidProjectId(String),
+
+    #[error(transparent)]
+    JWT(#[from] jsonwebtoken::errors::Error),
 }
 
 impl IntoResponse for Error {

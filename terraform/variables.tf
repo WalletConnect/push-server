@@ -32,3 +32,8 @@ variable "cloud_api_key" {
   type      = string
   sensitive = true
 }
+
+variable "jwt_secret" {
+  type      = string
+  sensitive = true
+}

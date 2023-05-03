@@ -172,6 +172,8 @@ module "ecs" {
   cloud_api_key = var.cloud_api_key
   cloud_api_url = "https://registry.walletconnect.com/"
 
+  jwt_secret = var.jwt_secret
+
   autoscaling_max_capacity = local.environment == "prod" ? 4 : 1
   autoscaling_min_capacity = local.environment == "prod" ? 2 : 1
   desired_count            = local.environment == "prod" ? 2 : 1

@@ -1,6 +1,22 @@
+#[cfg(feature = "cloud")]
 use {
-    crate::error::Result,
-    axum::{http::HeaderMap, response::IntoResponse, Json},
+    crate::error::Error::InvalidProjectId,
+    async_recursion::async_recursion,
+    cerberus::{
+        project::ProjectData,
+        registry::{RegistryClient, RegistryHttpClient},
+    },
+};
+use {
+    crate::{
+        error::{Error::InvalidAuthentication, Result},
+        supabase::GoTrueClient,
+    },
+    axum::{
+        http::{header::AUTHORIZATION, HeaderMap},
+        response::IntoResponse,
+        Json,
+    },
     hyper::StatusCode,
     relay_rpc::{auth::Jwt, domain::ClientId},
     serde_json::{json, Value},
@@ -133,5 +149,67 @@ impl From<Response> for Json<Value> {
 impl Default for Response {
     fn default() -> Self {
         Response::new_success(StatusCode::OK)
+    }
+}
+
+#[async_recursion]
+#[cfg(feature = "cloud")]
+pub async fn validate_tenant_request(
+    registry_client: &RegistryHttpClient,
+    gotrue_client: &GoTrueClient,
+    headers: &HeaderMap,
+    project_id: String,
+    project: Option<ProjectData>,
+) -> Result<bool> {
+    if let Some(project) = project {
+        if let Some(token_value) = headers.get(AUTHORIZATION) {
+            Ok(match gotrue_client
+                .is_valid_token(token_value.to_str()?.to_string().replace("Bearer ", ""))
+            {
+                Ok(token_data) => {
+                    #[cfg(feature = "cloud")]
+                    let valid_token = token_data.claims.sub == project.creator;
+
+                    #[cfg(not(feature = "cloud"))]
+                    let valid_token = true;
+
+                    if !valid_token {
+                        Err(InvalidAuthentication)
+                    } else {
+                        Ok(true)
+                    }
+                }
+                Err(_) => Err(InvalidAuthentication),
+            }?)
+        } else {
+            Err(InvalidAuthentication)
+        }
+    } else if let Some(project_fetched) = registry_client.project_data(&project_id).await? {
+        validate_tenant_request(
+            registry_client,
+            gotrue_client,
+            headers,
+            project_id,
+            Some(project_fetched),
+        )
+        .await
+    } else {
+        Err(InvalidProjectId(project_id.to_string()))
+    }
+}
+
+#[cfg(not(feature = "cloud"))]
+pub fn validate_tenant_request(gotrue_client: &GoTrueClient, headers: &HeaderMap) -> Result<bool> {
+    if let Some(token_data) = headers.get(AUTHORIZATION) {
+        if gotrue_client
+            .is_valid_token(token_data.to_str()?.to_string().replace("Bearer ", ""))
+            .is_ok()
+        {
+            Ok(true)
+        } else {
+            Err(InvalidAuthentication)
+        }
+    } else {
+        Err(InvalidAuthentication)
     }
 }

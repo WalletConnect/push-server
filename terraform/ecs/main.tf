@@ -90,7 +90,9 @@ resource "aws_ecs_task_definition" "app_task_definition" {
         { name = "ANALYTICS_GEOIP_DB_KEY", value = var.analytics_geoip_db_key },
 
         { name = "CLOUD_API_KEY", value = var.cloud_api_key },
-        { name = "CLOUD_API_URL", value = var.cloud_api_url }
+        { name = "CLOUD_API_URL", value = var.cloud_api_url },
+
+        { name = "JWT_SECRET", value = var.jwt_secret }
       ],
       dependsOn = [
         { containerName = "aws-otel-collector", condition = "START" }

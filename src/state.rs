@@ -1,3 +1,5 @@
+#[cfg(feature = "cloud")]
+use cerberus::registry::RegistryHttpClient;
 use {
     crate::{
         config::Config,
@@ -7,12 +9,13 @@ use {
         stores::{client::ClientStore, notification::NotificationStore, tenant::TenantStore},
     },
     build_info::BuildInfo,
-    cerberus::registry::RegistryHttpClient,
     std::{net::IpAddr, sync::Arc},
 };
 
 #[cfg(feature = "analytics")]
 use crate::analytics::PushAnalytics;
+#[cfg(feature = "multitenant")]
+use crate::supabase::GoTrueClient;
 
 pub type ClientStoreArc = Arc<dyn ClientStore + Send + Sync + 'static>;
 pub type NotificationStoreArc = Arc<dyn NotificationStore + Send + Sync + 'static>;
@@ -44,6 +47,8 @@ pub struct AppState {
     pub relay_client: RelayClient,
     #[cfg(feature = "cloud")]
     pub registry_client: RegistryHttpClient,
+    #[cfg(feature = "multitenant")]
+    pub gotrue_client: GoTrueClient,
     pub public_ip: Option<IpAddr>,
     is_multitenant: bool,
 }
@@ -69,6 +74,9 @@ pub fn new_state(
     #[cfg(feature = "cloud")]
     let (cloud_url, cloud_api_key) = (config.cloud_api_url.clone(), config.cloud_api_key.clone());
 
+    #[cfg(feature = "multitenant")]
+    let jwt_secret = config.jwt_secret.clone();
+
     let public_ip = match networking::find_public_ip_addr() {
         Ok(ip) => Some(ip),
         // Note: Should we pass this error back up?
@@ -87,6 +95,8 @@ pub fn new_state(
         relay_client: RelayClient::new(relay_url),
         #[cfg(feature = "cloud")]
         registry_client: RegistryHttpClient::new(cloud_url, cloud_api_key.as_str())?,
+        #[cfg(feature = "multitenant")]
+        gotrue_client: GoTrueClient::new(jwt_secret),
         public_ip,
         is_multitenant,
     })
