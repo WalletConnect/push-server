@@ -3,7 +3,7 @@ locals {
   # the Grafana provider e.g.
   # net/prod-relay-load-balancer/e9a51c46020a0f85
   load_balancer                 = join("/", slice(split("/", var.load_balancer_arn), 1, 4))
-  opsgenie_notification_channel = "l_iaPw6nk"
+  opsgenie_notification_channel = "NNOynGwVz"
   #  notifications = (
   #    var.environment == "prod" ?
   #    "[{\"uid\": \"${local.opsgenie_notification_channel}\"}]" :
