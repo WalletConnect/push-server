@@ -1,8 +1,6 @@
-# This workflow moves issues to the Iridium board
-# when they receive the "accepted" label
-# When WalletConnect Org members create issues they
-# are automatically "accepted".
-# Else they need to manually receive that label during intake.
+# This workflow moves issues to the Project board when they receive the "accepted" label
+# When WalletConnect Org members create issues they are automatically "accepted".
+# Otherwise, they need to manually receive that label during intake.
 name: intake
 
 on:
@@ -14,15 +12,16 @@ on:
 jobs:
   add-to-project:
     name: Add issue to board
-    if: github.event.action == 'labeled' && github.event.label.name == 'accepted'
+    if: github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'accepted'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/add-to-project@v0.1.0
         with:
-          project-url: https://github.com/orgs/WalletConnect/projects/9
+          project-url: https://github.com/orgs/WalletConnect/projects/20
           github-token: ${{ secrets.ASSIGN_TO_PROJECT_GITHUB_TOKEN }}
           labeled: accepted
           label-operator: OR
+
   auto-promote:
     name: auto-promote
     if: github.event.action == 'opened'
@@ -44,5 +43,5 @@ jobs:
         if: ${{ steps.is-core-team.outputs.isTeamMember == 'true' }}
         uses: andymckay/labeler@e6c4322d0397f3240f0e7e30a33b5c5df2d39e90
         with:
-          add-labels: "S-accepted"
+          add-labels: "accepted"
           repo-token: ${{ secrets.ASSIGN_TO_PROJECT_GITHUB_TOKEN }}
