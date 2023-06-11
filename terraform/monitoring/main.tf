@@ -122,28 +122,28 @@ resource "grafana_dashboard" "at_a_glance" {
             "refId" : "Received"
           },
           {
-            "datasource": {
-              "type": "prometheus",
-              "uid": grafana_data_source.prometheus.uid
+            "datasource" : {
+              "type" : "prometheus",
+              "uid" : grafana_data_source.prometheus.uid
             },
-            "editorMode": "code",
-            "expr": "sum(increase(sent_apns_notifications{}[1h]))",
-            "hide": false,
-            "legendFormat": "__auto",
-            "range": true,
-            "refId": "SentAPNS"
+            "editorMode" : "code",
+            "expr" : "sum(increase(sent_apns_notifications{}[1h]))",
+            "hide" : false,
+            "legendFormat" : "__auto",
+            "range" : true,
+            "refId" : "SentAPNS"
           },
           {
-            "datasource": {
-              "type": "prometheus",
-              "uid": grafana_data_source.prometheus.uid
+            "datasource" : {
+              "type" : "prometheus",
+              "uid" : grafana_data_source.prometheus.uid
             },
-            "editorMode": "code",
-            "expr": "sum(increase(sent_fcm_notifications{}[1h]))",
-            "hide": false,
-            "legendFormat": "__auto",
-            "range": true,
-            "refId": "SentFCM"
+            "editorMode" : "code",
+            "expr" : "sum(increase(sent_fcm_notifications{}[1h]))",
+            "hide" : false,
+            "legendFormat" : "__auto",
+            "range" : true,
+            "refId" : "SentFCM"
           }
         ],
         "title" : "Notifications per Hour",
