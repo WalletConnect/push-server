@@ -117,11 +117,33 @@ resource "grafana_dashboard" "at_a_glance" {
               "type" : "prometheus",
               "uid" : grafana_data_source.prometheus.uid
             },
-            "exemplar" : true,
             "expr" : "sum(rate(received_notifications{}[1h]))",
-            "interval" : "",
-            "legendFormat" : "",
-            "refId" : "A"
+            "legendFormat" : "__auto",
+            "refId" : "Received"
+          },
+          {
+            "datasource" : {
+              "type" : "prometheus",
+              "uid" : grafana_data_source.prometheus.uid
+            },
+            "editorMode" : "code",
+            "expr" : "sum(increase(sent_apns_notifications{}[1h]))",
+            "hide" : false,
+            "legendFormat" : "__auto",
+            "range" : true,
+            "refId" : "SentAPNS"
+          },
+          {
+            "datasource" : {
+              "type" : "prometheus",
+              "uid" : grafana_data_source.prometheus.uid
+            },
+            "editorMode" : "code",
+            "expr" : "sum(increase(sent_fcm_notifications{}[1h]))",
+            "hide" : false,
+            "legendFormat" : "__auto",
+            "range" : true,
+            "refId" : "SentFCM"
           }
         ],
         "title" : "Notifications per Hour",
@@ -305,23 +327,11 @@ resource "grafana_dashboard" "at_a_glance" {
               "uid" : grafana_data_source.prometheus.uid
             },
             "exemplar" : true,
-            "expr" : "sum(received_notifications{})",
+            "expr" : "sum(increase(received_notifications{}[1h]))",
             "format" : "time_series",
             "interval" : "",
             "legendFormat" : "",
             "refId" : "Notifications"
-          },
-          {
-            "datasource" : {
-              "type" : "prometheus",
-              "uid" : "S5BhqwK4z"
-            },
-            "exemplar" : true,
-            "expr" : "",
-            "hide" : false,
-            "interval" : "",
-            "legendFormat" : "",
-            "refId" : "Processed Notifications"
           }
         ],
         "title" : "Received Notifications",
