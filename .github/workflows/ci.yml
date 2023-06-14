@@ -130,6 +130,9 @@ jobs:
         run: |
           sccache --stop-server || true
           sccache --start-server
+          
+      - name: Install lld and llvm
+        run: sudo apt-get install -y lld llvm
 
       # TODO: Remove once https://crates.io/crates/opentelemetry-otlp is updated
       # and no longer has a build requirement of `protoc``.
