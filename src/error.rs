@@ -7,7 +7,6 @@ use {
     },
     axum::response::{IntoResponse, Response},
     hyper::StatusCode,
-    std::fmt::format,
 };
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -453,8 +452,8 @@ impl IntoResponse for Error {
                 },
             ], vec![]),
             e => {
-                warn!("Error does not have response clause, {:?}", Self);
-                
+                warn!("Error does not have response clause, {:?}", e);
+
                 crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
                     ResponseError {
                         name: "unknown_error".to_string(),
