@@ -76,7 +76,7 @@ pub enum ErrorLocation {
     // Query,
     Header,
     Path,
-    Unknown
+    Unknown,
 }
 
 #[derive(serde::Serialize)]

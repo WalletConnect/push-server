@@ -1,4 +1,3 @@
-use std::fmt::format;
 use {
     crate::{
         handlers::{ErrorField, ErrorLocation, ResponseError},
@@ -8,6 +7,7 @@ use {
     },
     axum::response::{IntoResponse, Response},
     hyper::StatusCode,
+    std::fmt::format,
 };
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -120,7 +120,7 @@ pub enum Error {
     NoApnsConfigured,
 
     #[error(
-        "Encrypted push notification received without a topic, please ensure all required \
+    "Encrypted push notification received without a topic, please ensure all required \
          parameters set"
     )]
     MissingTopic,
@@ -227,7 +227,7 @@ impl IntoResponse for Error {
                 ErrorField {
                     field: "provider".to_string(),
                     description: format!("The requested provider ({}) is not a valid provider", &p),
-                    location: ErrorLocation::Body
+                    location: ErrorLocation::Body,
                 }
             ]),
             Error::ProviderNotAvailable(p) => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
@@ -239,7 +239,7 @@ impl IntoResponse for Error {
                 ErrorField {
                     field: "provider".to_string(),
                     description: format!("The requested provider ({}) is not currently available", &p),
-                    location: ErrorLocation::Body
+                    location: ErrorLocation::Body,
                 }
             ]),
             Error::MissingAllSignatureHeader => crate::handlers::Response::new_failure(StatusCode::UNAUTHORIZED, vec![
@@ -251,13 +251,13 @@ impl IntoResponse for Error {
                 ErrorField {
                     field: SIGNATURE_HEADER_NAME.to_string(),
                     description: "Missing signature".to_string(),
-                    location: ErrorLocation::Header
+                    location: ErrorLocation::Header,
                 },
                 ErrorField {
                     field: TIMESTAMP_HEADER_NAME.to_string(),
                     description: "Missing timestamp".to_string(),
-                    location: ErrorLocation::Header
-                }
+                    location: ErrorLocation::Header,
+                },
             ]),
             Error::MissingSignatureHeader => crate::handlers::Response::new_failure(StatusCode::UNAUTHORIZED, vec![
                 ResponseError {
@@ -268,7 +268,7 @@ impl IntoResponse for Error {
                 ErrorField {
                     field: SIGNATURE_HEADER_NAME.to_string(),
                     description: "Missing signature".to_string(),
-                    location: ErrorLocation::Header
+                    location: ErrorLocation::Header,
                 }
             ]),
             Error::MissingTimestampHeader => crate::handlers::Response::new_failure(StatusCode::UNAUTHORIZED, vec![
@@ -280,7 +280,7 @@ impl IntoResponse for Error {
                 ErrorField {
                     field: TIMESTAMP_HEADER_NAME.to_string(),
                     description: "Missing timestamp".to_string(),
-                    location: ErrorLocation::Header
+                    location: ErrorLocation::Header,
                 }
             ]),
             Error::InvalidTenantId(id) => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
@@ -292,7 +292,7 @@ impl IntoResponse for Error {
                 ErrorField {
                     field: "tenant_id".to_string(),
                     description: format!("Invalid Tenant ID, {}", &id),
-                    location: ErrorLocation::Path
+                    location: ErrorLocation::Path,
                 }
             ]),
             Error::MissingTenantId => crate::handlers::Response::new_failure(
@@ -348,7 +348,7 @@ impl IntoResponse for Error {
                         location: ErrorLocation::Body,
                     }
                 ],
-           ),
+            ),
             Error::Io(_) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
                 ResponseError {
                     name: "io".to_string(),
@@ -407,8 +407,8 @@ impl IntoResponse for Error {
                 },
                 ResponseError {
                     name: "multipart".to_string(),
-                    message: format!("{:?}", e)
-                }
+                    message: format!("{:?}", e),
+                },
             ], vec![]),
             Error::InvalidMultipartBody => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
                 ResponseError {
@@ -452,16 +452,20 @@ impl IntoResponse for Error {
                     message: "JWT Authentication Failed".to_string(),
                 },
             ], vec![]),
-            e => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
-                ResponseError {
-                    name: "unknown_error".to_string(),
-                    message: "This error should not have occurred. Please file an issue at: https://github.com/walletconnect/echo-server".to_string(),
-                },
-                ResponseError {
-                    name: "dbg".to_string(),
-                    message: format!("{e:?}"),
-                }
-            ], vec![]),
+            e => {
+                warn!("Error does not have response clause, {:?}", Self);
+                
+                crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
+                    ResponseError {
+                        name: "unknown_error".to_string(),
+                        message: "This error should not have occurred. Please file an issue at: https://github.com/walletconnect/echo-server".to_string(),
+                    },
+                    ResponseError {
+                        name: "dbg".to_string(),
+                        message: format!("{e:?}"),
+                    },
+                ], vec![])
+            }
         }.into_response()
     }
 }
