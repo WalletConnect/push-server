@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.25.1 - 2023-06-20
+#### Bug Fixes
+- docker images now build - (d65eb3b) - Harry Bairstow
+- - -
+
 ## v0.25.0 - 2023-06-20
 #### Bug Fixes
 - **(o11y)** received notifications metric broken (#131) - (bb1e0f4) - Derek
