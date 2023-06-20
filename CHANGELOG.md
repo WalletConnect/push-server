@@ -2,6 +2,20 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.25.0 - 2023-06-20
+#### Bug Fixes
+- **(o11y)** received notifications metric broken (#131) - (bb1e0f4) - Derek
+- reformat file - (090ca71) - Harry Bairstow
+- Ensure CI/Release actions and container building works (#136) - (5d1a864) - Harry Bairstow
+- remove redundant project actions (#138) - (90a3a7e) - Xavier Basty
+#### Features
+- Better error responses (#139) - (c4ce93c) - Harry Bairstow
+- add project issues workflow, update project id (#129) - (d0559a2) - Xavier Basty
+- update Grafana notification channel - (c5e2713) - Derek
+- upgrade to Grafana 9 - (8f0ac06) - Derek
+- authenticate JWTs for tenant endpoints (#123) - (e94d85b) - Harry Bairstow
+- - -
+
 ## v0.24.1 - 2023-04-26
 #### Bug Fixes
 - have `/health` and `/info` endpoints (#125) - (0fb0804) - Harry Bairstow
