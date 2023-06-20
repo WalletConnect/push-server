@@ -130,11 +130,16 @@ jobs:
         run: |
           sccache --stop-server || true
           sccache --start-server
+          
+      - name: Install lld and llvm
+        run: sudo apt-get install -y lld llvm
 
       # TODO: Remove once https://crates.io/crates/opentelemetry-otlp is updated
       # and no longer has a build requirement of `protoc``.
       - name: Install Protoc
         uses: arduino/setup-protoc@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Task ${{ matrix.cargo.name }}"
         uses: actions-rs/cargo@v1
