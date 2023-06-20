@@ -138,6 +138,8 @@ jobs:
       # and no longer has a build requirement of `protoc``.
       - name: Install Protoc
         uses: arduino/setup-protoc@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Task ${{ matrix.cargo.name }}"
         uses: actions-rs/cargo@v1
