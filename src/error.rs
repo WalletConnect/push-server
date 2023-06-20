@@ -119,7 +119,7 @@ pub enum Error {
     NoApnsConfigured,
 
     #[error(
-    "Encrypted push notification received without a topic, please ensure all required \
+        "Encrypted push notification received without a topic, please ensure all required \
          parameters set"
     )]
     MissingTopic,
