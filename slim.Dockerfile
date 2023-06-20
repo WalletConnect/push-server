@@ -16,6 +16,7 @@ RUN                 cargo install cargo-chef
 FROM                chef AS plan
 
 WORKDIR             /app
+COPY                ./.cargo ./.cargo
 COPY                Cargo.lock Cargo.toml ./
 COPY                src ./src
 COPY                crates ./crates
@@ -29,6 +30,9 @@ RUN                 cargo chef prepare --recipe-path recipe.json
 FROM                chef AS build
 
 ENV                 TINI_VERSION v0.19.0
+
+# Ensure Cargo Config Copied
+COPY                ./.cargo ./.cargo
 
 # This is a build requirement of `opentelemetry-otlp`. Once the new version
 # is rolled out, which no longer requires the `protoc`, we'll be able to
