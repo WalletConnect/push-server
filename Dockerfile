@@ -36,6 +36,9 @@ ENV                 TINI_VERSION v0.19.0
 RUN                 apt-get update \
   && apt-get install -y --no-install-recommends protobuf-compiler
 
+RUN                 apt-get update \
+  && apt-get install -y --no-install-recommends lld llvm
+
 WORKDIR             /app
 # Cache dependencies
 COPY --from=plan    /app/recipe.json recipe.json
