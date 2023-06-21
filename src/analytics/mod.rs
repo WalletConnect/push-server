@@ -2,19 +2,21 @@ use {
     crate::{
         analytics::{client_info::ClientInfo, message_info::MessageInfo},
         config::Config,
-        error::{Error, Result},
+        error::Result,
         log::prelude::*,
     },
     aws_config::meta::region::RegionProviderChain,
-    aws_sdk_s3::{Client as S3Client, Region},
+    aws_sdk_s3::{config::Region, Client as S3Client},
     gorgon::{
-        batcher::{AwsExporter, AwsExporterOpts, BatchCollectorOpts},
+        collectors::{batch::BatchOpts, noop::NoopCollector},
+        exporters::aws::{AwsExporter, AwsOpts},
         geoip::{AnalyticsGeoData, GeoIpReader},
+        writers::parquet::ParquetWriter,
         Analytics,
-        NoopCollector,
     },
     std::{net::IpAddr, sync::Arc},
 };
+use crate::error::Error;
 
 pub mod client_info;
 pub mod message_info;
@@ -45,28 +47,29 @@ impl PushAnalytics {
     ) -> Result<Self> {
         info!(%export_bucket, "initializing analytics with aws export");
 
-        let opts = BatchCollectorOpts::default();
+        let opts = BatchOpts::default();
         let bucket_name: Arc<str> = export_bucket.into();
         let node_ip: Arc<str> = node_ip.to_string().into();
 
         let messages = {
-            let exporter = AwsExporter::new(AwsExporterOpts {
+            let exporter = AwsExporter::new(AwsOpts {
+                // TODO (Harry Bairstow): Do we need a prefix?
+                export_prefix: "",
                 export_name: "push_messages",
                 file_extension: "parquet",
-                // Note: Clone these values if we add more exporters
                 bucket_name: bucket_name.clone(),
                 s3_client: s3_client.clone(),
                 node_ip: node_ip.clone(),
             });
 
-            Analytics::new(
-                gorgon::batcher::create_parquet_collector::<MessageInfo, _>(opts.clone(), exporter)
-                    .map_err(|e| Error::BatchCollector(e.to_string()))?,
-            )
+            let collector = ParquetWriter::<MessageInfo>::new(opts.clone(), exporter)?;
+            Analytics::new(collector)
         };
 
         let clients = {
-            let exporter = AwsExporter::new(AwsExporterOpts {
+            let exporter = AwsExporter::new(AwsOpts {
+                // TODO (Harry Bairstow): Do we need a prefix?
+                export_prefix: "",
                 export_name: "push_clients",
                 file_extension: "parquet",
                 bucket_name,
@@ -74,10 +77,7 @@ impl PushAnalytics {
                 node_ip,
             });
 
-            Analytics::new(
-                gorgon::batcher::create_parquet_collector::<ClientInfo, _>(opts, exporter)
-                    .map_err(|e| Error::BatchCollector(e.to_string()))?,
-            )
+            Analytics::new(ParquetWriter::new(opts, exporter)?)
         };
 
         Ok(Self {
@@ -100,38 +100,53 @@ impl PushAnalytics {
     }
 }
 
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct AnalyticsConfig {
+    pub s3_endpoint: Option<String>,
+    pub export_bucket: Option<String>,
+    pub geoip_db_bucket: Option<String>,
+    pub geoip_db_key: Option<String>,
+}
+
 pub async fn initialize(config: &Config, echo_ip: IpAddr) -> Result<PushAnalytics> {
-    let export_bucket = config.analytics_export_bucket.clone();
-    let region_provider = RegionProviderChain::first_try(Region::new("eu-central-1"));
-    let shared_config = aws_config::from_env().region(region_provider).load().await;
-
-    let aws_config = if let Some(s3_endpoint) = &config.analytics_s3_endpoint {
-        info!(%s3_endpoint, "initializing analytics with custom s3 endpoint");
-
-        aws_sdk_s3::config::Builder::from(&shared_config)
-            .endpoint_url(s3_endpoint)
-            .build()
-    } else {
-        aws_sdk_s3::config::Builder::from(&shared_config).build()
+    let analytics = AnalyticsConfig {
+        s3_endpoint: config.analytics_s3_endpoint.clone(),
+        export_bucket: Some(config.analytics_export_bucket.clone()),
+        geoip_db_bucket: config.analytics_geoip_db_bucket.clone(),
+        geoip_db_key: config.analytics_geoip_db_key.clone(),
     };
 
-    let s3_client = S3Client::from_conf(aws_config);
-    let geoip_params = (
-        &config.analytics_geoip_db_bucket,
-        &config.analytics_geoip_db_key,
-    );
+    if let Some(export_bucket) = analytics.export_bucket.as_deref() {
+        let region_provider = RegionProviderChain::first_try(Region::new("eu-central-1"));
+        let shared_config = aws_config::from_env().region(region_provider).load().await;
 
-    let geoip = if let (Some(bucket), Some(key)) = geoip_params {
-        info!(%bucket, %key, "initializing geoip database from aws s3");
+        let aws_config = if let Some(s3_endpoint) = &analytics.s3_endpoint {
+            info!(%s3_endpoint, "initializing analytics with custom s3 endpoint");
 
-        GeoIpReader::from_aws_s3(&s3_client, bucket, key)
-            .await
-            .map_err(|e| Error::GeoIpReader(e.to_string()))?
+            aws_sdk_s3::config::Builder::from(&shared_config)
+                .endpoint_url(s3_endpoint)
+                .build()
+        } else {
+            aws_sdk_s3::config::Builder::from(&shared_config).build()
+        };
+
+        let s3_client = S3Client::from_conf(aws_config);
+        let geoip_params = (&analytics.geoip_db_bucket, &analytics.geoip_db_key);
+
+        let geoip = if let (Some(bucket), Some(key)) = geoip_params {
+            info!(%bucket, %key, "initializing geoip database from aws s3");
+
+            GeoIpReader::from_aws_s3(&s3_client, bucket, key)
+                .await
+                .map_err(|_| Error::GeoIpS3Failed)?
+        } else {
+            info!("analytics geoip lookup is disabled");
+
+            GeoIpReader::empty()
+        };
+
+        PushAnalytics::with_aws_export(s3_client, export_bucket, echo_ip, geoip)
     } else {
-        info!("analytics geoip lookup is disabled");
-
-        GeoIpReader::empty()
-    };
-
-    PushAnalytics::with_aws_export(s3_client, &export_bucket, echo_ip, geoip)
+        Ok(PushAnalytics::with_noop_export())
+    }
 }
