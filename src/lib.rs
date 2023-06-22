@@ -138,15 +138,10 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
     let port = state.config.port;
     let private_port = state.config.telemetry_prometheus_port.unwrap_or(3001);
     let build_version = state.build_info.crate_info.version.clone();
-    let build_commit = state
-        .build_info
-        .version_control
-        .clone()
-        .unwrap()
-        .git()
-        .unwrap()
-        .commit_short_id
-        .clone();
+    let build_commit = match state.build_info.version_control.clone() {
+        Some(v) => v.git().unwrap().commit_short_id.clone(),
+        None => "unknown-commit".to_string(),
+    };
     let build_rustc_version = state.build_info.compiler.version.clone();
     let show_header = !state.config.disable_header;
     // TODO use value again
