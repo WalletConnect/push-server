@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.26.0 - 2023-06-22
+#### Features
+- bump parquet and fix builds (#143) - (59df9a8) - Harry Bairstow
+- - -
+
 ## v0.25.1 - 2023-06-20
 #### Bug Fixes
 - docker images now build - (d65eb3b) - Harry Bairstow
