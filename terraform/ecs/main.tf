@@ -4,7 +4,7 @@ locals {
 
   prometheus_port = "8081"
 
-  otel_collector_image_tag = "v0.2.0"
+  otel_collector_image_tag = "v0.3.0"
   otel_collector_image     = "${var.aws_otel_collector_ecr_repository_url}:${local.otel_collector_image_tag}"
 }
 
