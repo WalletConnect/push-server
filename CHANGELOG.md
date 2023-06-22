@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.27.0 - 2023-06-22
+#### Bug Fixes
+- **(hotfix)** build info unknown (#145) - (8c12c57) - Derek
+#### Features
+- use latest otel collector image (#144) - (4bd8ea7) - Derek
+- - -
+
 ## v0.26.0 - 2023-06-22
 #### Features
 - bump parquet and fix builds (#143) - (59df9a8) - Harry Bairstow
