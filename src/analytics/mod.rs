@@ -2,7 +2,7 @@ use {
     crate::{
         analytics::{client_info::ClientInfo, message_info::MessageInfo},
         config::Config,
-        error::Result,
+        error::{Error, Result},
         log::prelude::*,
     },
     aws_config::meta::region::RegionProviderChain,
@@ -16,7 +16,6 @@ use {
     },
     std::{net::IpAddr, sync::Arc},
 };
-use crate::error::Error;
 
 pub mod client_info;
 pub mod message_info;
