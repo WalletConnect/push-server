@@ -1,3 +1,4 @@
+use a2::{ErrorBody, ErrorReason};
 use {
     crate::{
         blob::DecryptedPayloadBlob,
@@ -9,6 +10,7 @@ use {
     std::io::Read,
     tracing::span,
 };
+use crate::error::Error;
 
 #[derive(Debug, Clone)]
 pub struct ApnsProvider {
@@ -68,28 +70,45 @@ impl PushProvider for ApnsProvider {
         };
 
         // TODO tidy after https://github.com/WalletConnect/a2/issues/67 is closed
-        if payload.is_encrypted() {
-            let mut notification_payload = a2::DefaultNotificationBuilder::new()
-                .set_content_available()
-                .set_mutable_content()
-                .set_title("much <3 love")
-                .build(token.as_str(), opt);
+        let result = match payload.is_encrypted() {
+            true => {
+                let mut notification_payload = a2::DefaultNotificationBuilder::new()
+                    .set_content_available()
+                    .set_mutable_content()
+                    .set_title("much <3 love")
+                    .build(token.as_str(), opt);
 
-            notification_payload.add_custom_data("topic", &payload.topic)?;
-            notification_payload.add_custom_data("blob", &payload.blob)?;
+                notification_payload.add_custom_data("topic", &payload.topic)?;
+                notification_payload.add_custom_data("blob", &payload.blob)?;
 
-            let _ = self.client.send(notification_payload).await?;
-        } else {
-            let blob = DecryptedPayloadBlob::from_base64_encoded(payload.blob)?;
+                self.client.send(notification_payload).await
+            }
+            false => {
+                let blob = DecryptedPayloadBlob::from_base64_encoded(payload.blob)?;
 
-            let notification_payload = a2::DefaultNotificationBuilder::new()
-                .set_title(&blob.title)
-                .set_body(&blob.body)
-                .build(token.as_str(), opt);
+                let notification_payload = a2::DefaultNotificationBuilder::new()
+                    .set_title(&blob.title)
+                    .set_body(&blob.body)
+                    .build(token.as_str(), opt);
 
-            let _ = self.client.send(notification_payload).await?;
+                self.client.send(notification_payload).await
+            }
+        };
+
+        match result {
+            Ok(_) => Ok(()),
+            Err(e) => match e {
+                a2::Error::ResponseError(res) => match res.error {
+                    None => Err(Error::Apns(a2::Error::ResponseError(res))),
+                    Some(response) => {
+                        match response.reason {
+                            ErrorReason::BadDeviceToken => Err(Error::BadDeviceToken),
+                            reason => Err(Error::ApnsResponse(reason)),
+                        }
+                    }
+                }
+                e => Err(Error::Apns(e))
+            }
         }
-
-        Ok(())
     }
 }
