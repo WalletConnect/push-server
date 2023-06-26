@@ -72,7 +72,7 @@ impl PushProvider for ApnsProvider {
             let mut notification_payload = a2::DefaultNotificationBuilder::new()
                 .set_content_available()
                 .set_mutable_content()
-                .set_title("much <3 love")
+                .set_title("You have new notifications. Open to view")
                 .build(token.as_str(), opt);
 
             notification_payload.add_custom_data("topic", &payload.topic)?;
