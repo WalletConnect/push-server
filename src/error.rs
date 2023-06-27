@@ -25,8 +25,14 @@ pub enum Error {
     #[error(transparent)]
     Prometheus(#[from] prometheus_core::Error),
 
+    #[error("invalid device token provided")]
+    BadDeviceToken,
+
     #[error(transparent)]
     Apns(#[from] a2::Error),
+
+    #[error("APNS Responded with error, {0}")]
+    ApnsResponse(a2::ErrorReason),
 
     #[error(transparent)]
     Fcm(#[from] fcm::FcmError),
@@ -162,9 +168,27 @@ impl IntoResponse for Error {
     fn into_response(self) -> Response {
         error!("responding with error ({:?})", self);
         match self {
+            Error::BadDeviceToken => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
+                ResponseError {
+                    name: "invalid_token".to_string(),
+                    message: "Provided device token is now invalid, the client id has been un-registered".to_string(),
+                }
+            ], vec![
+                ErrorField {
+                    field: "token".to_string(),
+                    description: "Invalid device token".to_string(),
+                    location: ErrorLocation::Body,
+                }
+            ]),
             Error::Apns(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
                 ResponseError {
                     name: "apns".to_string(),
+                    message: e.to_string(),
+                }
+            ], vec![]),
+            Error::ApnsResponse(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
+                ResponseError {
+                    name: "apns_response".to_string(),
                     message: e.to_string(),
                 }
             ], vec![]),
