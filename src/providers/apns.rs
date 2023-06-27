@@ -69,7 +69,7 @@ impl PushProvider for ApnsProvider {
         };
 
         // TODO tidy after https://github.com/WalletConnect/a2/issues/67 is closed
-        let _res = match payload.is_encrypted() {
+        let result = match payload.is_encrypted() {
             true => {
                 let mut notification_payload = a2::DefaultNotificationBuilder::new()
                     .set_content_available()
