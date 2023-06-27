@@ -1,16 +1,15 @@
-use a2::{ErrorBody, ErrorReason};
 use {
     crate::{
         blob::DecryptedPayloadBlob,
+        error::Error,
         handlers::push_message::MessagePayload,
         providers::PushProvider,
     },
-    a2::{NotificationBuilder, NotificationOptions},
+    a2::{ErrorReason, NotificationBuilder, NotificationOptions},
     async_trait::async_trait,
     std::io::Read,
     tracing::span,
 };
-use crate::error::Error;
 
 #[derive(Debug, Clone)]
 pub struct ApnsProvider {
@@ -100,15 +99,13 @@ impl PushProvider for ApnsProvider {
             Err(e) => match e {
                 a2::Error::ResponseError(res) => match res.error {
                     None => Err(Error::Apns(a2::Error::ResponseError(res))),
-                    Some(response) => {
-                        match response.reason {
-                            ErrorReason::BadDeviceToken => Err(Error::BadDeviceToken),
-                            reason => Err(Error::ApnsResponse(reason)),
-                        }
-                    }
-                }
-                e => Err(Error::Apns(e))
-            }
+                    Some(response) => match response.reason {
+                        ErrorReason::BadDeviceToken => Err(Error::BadDeviceToken),
+                        reason => Err(Error::ApnsResponse(reason)),
+                    },
+                },
+                e => Err(Error::Apns(e)),
+            },
         }
     }
 }

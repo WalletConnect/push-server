@@ -31,8 +31,8 @@ pub enum Error {
     #[error(transparent)]
     Apns(#[from] a2::Error),
 
-    #[error(transparent)]
-    ApnsResponse(#[from] a2::ErrorReason),
+    #[error("APNS Responded with error, {0}")]
+    ApnsResponse(a2::ErrorReason),
 
     #[error(transparent)]
     Fcm(#[from] fcm::FcmError),
