@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.28.0 - 2023-06-27
+#### Bug Fixes
+- return correct error code (#148) - (baf52ac) - Harry Bairstow
+#### Features
+- improve default message (#151) - (42b8bbe) - Derek
+- - -
+
 ## v0.27.0 - 2023-06-22
 #### Bug Fixes
 - **(hotfix)** build info unknown (#145) - (8c12c57) - Derek
