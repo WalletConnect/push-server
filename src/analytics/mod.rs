@@ -52,8 +52,7 @@ impl PushAnalytics {
 
         let messages = {
             let exporter = AwsExporter::new(AwsOpts {
-                // TODO (Harry Bairstow): Do we need a prefix?
-                export_prefix: "",
+                export_prefix: "echo/messages",
                 export_name: "push_messages",
                 file_extension: "parquet",
                 bucket_name: bucket_name.clone(),
@@ -67,8 +66,7 @@ impl PushAnalytics {
 
         let clients = {
             let exporter = AwsExporter::new(AwsOpts {
-                // TODO (Harry Bairstow): Do we need a prefix?
-                export_prefix: "",
+                export_prefix: "echo/clients",
                 export_name: "push_clients",
                 file_extension: "parquet",
                 bucket_name,
