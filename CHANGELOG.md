@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.28.1 - 2023-06-29
+#### Bug Fixes
+- bucket prefix (#153) - (ed139ab) - Harry Bairstow
+- - -
+
 ## v0.28.0 - 2023-06-27
 #### Bug Fixes
 - return correct error code (#148) - (baf52ac) - Harry Bairstow
