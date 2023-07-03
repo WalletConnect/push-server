@@ -188,10 +188,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
                                 .map(|v| v.parse::<HeaderValue>().unwrap())
                                 .collect::<Vec<HeaderValue>>(), */
                         .allow_origin(AllowOrigin::any())
-                        .allow_headers(vec![
-                            "Content-Type".parse().unwrap(),
-                            "Authorization".parse().unwrap(),
-                        ]),
+                        .allow_headers([hyper::http::header::CONTENT_TYPE, hyper::http::header::AUTHORIZATION]),
                 ),
             );
 
