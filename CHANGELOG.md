@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.29.0 - 2023-07-03
+#### Features
+- add `msg_id` to analytics exports (#156) - (0be5086) - Xavier Basty
+- - -
+
 ## v0.28.2 - 2023-07-03
 #### Bug Fixes
 - **(cors-headers)** allow authorization and content-type headers (#155) - (0a6fbfe) - Cali
