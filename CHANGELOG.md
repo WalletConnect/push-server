@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.28.2 - 2023-07-03
+#### Bug Fixes
+- **(cors-headers)** allow authorization and content-type headers (#155) - (0a6fbfe) - Cali
+- - -
+
 ## v0.28.1 - 2023-06-29
 #### Bug Fixes
 - bucket prefix (#153) - (ed139ab) - Harry Bairstow
