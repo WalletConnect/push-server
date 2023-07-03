@@ -183,6 +183,7 @@ pub async fn handler(
             );
 
             let msg = MessageInfo {
+                msg_id: body.id.into(),
                 region: region.map(|r| Arc::from(r.join(", "))),
                 country,
                 continent,
