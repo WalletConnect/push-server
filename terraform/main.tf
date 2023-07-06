@@ -166,7 +166,7 @@ module "ecs" {
   aws_otel_collector_ecr_repository_url = data.aws_ecr_repository.aws_otel_collector.repository_url
 
   analytics_datalake_bucket_name = local.analytics_data_lake_bucket_name 
-  analytics_key_arn              =   var.analytics_data_lake_kms_key_arn 
+  analytics_key_arn              =  local.environment == "prod" ? "arn:aws:kms:eu-central-1:898587786287:key/06e7c9fd-943d-47bf-bcf4-781b44411ba4" :  "arn:aws:kms:eu-central-1:898587786287:key/d1d2f047-b2a3-4f4a-8786-7c87ee83c954"
   analytics_geoip_db_bucket_name = local.geoip_db_bucket_name
   analytics_geoip_db_key         = var.geoip_db_key
 
