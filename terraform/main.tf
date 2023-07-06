@@ -10,7 +10,7 @@ locals {
   database_url        = "postgres://${module.database_cluster.cluster_master_username}:${module.database_cluster.cluster_master_password}@${module.database_cluster.cluster_endpoint}:${module.database_cluster.cluster_port}/postgres"
   tenant_database_url = "postgres://${module.tenant_database_cluster.cluster_master_username}:${module.tenant_database_cluster.cluster_master_password}@${module.tenant_database_cluster.cluster_endpoint}:${module.tenant_database_cluster.cluster_port}/postgres"
 
-  geoip_db_bucket_name = "${local.environment}.relay.geo.ip.database.private.${local.environment}.walletconnect"
+  geoip_db_bucket_name            = "${local.environment}.relay.geo.ip.database.private.${local.environment}.walletconnect"
   analytics_data_lake_bucket_name = "walletconnect.data-lake.${local.environment}"
 }
 
@@ -165,8 +165,8 @@ module "ecs" {
 
   aws_otel_collector_ecr_repository_url = data.aws_ecr_repository.aws_otel_collector.repository_url
 
-  analytics_datalake_bucket_name = local.analytics_data_lake_bucket_name 
-  analytics_key_arn              =  local.environment == "prod" ? "arn:aws:kms:eu-central-1:898587786287:key/06e7c9fd-943d-47bf-bcf4-781b44411ba4" :  "arn:aws:kms:eu-central-1:898587786287:key/d1d2f047-b2a3-4f4a-8786-7c87ee83c954"
+  analytics_datalake_bucket_name = local.analytics_data_lake_bucket_name
+  analytics_key_arn              = local.environment == "prod" ? "arn:aws:kms:eu-central-1:898587786287:key/06e7c9fd-943d-47bf-bcf4-781b44411ba4" : "arn:aws:kms:eu-central-1:898587786287:key/d1d2f047-b2a3-4f4a-8786-7c87ee83c954"
   analytics_geoip_db_bucket_name = local.geoip_db_bucket_name
   analytics_geoip_db_key         = var.geoip_db_key
 
