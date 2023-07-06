@@ -11,6 +11,7 @@ locals {
   tenant_database_url = "postgres://${module.tenant_database_cluster.cluster_master_username}:${module.tenant_database_cluster.cluster_master_password}@${module.tenant_database_cluster.cluster_endpoint}:${module.tenant_database_cluster.cluster_port}/postgres"
 
   geoip_db_bucket_name = "${local.environment}.relay.geo.ip.database.private.${local.environment}.walletconnect"
+  analytics_data_lake_bucket_name = "walletconnect.data-lake.${local.environment}"
 }
 
 #tflint-ignore: terraform_required_providers,terraform_unused_declarations
@@ -164,8 +165,8 @@ module "ecs" {
 
   aws_otel_collector_ecr_repository_url = data.aws_ecr_repository.aws_otel_collector.repository_url
 
-  analytics_datalake_bucket_name = module.analytics.bucket-name
-  analytics_key_arn              = module.analytics.kms-key_arn
+  analytics_datalake_bucket_name = local.analytics_data_lake_bucket_name 
+  analytics_key_arn              =   var.analytics_data_lake_kms_key_arn 
   analytics_geoip_db_bucket_name = local.geoip_db_bucket_name
   analytics_geoip_db_key         = var.geoip_db_key
 
