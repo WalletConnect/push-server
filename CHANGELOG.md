@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.30.0 - 2023-07-12
+#### Features
+- move analytics to proper s3 bucket (#159) - (88416fb) - Rakowskiii
+- propagate tags to ECS tasks - (a21dce9) - Derek
+- - -
+
 ## v0.29.0 - 2023-07-03
 #### Features
 - add `msg_id` to analytics exports (#156) - (0be5086) - Xavier Basty
