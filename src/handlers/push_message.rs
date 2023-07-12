@@ -23,6 +23,7 @@ use {
     axum::{
         extract::{Json, Path, State as StateExtractor},
         http::{HeaderMap, StatusCode},
+        response::IntoResponse,
     },
     serde::{Deserialize, Serialize},
     std::sync::Arc,
@@ -54,12 +55,91 @@ pub async fn handler(
     headers: HeaderMap,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<Response> {
-    let request_id = get_req_id(&headers);
+    let (res, analytics_option) = handler_internal(
+        Path((tenant_id, id)),
+        StateExtractor(state),
+        headers,
+        RequireValidSignature(Json(body)),
+    )
+    .await;
 
-    increment_counter!(state.metrics, received_notifications);
+    let (status, response) = match res {
+        Ok(res) => (res.status_code.clone().as_u16(), res),
+        Err(error) => {
+            let res = error.into_response();
+            let status_code = res.status().clone().as_u16();
+            (status_code, res)
+        }
+    };
+
+    #[cfg(feature = "analytics")]
+    if let Some(mut message_info) = analytics_option {
+        message_info.status = status;
+        message_info.success = status >= 200 && status < 300;
+        message_info.response_message = Some(response.body().to_string());
+
+        tokio::spawn(async move {
+            if let Some(analytics) = &state.analytics {
+                let (country, continent, region) = analytics
+                    .geoip
+                    .lookup_geo_data(addr.ip())
+                    .map_or((None, None, None), |geo| {
+                        (geo.country, geo.continent, geo.region)
+                    });
+
+                debug!(
+                    %request_id,
+                    %tenant_id,
+                    client_id = %id,
+                    ip = %addr.ip(),
+                    "loaded geo data"
+                );
+
+                message_info.country = country;
+                message_info.continent = continent;
+                message_info.region = region.map(|r| Arc::from(r.join(", ")));
+
+                analytics.message(message_info);
+            }
+        });
+    }
+
+    Ok(response)
+}
+
+pub async fn handler_internal(
+    Path((tenant_id, id)): Path<(String, String)>,
+    StateExtractor(state): StateExtractor<Arc<AppState>>,
+    headers: HeaderMap,
+    RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
+) -> (Result<Response>, Option<MessageInfo>) {
+    #[cfg(feature = "analytics")]
+    let topic: Option<Arc<str>> = body.payload.topic.as_ref().map(|t| t.clone().into());
 
     #[cfg(feature = "analytics")]
     let (flags, encrypted) = (body.payload.flags, body.payload.is_encrypted());
+
+    #[cfg(feature = "analytics")]
+    let mut analytics = MessageInfo {
+        msg_id: body.id.into(),
+        region: None,
+        country: None,
+        continent: None,
+        project_id: tenant_id.into(),
+        client_id: id.into(),
+        topic,
+        push_provider: client.push_type.as_str().into(),
+        encrypted,
+        flags,
+        status: 0,
+        success: false,
+        response_message: None,
+        received_at: gorgon::time::now(),
+    };
+
+    let request_id = get_req_id(&headers);
+
+    increment_counter!(state.metrics, received_notifications);
 
     let id = id
         .trim_start_matches(DECENTRALIZED_IDENTIFIER_PREFIX)
@@ -91,7 +171,18 @@ pub async fn handler(
             last_recieved_at = %notification.last_received_at,
             "notification has already been received"
         );
-        return Ok(Response::new_success(StatusCode::OK));
+
+        #[cfg(feature = "analytics")]
+        {
+            analytics.success = true;
+            analytics.response_message = Some("Notification has already been received".into());
+        }
+
+        #[cfg(not(feature = "analytics"))]
+        return (Ok(Response::new_success(StatusCode::OK)), None);
+
+        #[cfg(feature = "analytics")]
+        return (Ok(Response::new_success(StatusCode::OK)), Some(analytics));
     }
 
     let notification = state
@@ -117,7 +208,18 @@ pub async fn handler(
             last_recieved_at = %notification.last_received_at,
             "notification has already been processed"
         );
-        return Ok(Response::new_success(StatusCode::OK));
+
+        #[cfg(feature = "analytics")]
+        {
+            analytics.success = true;
+            analytics.response_message = Some("Notification has already been processed".into());
+        }
+
+        #[cfg(not(feature = "analytics"))]
+        return (Ok(Response::new_success(StatusCode::OK)), None);
+
+        #[cfg(feature = "analytics")]
+        return (Ok(Response::new_success(StatusCode::OK)), Some(analytics));
     }
 
     let tenant = state.tenant_store.get_tenant(&tenant_id).await?;
@@ -138,9 +240,6 @@ pub async fn handler(
         push_type = client.push_type.as_str(),
         "fetched provider"
     );
-
-    #[cfg(feature = "analytics")]
-    let topic: Option<Arc<str>> = body.payload.topic.as_ref().map(|t| t.clone().into());
 
     provider
         .send_notification(client.token, body.payload)
@@ -163,42 +262,18 @@ pub async fn handler(
         Provider::Noop(_) => {}
     }
 
-    // Analytics
     #[cfg(feature = "analytics")]
-    tokio::spawn(async move {
-        if let Some(analytics) = &state.analytics {
-            let (country, continent, region) = analytics
-                .geoip
-                .lookup_geo_data(addr.ip())
-                .map_or((None, None, None), |geo| {
-                    (geo.country, geo.continent, geo.region)
-                });
+    {
+        analytics.success = true;
+        analytics.response_message = Some("Delivered".into());
+    }
 
-            debug!(
-                %request_id,
-                %tenant_id,
-                client_id = %id,
-                ip = %addr.ip(),
-                "loaded geo data"
-            );
+    #[cfg(feature = "analytics")]
+    return (
+        Ok(Response::new_success(StatusCode::ACCEPTED)),
+        Some(analytics),
+    );
 
-            let msg = MessageInfo {
-                msg_id: body.id.into(),
-                region: region.map(|r| Arc::from(r.join(", "))),
-                country,
-                continent,
-                project_id: tenant_id.into(),
-                client_id: id.into(),
-                topic,
-                push_provider: client.push_type.as_str().into(),
-                encrypted,
-                flags,
-                received_at: gorgon::time::now(),
-            };
-
-            analytics.message(msg);
-        }
-    });
-
-    Ok(Response::new_success(StatusCode::ACCEPTED))
+    #[cfg(not(feature = "analytics"))]
+    (Ok(Response::new_success(StatusCode::ACCEPTED)), None)
 }

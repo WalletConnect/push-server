@@ -13,5 +13,8 @@ pub struct MessageInfo {
     pub push_provider: Arc<str>,
     pub encrypted: bool,
     pub flags: u32,
+    pub status: u16,
+    pub success: bool,
+    pub response_message: Option<Arc<str>>,
     pub received_at: chrono::NaiveDateTime,
 }
