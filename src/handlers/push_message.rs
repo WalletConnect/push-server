@@ -75,8 +75,7 @@ pub async fn handler(
     #[cfg(feature = "analytics")]
     if let Some(mut message_info) = analytics_option {
         message_info.status = status;
-        message_info.success = status >= 200 && status < 300;
-        message_info.response_message = Some(response.body().to_string());
+        message_info.response_message = None;
 
         tokio::spawn(async move {
             if let Some(analytics) = &state.analytics {
@@ -132,7 +131,6 @@ pub async fn handler_internal(
         encrypted,
         flags,
         status: 0,
-        success: false,
         response_message: None,
         received_at: gorgon::time::now(),
     };
@@ -174,7 +172,6 @@ pub async fn handler_internal(
 
         #[cfg(feature = "analytics")]
         {
-            analytics.success = true;
             analytics.response_message = Some("Notification has already been received".into());
         }
 
@@ -211,7 +208,6 @@ pub async fn handler_internal(
 
         #[cfg(feature = "analytics")]
         {
-            analytics.success = true;
             analytics.response_message = Some("Notification has already been processed".into());
         }
 
@@ -264,7 +260,6 @@ pub async fn handler_internal(
 
     #[cfg(feature = "analytics")]
     {
-        analytics.success = true;
         analytics.response_message = Some("Delivered".into());
     }
 
