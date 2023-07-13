@@ -42,7 +42,7 @@ impl MessagePayload {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct PushMessageBody {
     pub id: String,
     pub payload: MessagePayload,
@@ -55,7 +55,7 @@ pub async fn handler(
     headers: HeaderMap,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<Response> {
-    let (res, analytics_option) = handler_internal(
+    let res = handler_internal(
         Path((tenant_id, id)),
         StateExtractor(state),
         headers,
@@ -63,12 +63,38 @@ pub async fn handler(
     )
     .await;
 
-    let (status, response) = match res {
-        Ok(res) => (res.status_code.clone().as_u16(), res),
+    let (status, response, analytics_option) = match res {
+        Ok((res, analytics_options_inner)) => (
+            res.status_code.clone().as_u16(),
+            res,
+            analytics_options_inner,
+        ),
         Err(error) => {
+            let error_str = format!("{:?}", &error);
             let res = error.into_response();
             let status_code = res.status().clone().as_u16();
-            (status_code, res)
+
+            #[cfg(feature = "analytics")]
+            let analytics_option = Some(MessageInfo {
+                msg_id: body.clone().id.into(),
+                region: None,
+                country: None,
+                continent: None,
+                project_id: tenant_id.clone().into(),
+                client_id: id.clone().into(),
+                topic: None,
+                push_provider: "unknown".into(),
+                encrypted: false,
+                flags: body.clone().payload.flags,
+                status: status_code.clone(),
+                response_message: Some(error_str.into()),
+                received_at: Default::default(),
+            });
+
+            #[cfg(not(feature = "analytics"))]
+            let analytics_option = None;
+
+            (status_code, res, analytics_option)
         }
     };
 
@@ -111,7 +137,7 @@ pub async fn handler_internal(
     StateExtractor(state): StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
-) -> (Result<Response>, Option<MessageInfo>) {
+) -> Result<(Response, Option<MessageInfo>)> {
     #[cfg(feature = "analytics")]
     let topic: Option<Arc<str>> = body.payload.topic.as_ref().map(|t| t.clone().into());
 
@@ -176,10 +202,10 @@ pub async fn handler_internal(
         }
 
         #[cfg(not(feature = "analytics"))]
-        return (Ok(Response::new_success(StatusCode::OK)), None);
+        return Ok((Response::new_success(StatusCode::OK), None));
 
         #[cfg(feature = "analytics")]
-        return (Ok(Response::new_success(StatusCode::OK)), Some(analytics));
+        return Ok((Response::new_success(StatusCode::OK), Some(analytics)));
     }
 
     let notification = state
@@ -212,10 +238,10 @@ pub async fn handler_internal(
         }
 
         #[cfg(not(feature = "analytics"))]
-        return (Ok(Response::new_success(StatusCode::OK)), None);
+        return Ok((Response::new_success(StatusCode::OK), None));
 
         #[cfg(feature = "analytics")]
-        return (Ok(Response::new_success(StatusCode::OK)), Some(analytics));
+        return Ok((Response::new_success(StatusCode::OK), Some(analytics)));
     }
 
     let tenant = state.tenant_store.get_tenant(&tenant_id).await?;
@@ -264,11 +290,8 @@ pub async fn handler_internal(
     }
 
     #[cfg(feature = "analytics")]
-    return (
-        Ok(Response::new_success(StatusCode::ACCEPTED)),
-        Some(analytics),
-    );
+    return Ok((Response::new_success(StatusCode::ACCEPTED), Some(analytics)));
 
     #[cfg(not(feature = "analytics"))]
-    (Ok(Response::new_success(StatusCode::ACCEPTED)), None)
+    Ok((Response::new_success(StatusCode::ACCEPTED), None))
 }
