@@ -1,3 +1,4 @@
+use axum::response::IntoResponse;
 #[cfg(feature = "analytics")]
 use {
     crate::analytics::message_info::MessageInfo,
@@ -23,7 +24,6 @@ use {
     axum::{
         extract::{Json, Path, State as StateExtractor},
         http::{HeaderMap, StatusCode},
-        response::IntoResponse,
     },
     serde::{Deserialize, Serialize},
     std::sync::Arc,
@@ -132,17 +132,17 @@ pub async fn handler(
     Ok(response)
 }
 
-pub async fn handler_internal(
+pub async fn handler_internal<MessageInfo>(
     Path((tenant_id, id)): Path<(String, String)>,
     StateExtractor(state): StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<(Response, Option<MessageInfo>)> {
     #[cfg(feature = "analytics")]
-    let topic: Option<Arc<str>> = body.payload.topic.as_ref().map(|t| t.clone().into());
+    let topic: Option<Arc<str>> = body.payload.clone().topic.as_ref().map(|t| t.clone().into());
 
     #[cfg(feature = "analytics")]
-    let (flags, encrypted) = (body.payload.flags, body.payload.is_encrypted());
+    let (flags, encrypted) = (body.payload.clone().flags, body.payload.is_encrypted());
 
     #[cfg(feature = "analytics")]
     let mut analytics = MessageInfo {
