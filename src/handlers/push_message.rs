@@ -54,18 +54,20 @@ pub async fn handler(
     StateExtractor(state): StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
-) -> Result<Response> {
+) -> Result<axum::response::Response> {
     let res = handler_internal(
-        Path((tenant_id, id)),
-        StateExtractor(state),
-        headers,
-        RequireValidSignature(Json(body)),
+        Path((tenant_id.clone(), id.clone())),
+        StateExtractor(state.clone()),
+        headers.clone(),
+        RequireValidSignature(Json(body.clone())),
     )
     .await;
 
+    let request_id = get_req_id(&headers);
+
     let (status, response, analytics_option) = match res {
         Ok((res, analytics_options_inner)) => (
-            res.status_code.clone().as_u16(),
+            res.status().as_u16(),
             res,
             analytics_options_inner,
         ),
@@ -132,26 +134,32 @@ pub async fn handler(
     Ok(response)
 }
 
-pub async fn handler_internal<MessageInfo>(
+pub async fn handler_internal(
     Path((tenant_id, id)): Path<(String, String)>,
     StateExtractor(state): StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
-) -> Result<(Response, Option<MessageInfo>)> {
+) -> Result<(axum::response::Response, Option<MessageInfo>)> {
     #[cfg(feature = "analytics")]
     let topic: Option<Arc<str>> = body.payload.clone().topic.as_ref().map(|t| t.clone().into());
 
     #[cfg(feature = "analytics")]
     let (flags, encrypted) = (body.payload.clone().flags, body.payload.is_encrypted());
 
+    let client = match state.client_store.get_client(&tenant_id, &id).await {
+        Ok(c) => Ok(c),
+        Err(StoreError::NotFound(_, _)) => Err(ClientNotFound),
+        Err(e) => Err(Store(e)),
+    }?;
+
     #[cfg(feature = "analytics")]
     let mut analytics = MessageInfo {
-        msg_id: body.id.into(),
+        msg_id: body.id.clone().into(),
         region: None,
         country: None,
         continent: None,
-        project_id: tenant_id.into(),
-        client_id: id.into(),
+        project_id: tenant_id.clone().into(),
+        client_id: id.clone().into(),
         topic,
         push_provider: client.push_type.as_str().into(),
         encrypted,
@@ -202,10 +210,10 @@ pub async fn handler_internal<MessageInfo>(
         }
 
         #[cfg(not(feature = "analytics"))]
-        return Ok((Response::new_success(StatusCode::OK), None));
+        return Ok(((StatusCode::OK).into_response(), None));
 
         #[cfg(feature = "analytics")]
-        return Ok((Response::new_success(StatusCode::OK), Some(analytics)));
+        return Ok(((StatusCode::OK).into_response(), Some(analytics)));
     }
 
     let notification = state
@@ -238,10 +246,10 @@ pub async fn handler_internal<MessageInfo>(
         }
 
         #[cfg(not(feature = "analytics"))]
-        return Ok((Response::new_success(StatusCode::OK), None));
+        return Ok(((StatusCode::OK).into_response(), None));
 
         #[cfg(feature = "analytics")]
-        return Ok((Response::new_success(StatusCode::OK), Some(analytics)));
+        return Ok(((StatusCode::OK).into_response(), Some(analytics)));
     }
 
     let tenant = state.tenant_store.get_tenant(&tenant_id).await?;
@@ -290,8 +298,8 @@ pub async fn handler_internal<MessageInfo>(
     }
 
     #[cfg(feature = "analytics")]
-    return Ok((Response::new_success(StatusCode::ACCEPTED), Some(analytics)));
+    return Ok(((StatusCode::ACCEPTED).into_response(), Some(analytics)));
 
     #[cfg(not(feature = "analytics"))]
-    Ok((Response::new_success(StatusCode::ACCEPTED), None))
+    Ok(((StatusCode::ACCEPTED).into_response(), None))
 }

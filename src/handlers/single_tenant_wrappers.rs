@@ -42,7 +42,7 @@ pub async fn push_handler(
     state: StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
     valid_sig: RequireValidSignature<Json<PushMessageBody>>,
-) -> Result<Response> {
+) -> Result<axum::response::Response> {
     #[cfg(feature = "multitenant")]
     return Err(MissingTenantId);
 
