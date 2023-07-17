@@ -34,6 +34,12 @@ use crate::stores::tenant::DefaultTenantStore;
 
 #[cfg(feature = "analytics")]
 pub mod analytics;
+#[cfg(not(feature = "analytics"))]
+pub mod analytics {
+    pub mod message_info {
+        pub struct MessageInfo;
+    }
+}
 pub mod blob;
 pub mod config;
 pub mod error;

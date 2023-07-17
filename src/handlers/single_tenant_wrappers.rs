@@ -14,7 +14,7 @@ use {
     std::sync::Arc,
 };
 #[cfg(feature = "analytics")]
-use {axum::ConnectInfo, std::net::SocketAddr};
+use {axum::extract::ConnectInfo, std::net::SocketAddr};
 
 #[cfg(feature = "multitenant")]
 use crate::error::Error::MissingTenantId;
@@ -46,11 +46,12 @@ pub async fn push_handler(
     #[cfg(feature = "multitenant")]
     return Err(MissingTenantId);
 
-    #[cfg(all(not(feature = "multitenant"), analytics))]
+    #[cfg(all(not(feature = "multitenant"), feature = "analytics"))]
     return crate::handlers::push_message::handler(
         addr,
         Path((DEFAULT_TENANT_ID.to_string(), id)),
         state,
+        headers,
         valid_sig,
     )
     .await;
@@ -74,7 +75,7 @@ pub async fn register_handler(
     #[cfg(feature = "multitenant")]
     return Err(MissingTenantId);
 
-    #[cfg(all(not(feature = "multitenant"), analytics))]
+    #[cfg(all(not(feature = "multitenant"), feature = "analytics"))]
     return crate::handlers::register_client::handler(
         addr,
         Path(DEFAULT_TENANT_ID.to_string()),

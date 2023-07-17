@@ -1,18 +1,12 @@
-use axum::response::IntoResponse;
-#[cfg(feature = "analytics")]
-use {
-    crate::analytics::message_info::MessageInfo,
-    axum::extract::ConnectInfo,
-    std::net::SocketAddr,
-};
 use {
     crate::{
+        analytics::message_info::MessageInfo,
         blob::ENCRYPTED_FLAG,
         error::{
             Error::{ClientNotFound, Store},
             Result,
         },
-        handlers::{Response, DECENTRALIZED_IDENTIFIER_PREFIX},
+        handlers::DECENTRALIZED_IDENTIFIER_PREFIX,
         increment_counter,
         log::prelude::*,
         middleware::validate_signature::RequireValidSignature,
@@ -24,10 +18,13 @@ use {
     axum::{
         extract::{Json, Path, State as StateExtractor},
         http::{HeaderMap, StatusCode},
+        response::IntoResponse,
     },
     serde::{Deserialize, Serialize},
     std::sync::Arc,
 };
+#[cfg(feature = "analytics")]
+use {axum::extract::ConnectInfo, std::net::SocketAddr};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct MessagePayload {
@@ -66,12 +63,9 @@ pub async fn handler(
     let request_id = get_req_id(&headers);
 
     let (status, response, analytics_option) = match res {
-        Ok((res, analytics_options_inner)) => (
-            res.status().as_u16(),
-            res,
-            analytics_options_inner,
-        ),
+        Ok((res, analytics_options_inner)) => (res.status().as_u16(), res, analytics_options_inner),
         Err(error) => {
+            #[cfg(feature = "analytics")]
             let error_str = format!("{:?}", &error);
             let res = error.into_response();
             let status_code = res.status().clone().as_u16();
@@ -141,7 +135,12 @@ pub async fn handler_internal(
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<(axum::response::Response, Option<MessageInfo>)> {
     #[cfg(feature = "analytics")]
-    let topic: Option<Arc<str>> = body.payload.clone().topic.as_ref().map(|t| t.clone().into());
+    let topic: Option<Arc<str>> = body
+        .payload
+        .clone()
+        .topic
+        .as_ref()
+        .map(|t| t.clone().into());
 
     #[cfg(feature = "analytics")]
     let (flags, encrypted) = (body.payload.clone().flags, body.payload.is_encrypted());
@@ -176,12 +175,6 @@ pub async fn handler_internal(
     let id = id
         .trim_start_matches(DECENTRALIZED_IDENTIFIER_PREFIX)
         .to_string();
-
-    let client = match state.client_store.get_client(&tenant_id, &id).await {
-        Ok(c) => Ok(c),
-        Err(StoreError::NotFound(_, _)) => Err(ClientNotFound),
-        Err(e) => Err(Store(e)),
-    }?;
 
     debug!(
         %request_id,
