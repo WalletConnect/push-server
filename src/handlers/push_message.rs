@@ -82,7 +82,7 @@ pub async fn handler(
                 push_provider: "unknown".into(),
                 encrypted: false,
                 flags: body.clone().payload.flags,
-                status: status_code.clone(),
+                status: status_code,
                 response_message: Some(error_str.into()),
                 received_at: Default::default(),
             });

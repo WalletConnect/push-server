@@ -159,7 +159,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         // set `x-request-id` header on all requests
         .layer(SetRequestIdLayer::new(
             X_REQUEST_ID.clone(),
-            GenericRequestId::default(),
+            GenericRequestId,
         ))
         .layer(
             TraceLayer::new_for_http()

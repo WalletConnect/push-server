@@ -91,7 +91,7 @@ impl Config {
     pub fn is_valid(&self) -> error::Result<()> {
         #[cfg(feature = "multitenant")]
         {
-            if &self.tenant_database_url == &self.database_url {
+            if self.tenant_database_url == self.database_url {
                 return Err(InvalidConfiguration(
                     "`TENANT_DATABASE_URL` is equal to `DATABASE_URL`, this is not allowed"
                         .to_string(),
