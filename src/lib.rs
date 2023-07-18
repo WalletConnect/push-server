@@ -34,6 +34,12 @@ use crate::stores::tenant::DefaultTenantStore;
 
 #[cfg(feature = "analytics")]
 pub mod analytics;
+#[cfg(not(feature = "analytics"))]
+pub mod analytics {
+    pub mod message_info {
+        pub struct MessageInfo;
+    }
+}
 pub mod blob;
 pub mod config;
 pub mod error;
@@ -153,7 +159,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         // set `x-request-id` header on all requests
         .layer(SetRequestIdLayer::new(
             X_REQUEST_ID.clone(),
-            GenericRequestId::default(),
+            GenericRequestId,
         ))
         .layer(
             TraceLayer::new_for_http()
