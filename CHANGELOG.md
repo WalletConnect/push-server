@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.31.0 - 2023-07-18
+#### Features
+- Response Analytics (#161) - (5698d83) - Harry Bairstow
+- - -
+
 ## v0.30.0 - 2023-07-12
 #### Features
 - move analytics to proper s3 bucket (#159) - (88416fb) - Rakowskiii
