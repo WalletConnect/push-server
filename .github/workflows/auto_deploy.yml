@@ -1,4 +1,4 @@
-name: publish_image
+name: auto_deploy
 
 on:
   push:
@@ -76,3 +76,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+  run-cd:
+    # call the cd.yml file with image tag as the commit hash
+    uses: ./.github/workflows/cd.yml
+    with:
+      image_tag: ${{ github.head_ref }}
