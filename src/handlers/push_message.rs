@@ -73,6 +73,7 @@ pub async fn handler(
             let mut analytics_option = None;
             if let Some(analytics_unwrapped) = analytics_option_inner {
                 analytics_option = Some(MessageInfo {
+                    #[cfg(feature = "analytics")]
                     response_message: Some(error_str.into()),
                     ..analytics_unwrapped
                 });
@@ -141,6 +142,7 @@ pub async fn handler_internal(
     .map_err(|e| {
         (
             e,
+            #[cfg(feature = "analytics")]
             Some(MessageInfo {
                 msg_id: body.id.clone().into(),
                 region: None,
@@ -156,6 +158,8 @@ pub async fn handler_internal(
                 response_message: None,
                 received_at: gorgon::time::now(),
             }),
+            #[cfg(not(feature = "analytics"))]
+            None,
         )
     })?;
 
@@ -177,7 +181,7 @@ pub async fn handler_internal(
     });
 
     #[cfg(not(feature = "analytics"))]
-    let mut analytics = None;
+    let analytics = None;
 
     let request_id = get_req_id(&headers);
 
