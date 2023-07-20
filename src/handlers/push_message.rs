@@ -72,11 +72,18 @@ pub async fn handler(
 
             let mut analytics_option = None;
             if let Some(analytics_unwrapped) = analytics_option_inner {
-                analytics_option = Some(MessageInfo {
-                    #[cfg(feature = "analytics")]
-                    response_message: Some(error_str.into()),
-                    ..analytics_unwrapped
-                });
+                #[cfg(feature = "analytics")]
+                {
+                    analytics_option = Some(MessageInfo {
+                        response_message: Some(error_str.into()),
+                        ..analytics_unwrapped
+                    });
+                }
+
+                #[cfg(not(feature = "analytics"))]
+                {
+                    analytics_option = Some(analytics_unwrapped);
+                }
             }
 
             (status_code, res, analytics_option)
