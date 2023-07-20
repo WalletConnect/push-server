@@ -3,8 +3,8 @@ use {
         analytics::message_info::MessageInfo,
         blob::ENCRYPTED_FLAG,
         error::{
+            Error,
             Error::{ClientNotFound, Store},
-
         },
         handlers::DECENTRALIZED_IDENTIFIER_PREFIX,
         increment_counter,
@@ -25,7 +25,6 @@ use {
 };
 #[cfg(feature = "analytics")]
 use {axum::extract::ConnectInfo, std::net::SocketAddr};
-use crate::error::Error;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct MessagePayload {
@@ -138,24 +137,30 @@ pub async fn handler_internal(
         Ok(c) => Ok(c),
         Err(StoreError::NotFound(_, _)) => Err(ClientNotFound),
         Err(e) => Err(Store(e)),
-    }.map_err(|e| (e, Some(MessageInfo {
-        msg_id: body.id.clone().into(),
-        region: None,
-        country: None,
-        continent: None,
-        project_id: tenant_id.clone().into(),
-        client_id: id.clone().into(),
-        topic: topic.clone(),
-        push_provider: "unknown".into(),
-        encrypted,
-        flags,
-        status: 0,
-        response_message: None,
-        received_at: gorgon::time::now(),
-    })))?;
+    }
+    .map_err(|e| {
+        (
+            e,
+            Some(MessageInfo {
+                msg_id: body.id.clone().into(),
+                region: None,
+                country: None,
+                continent: None,
+                project_id: tenant_id.clone().into(),
+                client_id: id.clone().into(),
+                topic: topic.clone(),
+                push_provider: "unknown".into(),
+                encrypted,
+                flags,
+                status: 0,
+                response_message: None,
+                received_at: gorgon::time::now(),
+            }),
+        )
+    })?;
 
     #[cfg(feature = "analytics")]
-        let mut analytics = Some(MessageInfo {
+    let mut analytics = Some(MessageInfo {
         msg_id: body.id.clone().into(),
         region: None,
         country: None,
@@ -221,7 +226,8 @@ pub async fn handler_internal(
     let notification = state
         .notification_store
         .create_or_update_notification(&body.id, &tenant_id, &id, &body.payload)
-        .await.map_err(|e| (Error::Store(e), analytics.clone()))?;
+        .await
+        .map_err(|e| (Error::Store(e), analytics.clone()))?;
 
     info!(
         %request_id,
@@ -258,7 +264,11 @@ pub async fn handler_internal(
         return Ok(((StatusCode::OK).into_response(), analytics));
     }
 
-    let tenant = state.tenant_store.get_tenant(&tenant_id).await.map_err(|e| (e, analytics.clone()))?;
+    let tenant = state
+        .tenant_store
+        .get_tenant(&tenant_id)
+        .await
+        .map_err(|e| (e, analytics.clone()))?;
     debug!(
         %request_id,
         %tenant_id,
@@ -267,7 +277,9 @@ pub async fn handler_internal(
         "fetched tenant"
     );
 
-    let mut provider = tenant.provider(&client.push_type).map_err(|e| (e, analytics.clone()))?;
+    let mut provider = tenant
+        .provider(&client.push_type)
+        .map_err(|e| (e, analytics.clone()))?;
     debug!(
         %request_id,
         %tenant_id,
@@ -279,7 +291,8 @@ pub async fn handler_internal(
 
     provider
         .send_notification(client.token, body.payload)
-        .await.map_err(|e| (e, analytics.clone()))?;
+        .await
+        .map_err(|e| (e, analytics.clone()))?;
 
     info!(
         %request_id,

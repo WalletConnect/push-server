@@ -66,12 +66,6 @@ terraform -chdir=terraform apply  -var-file="vars/$(terraform -chdir=terraform w
 There are two Dockerfiles, one `Dockerfile` is used in production by the hosted platform at WalletConnect
 while `slim.Dockerfile` is a stripped down version with no features enabled i.e. Single Tenant
 
-## Analytics & Metrics
-Echo Server is instrumented with analytics & metrics to help with debugging and monitoring.
-
-### Metrics
-
-
 ## Contact
 If you wish to integrate Push functionality into your Wallet (only available on v2), please contact us.
 
