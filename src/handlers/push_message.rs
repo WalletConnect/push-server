@@ -4,7 +4,7 @@ use {
         blob::ENCRYPTED_FLAG,
         error::{
             Error::{ClientNotFound, Store},
-            Result,
+
         },
         handlers::DECENTRALIZED_IDENTIFIER_PREFIX,
         increment_counter,
@@ -25,6 +25,7 @@ use {
 };
 #[cfg(feature = "analytics")]
 use {axum::extract::ConnectInfo, std::net::SocketAddr};
+use crate::error::Error;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct MessagePayload {
@@ -51,7 +52,7 @@ pub async fn handler(
     StateExtractor(state): StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
-) -> Result<axum::response::Response> {
+) -> Result<axum::response::Response, Error> {
     let res = handler_internal(
         Path((tenant_id.clone(), id.clone())),
         StateExtractor(state.clone()),
@@ -64,31 +65,19 @@ pub async fn handler(
 
     let (status, response, analytics_option) = match res {
         Ok((res, analytics_options_inner)) => (res.status().as_u16(), res, analytics_options_inner),
-        Err(error) => {
+        Err((error, analytics_option_inner)) => {
             #[cfg(feature = "analytics")]
             let error_str = format!("{:?}", &error);
             let res = error.into_response();
             let status_code = res.status().clone().as_u16();
 
-            #[cfg(feature = "analytics")]
-            let analytics_option = Some(MessageInfo {
-                msg_id: body.clone().id.into(),
-                region: None,
-                country: None,
-                continent: None,
-                project_id: tenant_id.clone().into(),
-                client_id: id.clone().into(),
-                topic: None,
-                push_provider: "unknown".into(),
-                encrypted: false,
-                flags: body.clone().payload.flags,
-                status: status_code,
-                response_message: Some(error_str.into()),
-                received_at: Default::default(),
-            });
-
-            #[cfg(not(feature = "analytics"))]
-            let analytics_option = None;
+            let mut analytics_option = None;
+            if let Some(analytics_unwrapped) = analytics_option_inner {
+                analytics_option = Some(MessageInfo {
+                    response_message: Some(error_str.into()),
+                    ..analytics_unwrapped
+                });
+            }
 
             (status_code, res, analytics_option)
         }
@@ -133,7 +122,7 @@ pub async fn handler_internal(
     StateExtractor(state): StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
-) -> Result<(axum::response::Response, Option<MessageInfo>)> {
+) -> Result<(axum::response::Response, Option<MessageInfo>), (Error, Option<MessageInfo>)> {
     #[cfg(feature = "analytics")]
     let topic: Option<Arc<str>> = body
         .payload
@@ -149,10 +138,24 @@ pub async fn handler_internal(
         Ok(c) => Ok(c),
         Err(StoreError::NotFound(_, _)) => Err(ClientNotFound),
         Err(e) => Err(Store(e)),
-    }?;
+    }.map_err(|e| (e, Some(MessageInfo {
+        msg_id: body.id.clone().into(),
+        region: None,
+        country: None,
+        continent: None,
+        project_id: tenant_id.clone().into(),
+        client_id: id.clone().into(),
+        topic: topic.clone(),
+        push_provider: "unknown".into(),
+        encrypted,
+        flags,
+        status: 0,
+        response_message: None,
+        received_at: gorgon::time::now(),
+    })))?;
 
     #[cfg(feature = "analytics")]
-    let mut analytics = MessageInfo {
+        let mut analytics = Some(MessageInfo {
         msg_id: body.id.clone().into(),
         region: None,
         country: None,
@@ -166,7 +169,10 @@ pub async fn handler_internal(
         status: 0,
         response_message: None,
         received_at: gorgon::time::now(),
-    };
+    });
+
+    #[cfg(not(feature = "analytics"))]
+    let mut analytics = None;
 
     let request_id = get_req_id(&headers);
 
@@ -199,20 +205,24 @@ pub async fn handler_internal(
 
         #[cfg(feature = "analytics")]
         {
-            analytics.response_message = Some("Notification has already been received".into());
+            analytics = Some(MessageInfo {
+                response_message: Some("Notification has already been received".into()),
+                ..analytics.unwrap()
+            });
         }
 
         #[cfg(not(feature = "analytics"))]
         return Ok(((StatusCode::OK).into_response(), None));
 
         #[cfg(feature = "analytics")]
-        return Ok(((StatusCode::OK).into_response(), Some(analytics)));
+        return Ok(((StatusCode::OK).into_response(), analytics));
     }
 
     let notification = state
         .notification_store
         .create_or_update_notification(&body.id, &tenant_id, &id, &body.payload)
-        .await?;
+        .await.map_err(|e| (Error::Store(e), analytics.clone()))?;
+
     info!(
         %request_id,
         %tenant_id,
@@ -235,17 +245,20 @@ pub async fn handler_internal(
 
         #[cfg(feature = "analytics")]
         {
-            analytics.response_message = Some("Notification has already been processed".into());
+            analytics = Some(MessageInfo {
+                response_message: Some("Notification has already been processed".into()),
+                ..analytics.unwrap()
+            });
         }
 
         #[cfg(not(feature = "analytics"))]
         return Ok(((StatusCode::OK).into_response(), None));
 
         #[cfg(feature = "analytics")]
-        return Ok(((StatusCode::OK).into_response(), Some(analytics)));
+        return Ok(((StatusCode::OK).into_response(), analytics));
     }
 
-    let tenant = state.tenant_store.get_tenant(&tenant_id).await?;
+    let tenant = state.tenant_store.get_tenant(&tenant_id).await.map_err(|e| (e, analytics.clone()))?;
     debug!(
         %request_id,
         %tenant_id,
@@ -254,7 +267,7 @@ pub async fn handler_internal(
         "fetched tenant"
     );
 
-    let mut provider = tenant.provider(&client.push_type)?;
+    let mut provider = tenant.provider(&client.push_type).map_err(|e| (e, analytics.clone()))?;
     debug!(
         %request_id,
         %tenant_id,
@@ -266,7 +279,7 @@ pub async fn handler_internal(
 
     provider
         .send_notification(client.token, body.payload)
-        .await?;
+        .await.map_err(|e| (e, analytics.clone()))?;
 
     info!(
         %request_id,
@@ -287,11 +300,14 @@ pub async fn handler_internal(
 
     #[cfg(feature = "analytics")]
     {
-        analytics.response_message = Some("Delivered".into());
+        analytics = Some(MessageInfo {
+            response_message: Some("Delivered".into()),
+            ..analytics.unwrap()
+        });
     }
 
     #[cfg(feature = "analytics")]
-    return Ok(((StatusCode::ACCEPTED).into_response(), Some(analytics)));
+    return Ok(((StatusCode::ACCEPTED).into_response(), analytics));
 
     #[cfg(not(feature = "analytics"))]
     Ok(((StatusCode::ACCEPTED).into_response(), None))

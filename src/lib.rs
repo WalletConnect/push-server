@@ -36,6 +36,7 @@ use crate::stores::tenant::DefaultTenantStore;
 pub mod analytics;
 #[cfg(not(feature = "analytics"))]
 pub mod analytics {
+    #[derive(Debug, Clone, serde::Serialize)]
     pub mod message_info {
         pub struct MessageInfo;
     }
