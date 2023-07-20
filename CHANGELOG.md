@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.31.1 - 2023-07-20
+#### Bug Fixes
+- ensure all data provided (#164) - (6dc5949) - Harry Bairstow
+- - -
+
 ## v0.31.0 - 2023-07-18
 #### Features
 - Response Analytics (#161) - (5698d83) - Harry Bairstow
