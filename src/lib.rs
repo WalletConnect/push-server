@@ -37,6 +37,7 @@ pub mod analytics;
 #[cfg(not(feature = "analytics"))]
 pub mod analytics {
     pub mod message_info {
+        #[derive(Debug, Clone, serde::Serialize)]
         pub struct MessageInfo;
     }
 }

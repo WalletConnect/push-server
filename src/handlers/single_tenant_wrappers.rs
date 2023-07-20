@@ -27,7 +27,7 @@ pub async fn delete_handler(
     #[cfg(feature = "multitenant")]
     return Err(MissingTenantId);
 
-    #[cfg(all(not(feature = "multitenant")))]
+    #[cfg(not(feature = "multitenant"))]
     crate::handlers::delete_client::handler(
         Path((DEFAULT_TENANT_ID.to_string(), id)),
         state,
