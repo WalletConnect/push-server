@@ -1,4 +1,3 @@
-use tower_http::catch_panic::CatchPanicLayer;
 use {
     crate::{
         log::prelude::*,
@@ -19,6 +18,7 @@ use {
     tokio::{select, sync::broadcast},
     tower::ServiceBuilder,
     tower_http::{
+        catch_panic::CatchPanicLayer,
         request_id::{PropagateRequestIdLayer, SetRequestIdLayer},
         trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
     },
