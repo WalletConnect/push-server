@@ -18,6 +18,7 @@ use {
     tokio::{select, sync::broadcast},
     tower::ServiceBuilder,
     tower_http::{
+        catch_panic::CatchPanicLayer,
         request_id::{PropagateRequestIdLayer, SetRequestIdLayer},
         trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
     },
@@ -172,7 +173,8 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
                         .include_headers(true),
                 ),
         )
-        .layer(PropagateRequestIdLayer::new(X_REQUEST_ID.clone()));
+        .layer(PropagateRequestIdLayer::new(X_REQUEST_ID.clone()))
+        .layer(CatchPanicLayer::new());
 
     #[cfg(feature = "multitenant")]
     let app = {
