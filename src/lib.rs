@@ -1,3 +1,4 @@
+use tower_http::catch_panic::CatchPanicLayer;
 use {
     crate::{
         log::prelude::*,
@@ -172,7 +173,8 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
                         .include_headers(true),
                 ),
         )
-        .layer(PropagateRequestIdLayer::new(X_REQUEST_ID.clone()));
+        .layer(PropagateRequestIdLayer::new(X_REQUEST_ID.clone()))
+        .layer(CatchPanicLayer::new());
 
     #[cfg(feature = "multitenant")]
     let app = {
