@@ -205,6 +205,29 @@ pub async fn handler_internal(
         "fetched client to send notification"
     );
 
+    if tenant_id != client.tenant_id {
+        warn!(
+            %request_id,
+            %tenant_id,
+            client_id = %id,
+            "client tenant id does not match request tenant id"
+        );
+
+        #[cfg(feature = "analytics")]
+        {
+            analytics = Some(MessageInfo {
+                response_message: Some("Client tenant id does not match request tenant id".into()),
+                ..analytics.unwrap()
+            });
+        }
+
+        #[cfg(not(feature = "analytics"))]
+        return Err((Error::MissmatchedTenantId, None));
+
+        #[cfg(feature = "analytics")]
+        return Err((Error::MissatchedTenantId, analytics));
+    }
+
     if let Ok(notification) = state
         .notification_store
         .get_notification(&body.id, &tenant_id)

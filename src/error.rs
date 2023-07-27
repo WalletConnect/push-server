@@ -162,6 +162,9 @@ pub enum Error {
 
     #[error("failed to load geoip database from s3")]
     GeoIpS3Failed,
+
+    #[error("tenant id and client's registered tenant didn't match")]
+    MissatchedTenantId,
 }
 
 impl IntoResponse for Error {
@@ -481,6 +484,23 @@ impl IntoResponse for Error {
                     message: "JWT Authentication Failed".to_string(),
                 },
             ], vec![]),
+            Error::MissatchedTenantId => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
+                ResponseError {
+                    name: "missmatched_identifiers".to_string(),
+                    message: "The requested tenant doesn't have this client registered".to_string(),
+                },
+            ], vec![
+                ErrorField {
+                    field: "tenant_id".to_string(),
+                    description: "doesn't match registered id".to_string(),
+                    location: ErrorLocation::Path,
+                },
+                ErrorField {
+                    field: "id".to_string(),
+                    description: "doesn't match registered id".to_string(),
+                    location: ErrorLocation::Path,
+                }
+            ]),
             e => {
                 warn!("Error does not have response clause, {:?}", e);
 
