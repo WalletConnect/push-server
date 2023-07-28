@@ -35,7 +35,7 @@ pub struct MessagePayload {
 
 impl MessagePayload {
     pub fn is_encrypted(&self) -> bool {
-        (self.flags.clone() & ENCRYPTED_FLAG) == ENCRYPTED_FLAG
+        (self.flags & ENCRYPTED_FLAG) == ENCRYPTED_FLAG
     }
 }
 
