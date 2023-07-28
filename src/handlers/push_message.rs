@@ -35,7 +35,7 @@ pub struct MessagePayload {
 
 impl MessagePayload {
     pub fn is_encrypted(&self) -> bool {
-        (self.flags & ENCRYPTED_FLAG) == ENCRYPTED_FLAG
+        (self.flags.clone() & ENCRYPTED_FLAG) == ENCRYPTED_FLAG
     }
 }
 
@@ -60,9 +60,10 @@ pub async fn handler(
     )
     .await;
 
+    #[cfg(feature = "analytics")]
     let request_id = get_req_id(&headers);
 
-    let (status, response, analytics_option) = match res {
+    let inner_packed = match res {
         Ok((res, analytics_options_inner)) => (res.status().as_u16(), res, analytics_options_inner),
         Err((error, analytics_option_inner)) => {
             #[cfg(feature = "analytics")]
@@ -89,6 +90,12 @@ pub async fn handler(
             (status_code, res, analytics_option)
         }
     };
+
+    #[cfg(feature = "analytics")]
+    let (status, response, analytics_option) = inner_packed;
+
+    #[cfg(not(feature = "analytics"))]
+    let (_status, response, _analytics_option) = inner_packed;
 
     #[cfg(feature = "analytics")]
     if let Some(mut message_info) = analytics_option {
@@ -159,8 +166,8 @@ pub async fn handler_internal(
                 client_id: id.clone().into(),
                 topic: topic.clone(),
                 push_provider: "unknown".into(),
-                encrypted,
-                flags,
+                encrypted: encrypted.clone(),
+                flags: flags.clone(),
                 status: 0,
                 response_message: None,
                 received_at: gorgon::time::now(),
@@ -213,19 +220,49 @@ pub async fn handler_internal(
             "client tenant id does not match request tenant id"
         );
 
-        #[cfg(feature = "analytics")]
+        #[cfg(feature = "multitenant")]
         {
-            analytics = Some(MessageInfo {
-                response_message: Some("Client tenant id does not match request tenant id".into()),
-                ..analytics.unwrap()
-            });
+            if client.tenant_id == "0000-0000-0000-0000" {
+                warn!(
+                    %request_id,
+                    %tenant_id,
+                    client_id = %id,
+                    "client tenant id has not been set, allowing request to continue"
+                );
+            } else {
+                #[cfg(feature = "analytics")]
+                {
+                    analytics = Some(MessageInfo {
+                        response_message: Some(
+                            "Client tenant id does not match request tenant id".into(),
+                        ),
+                        ..analytics.unwrap()
+                    });
+
+                    return Err((Error::MissmatchedTenantId, analytics));
+                }
+
+                return Err((Error::MissmatchedTenantId, None));
+            }
         }
 
-        #[cfg(not(feature = "analytics"))]
-        return Err((Error::MissmatchedTenantId, None));
+        #[cfg(not(feature = "multitenant"))]
+        {
+            #[cfg(feature = "analytics")]
+            {
+                analytics = Some(MessageInfo {
+                    response_message: Some(
+                        "Client tenant id does not match request tenant id".into(),
+                    ),
+                    ..analytics.unwrap()
+                });
 
-        #[cfg(feature = "analytics")]
-        return Err((Error::MissatchedTenantId, analytics));
+                return Err((Error::MissmatchedTenantId, analytics));
+            }
+
+            #[cfg(not(feature = "analytics"))]
+            return Err((Error::MissmatchedTenantId, None));
+        }
     }
 
     if let Ok(notification) = state
@@ -248,13 +285,12 @@ pub async fn handler_internal(
                 response_message: Some("Notification has already been received".into()),
                 ..analytics.unwrap()
             });
+
+            return Ok(((StatusCode::OK).into_response(), analytics));
         }
 
         #[cfg(not(feature = "analytics"))]
         return Ok(((StatusCode::OK).into_response(), None));
-
-        #[cfg(feature = "analytics")]
-        return Ok(((StatusCode::OK).into_response(), analytics));
     }
 
     let notification = state
@@ -289,13 +325,12 @@ pub async fn handler_internal(
                 response_message: Some("Notification has already been processed".into()),
                 ..analytics.unwrap()
             });
+
+            return Ok(((StatusCode::OK).into_response(), analytics));
         }
 
         #[cfg(not(feature = "analytics"))]
         return Ok(((StatusCode::OK).into_response(), None));
-
-        #[cfg(feature = "analytics")]
-        return Ok(((StatusCode::OK).into_response(), analytics));
     }
 
     let tenant = state
@@ -351,11 +386,9 @@ pub async fn handler_internal(
             response_message: Some("Delivered".into()),
             ..analytics.unwrap()
         });
+
+        return Ok(((StatusCode::ACCEPTED).into_response(), analytics));
     }
 
-    #[cfg(feature = "analytics")]
-    return Ok(((StatusCode::ACCEPTED).into_response(), analytics));
-
-    #[cfg(not(feature = "analytics"))]
     Ok(((StatusCode::ACCEPTED).into_response(), None))
 }

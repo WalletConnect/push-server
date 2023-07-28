@@ -164,7 +164,7 @@ pub enum Error {
     GeoIpS3Failed,
 
     #[error("tenant id and client's registered tenant didn't match")]
-    MissatchedTenantId,
+    MissmatchedTenantId,
 }
 
 impl IntoResponse for Error {
@@ -484,7 +484,7 @@ impl IntoResponse for Error {
                     message: "JWT Authentication Failed".to_string(),
                 },
             ], vec![]),
-            Error::MissatchedTenantId => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
+            Error::MissmatchedTenantId => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
                 ResponseError {
                     name: "missmatched_identifiers".to_string(),
                     message: "The requested tenant doesn't have this client registered".to_string(),
