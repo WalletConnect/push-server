@@ -16,10 +16,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      # Ensure that we get the new version from updated Cargo.toml
-      - name: Move to HEAD
-        run: |
-          git reset --hard HEAD
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -76,7 +73,12 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+  run-ci:
+    uses: ./.github/workflows/ci.yml
   run-cd:
+    needs:
+      - build-container
+      - run-ci
     # call the cd.yml file with image tag as the commit hash
     uses: ./.github/workflows/cd.yml
     with:
