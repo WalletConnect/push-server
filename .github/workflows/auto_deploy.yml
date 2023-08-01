@@ -57,7 +57,7 @@ jobs:
           flavor: |
             latest=auto
           tags: |
-            type=raw,value=${{ github.head_ref }},suffix=${{ steps.suffix.outputs.suffix }}
+            type=raw,value=${{ github.ref_name }},suffix=${{ steps.suffix.outputs.suffix }}
 
       # Setup Buildkit
       - name: Set up Docker Buildx
@@ -82,4 +82,4 @@ jobs:
     # call the cd.yml file with image tag as the commit hash
     uses: ./.github/workflows/cd.yml
     with:
-      image_tag: ${{ github.head_ref }}
+      image_tag: ${{ github.ref_name }}
