@@ -82,4 +82,4 @@ jobs:
     # call the cd.yml file with image tag as the commit hash
     uses: ./.github/workflows/cd.yml
     with:
-      image_tag: ${{ github.head_ref }}
+      image_tag: ${{ github.ref_name }}
