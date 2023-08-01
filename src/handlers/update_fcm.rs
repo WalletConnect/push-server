@@ -55,13 +55,10 @@ pub async fn handler(
     }
 
     // ---- checks
-    let test_notification = fcm::Client::new()
-        .send(
-            fcm::MessageBuilder::new(&body.api_key.clone(), "wc-notification-test")
-                .dry_run(true)
-                .finalize(),
-        )
-        .await;
+    let test_message_builder =
+        fcm::MessageBuilder::new(&body.api_key.clone(), "wc-notification-test").dry_run(true);
+    let test_message = test_message_builder.finalize();
+    let test_notification = fcm::Client::new().send(test_message).await;
     match test_notification {
         Err(e) => match e {
             FcmError::Unauthorized => Err(BadFcmApiKey),
