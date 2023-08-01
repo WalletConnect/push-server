@@ -3,7 +3,7 @@ let
 in
   with nixpkgs;
   stdenv.mkDerivation {
-    name = "music-reader-env";
+    name = "echo-server";
     buildInputs = [
       cargo
       rustc
