@@ -55,8 +55,9 @@ pub async fn handler(
     }
 
     // ---- checks
+    let fcm_api_key = body.api_key.clone();
     let test_message_builder =
-        fcm::MessageBuilder::new(&body.api_key.clone(), "wc-notification-test").dry_run(true);
+        fcm::MessageBuilder::new(&fcm_api_key, "wc-notification-test").dry_run(true);
     let test_message = test_message_builder.finalize();
     let test_notification = fcm::Client::new().send(test_message).await;
     match test_notification {
