@@ -19,6 +19,9 @@ on:
       - "*.md"
       - "LICENSE"
 
+  workflow_call:
+
+
 concurrency:
   # Support push/pr as event types with different behaviors each:
   # 1. push: queue up builds

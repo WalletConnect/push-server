@@ -8,6 +8,11 @@ on:
       - "terraform/**"
   release:
     types: ["published"]
+  workflow_call:
+    inputs:
+      image_tag:
+        type: string
+        required: true
 
 concurrency:
   # Only allow for one action to run at once, queue any others
@@ -29,14 +34,18 @@ jobs:
           result-encoding: string
           script: |
             if (context.eventName == "release") {
-              return context.payload.release.tag_name
+              // remove the v from the tag
+              let tag = context.payload.release.tag_name.replace("v", "")
+              return tag
+            } else if (context.eventName == "workflow_call") {
+              return context.payload.inputs.image_tag
             } else {
               return ""
             }
 
       - id: clean_version
         run: |
-          version=$(echo "${{ steps.get.outputs.result }}" | sed 's/v//g')
+          version=$(echo "${{ steps.get.outputs.result }}")
           echo "version=$version" >> $GITHUB_OUTPUT
 
 
