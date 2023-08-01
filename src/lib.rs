@@ -18,6 +18,7 @@ use {
     tokio::{select, sync::broadcast},
     tower::ServiceBuilder,
     tower_http::{
+        catch_panic::CatchPanicLayer,
         request_id::{PropagateRequestIdLayer, SetRequestIdLayer},
         trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
     },
@@ -34,6 +35,13 @@ use crate::stores::tenant::DefaultTenantStore;
 
 #[cfg(feature = "analytics")]
 pub mod analytics;
+#[cfg(not(feature = "analytics"))]
+pub mod analytics {
+    pub mod message_info {
+        #[derive(Debug, Clone, serde::Serialize)]
+        pub struct MessageInfo;
+    }
+}
 pub mod blob;
 pub mod config;
 pub mod error;
@@ -153,7 +161,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         // set `x-request-id` header on all requests
         .layer(SetRequestIdLayer::new(
             X_REQUEST_ID.clone(),
-            GenericRequestId::default(),
+            GenericRequestId,
         ))
         .layer(
             TraceLayer::new_for_http()
@@ -165,7 +173,8 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
                         .include_headers(true),
                 ),
         )
-        .layer(PropagateRequestIdLayer::new(X_REQUEST_ID.clone()));
+        .layer(PropagateRequestIdLayer::new(X_REQUEST_ID.clone()))
+        .layer(CatchPanicLayer::new());
 
     #[cfg(feature = "multitenant")]
     let app = {

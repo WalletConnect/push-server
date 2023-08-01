@@ -1,6 +1,6 @@
 [package]
 name = "echo-server"
-version = "0.30.0"
+version = "0.31.2"
 edition = "2021"
 authors = [
     "Harry Bairstow <harry@walletconnect.com>"
@@ -22,7 +22,7 @@ cloud = []
 tokio = { version = "1", features = ["full"] }
 axum = { version = "0.6", features = ["json", "multipart", "tokio"] }
 tower = "0.4"
-tower-http = { version = "0.4", features = ["trace", "cors", "request-id", "propagate-header"] }
+tower-http = { version = "0.4", features = ["trace", "cors", "request-id", "propagate-header", "catch-panic"] }
 hyper = "0.14"
 
 # Database
