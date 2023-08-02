@@ -246,6 +246,14 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             post(handlers::single_tenant_wrappers::push_handler),
         )
         .layer(global_middleware)
+        .layer(
+            global_middleware.clone().layer(
+                CorsLayer::new()
+                    .allow_methods([Method::POST, Method::DELETE])
+                    .allow_origin(AllowOrigin::any())
+                    .allow_headers([hyper::http::header::CONTENT_TYPE, hyper::http::header::AUTHORIZATION]),
+            ),
+        )
         .with_state(state_arc.clone());
 
     let private_app = Router::new()
