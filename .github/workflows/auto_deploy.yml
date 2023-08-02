@@ -75,6 +75,7 @@ jobs:
           cache-to: type=gha,mode=max
   run-ci:
     uses: ./.github/workflows/ci.yml
+    secrets: inherit
   run-cd:
     needs:
       - build-container
@@ -83,3 +84,4 @@ jobs:
     uses: ./.github/workflows/cd.yml
     with:
       image_tag: ${{ github.sha }}
+    secrets: inherit
