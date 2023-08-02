@@ -20,9 +20,9 @@ use {
     tower::ServiceBuilder,
     tower_http::{
         catch_panic::CatchPanicLayer,
+        cors::{AllowOrigin, CorsLayer},
         request_id::{PropagateRequestIdLayer, SetRequestIdLayer},
         trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
-        cors::{AllowOrigin, CorsLayer},
     },
     tracing::{info, log::LevelFilter, warn, Level},
 };
