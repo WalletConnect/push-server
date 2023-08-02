@@ -223,7 +223,10 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
                     CorsLayer::new()
                         .allow_methods([Method::POST, Method::DELETE])
                         .allow_origin(AllowOrigin::any())
-                        .allow_headers([hyper::http::header::CONTENT_TYPE, hyper::http::header::AUTHORIZATION]),
+                        .allow_headers([
+                            hyper::http::header::CONTENT_TYPE,
+                            hyper::http::header::AUTHORIZATION,
+                        ]),
                 ),
             )
             .with_state(state_arc.clone())
@@ -251,7 +254,10 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
                 CorsLayer::new()
                     .allow_methods([Method::POST, Method::DELETE])
                     .allow_origin(AllowOrigin::any())
-                    .allow_headers([hyper::http::header::CONTENT_TYPE, hyper::http::header::AUTHORIZATION]),
+                    .allow_headers([
+                        hyper::http::header::CONTENT_TYPE,
+                        hyper::http::header::AUTHORIZATION,
+                    ]),
             ),
         )
         .with_state(state_arc.clone());
