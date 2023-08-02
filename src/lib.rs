@@ -9,6 +9,7 @@ use {
         Router,
     },
     config::Config,
+    hyper::http::Method,
     opentelemetry::{sdk::Resource, KeyValue},
     sqlx::{
         postgres::{PgConnectOptions, PgPoolOptions},
@@ -21,13 +22,9 @@ use {
         catch_panic::CatchPanicLayer,
         request_id::{PropagateRequestIdLayer, SetRequestIdLayer},
         trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
+        cors::{AllowOrigin, CorsLayer},
     },
     tracing::{info, log::LevelFilter, warn, Level},
-};
-#[cfg(feature = "multitenant")]
-use {
-    hyper::http::Method,
-    tower_http::cors::{AllowOrigin, CorsLayer},
 };
 
 #[cfg(not(feature = "multitenant"))]
