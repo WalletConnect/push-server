@@ -5,6 +5,7 @@ use {
         state::AppState,
         stores::tenant::{TenantApnsUpdateAuth, TenantApnsUpdateParams},
     },
+    a2::Client,
     axum::{
         extract::{Multipart, Path, State},
         Json,
@@ -26,6 +27,7 @@ pub struct ApnsUpdateBody {
     pub apns_team_id: Option<String>,
 }
 
+#[derive(Deserialize, Clone, Debug)]
 pub struct ApnsSqlUpdate {
     pub topic: Option<String>,
 
@@ -168,6 +170,40 @@ pub async fn handler(
 
             return Ok(Json(UpdateTenantApnsResponse { success: true }));
         }
+    }
+
+    // ---- Checks
+    if let Some(auth_change) = apns_updates.auth.clone() {
+        match auth_change {
+            TenantApnsUpdateAuth::Certificate {
+                mut apns_certificate,
+                apns_certificate_password,
+            } => {
+                match a2::Client::certificate(
+                    &mut apns_certificate,
+                    &apns_certificate_password,
+                    a2::Endpoint::Sandbox,
+                ) {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(Error::BadApnsCredentials),
+                }
+            }
+            TenantApnsUpdateAuth::Token {
+                apns_pkcs8_pem,
+                apns_key_id,
+                apns_team_id,
+            } => {
+                match a2::Client::token(
+                    apns_pkcs8_pem,
+                    apns_key_id,
+                    apns_team_id,
+                    a2::Endpoint::Sandbox,
+                ) {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(Error::BadApnsCredentials),
+                }
+            }
+        }?;
     }
 
     // ---- handler

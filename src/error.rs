@@ -165,6 +165,9 @@ pub enum Error {
 
     #[error("invalid fcm api key")]
     BadFcmApiKey,
+
+    #[error("invalid apns creds")]
+    BadApnsCredentials,
 }
 
 impl IntoResponse for Error {
@@ -193,6 +196,12 @@ impl IntoResponse for Error {
                 ResponseError {
                     name: "apns_response".to_string(),
                     message: e.to_string(),
+                }
+            ], vec![]),
+            Error::BadApnsCredentials => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
+                ResponseError {
+                    name: "bad_apns_credentials".to_string(),
+                    message: "Failed to validate the provided Certificate or Token".to_string(),
                 }
             ], vec![]),
             Error::Fcm(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![

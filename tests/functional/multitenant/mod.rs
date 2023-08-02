@@ -1,6 +1,7 @@
 /// Tests against the handlers
 use {crate::context::EchoServerContext, test_context::test_context};
 
+mod apns;
 mod fcm;
 mod tenancy;
 

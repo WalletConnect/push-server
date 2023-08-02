@@ -111,6 +111,7 @@ pub struct TenantFcmUpdateParams {
     pub fcm_api_key: String,
 }
 
+#[derive(Deserialize, Clone, Debug)]
 pub enum TenantApnsUpdateAuth {
     Certificate {
         apns_certificate: String,
