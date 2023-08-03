@@ -1,4 +1,3 @@
-use std::io::BufReader;
 use {
     crate::{
         error::{Error, Error::InvalidMultipartBody},
@@ -12,7 +11,7 @@ use {
     },
     base64::Engine,
     serde::{Deserialize, Serialize},
-    std::sync::Arc,
+    std::{io::BufReader, sync::Arc},
 };
 
 #[derive(Deserialize)]
