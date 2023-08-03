@@ -17,6 +17,7 @@ pub async fn get_client(client_store: &ClientStoreArc) -> String {
 
     client_store
         .create_client(TENANT_ID, &id, Client {
+            tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Noop,
             token: TOKEN.to_string(),
         })
