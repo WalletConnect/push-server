@@ -1,3 +1,4 @@
+use std::io::BufReader;
 use {
     crate::{
         error::{Error, Error::InvalidMultipartBody},
@@ -5,7 +6,6 @@ use {
         state::AppState,
         stores::tenant::{TenantApnsUpdateAuth, TenantApnsUpdateParams},
     },
-    a2::Client,
     axum::{
         extract::{Multipart, Path, State},
         Json,
@@ -176,11 +176,14 @@ pub async fn handler(
     if let Some(auth_change) = apns_updates.auth.clone() {
         match auth_change {
             TenantApnsUpdateAuth::Certificate {
-                mut apns_certificate,
+                apns_certificate,
                 apns_certificate_password,
             } => {
+                let cert_bytes = apns_certificate.into_bytes();
+                let mut reader = BufReader::new(&*cert_bytes);
+
                 match a2::Client::certificate(
-                    &mut apns_certificate,
+                    &mut reader,
                     &apns_certificate_password,
                     a2::Endpoint::Sandbox,
                 ) {
@@ -193,8 +196,11 @@ pub async fn handler(
                 apns_key_id,
                 apns_team_id,
             } => {
+                let pem_bytes = apns_pkcs8_pem.into_bytes();
+                let mut reader = BufReader::new(&*pem_bytes);
+
                 match a2::Client::token(
-                    apns_pkcs8_pem,
+                    &mut reader,
                     apns_key_id,
                     apns_team_id,
                     a2::Endpoint::Sandbox,

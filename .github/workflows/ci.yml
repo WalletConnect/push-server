@@ -76,7 +76,7 @@ jobs:
             rustc: nightly
           - name: "Unit Tests"
             cmd: test
-            args: --features analytics,multitenant
+            args: --all-features
             cache: { sharedKey: "tests" }
             rustc: stable
         include:
@@ -149,6 +149,8 @@ jobs:
         with:
           command: ${{ matrix.cargo.cmd }}
           args: ${{ matrix.cargo.args }}
+        env:
+          ECHO_TEST_FCM_KEY: ${{ secrets.ECHO_TEST_FCM_KEY }}
 
       - name: "Print sccache stats"
         run: sccache --show-stats

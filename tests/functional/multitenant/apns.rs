@@ -33,7 +33,7 @@ use {
 //             "http://{}/tenants/{}/apns",
 //             ctx.server.public_addr, &random_tenant_id
 //         ))
-//         .multipart(&form)
+//         .multipart(form)
 //         .send()
 //         .await
 //         .expect("Call failed");
@@ -73,7 +73,7 @@ async fn tenant_update_apns_bad_token(ctx: &mut EchoServerContext) {
             "http://{}/tenants/{}/apns",
             ctx.server.public_addr, &random_tenant_id
         ))
-        .multipart(&form)
+        .multipart(form)
         .send()
         .await
         .expect("Call failed");
@@ -109,7 +109,7 @@ async fn tenant_update_apns_bad_certificate(ctx: &mut EchoServerContext) {
             "http://{}/tenants/{}/apns",
             ctx.server.public_addr, &random_tenant_id
         ))
-        .multipart(&form)
+        .multipart(form)
         .send()
         .await
         .expect("Call failed");
