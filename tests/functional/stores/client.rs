@@ -15,7 +15,7 @@ async fn client_creation(ctx: &mut StoreContext) {
     let res = ctx
         .clients
         .create_client(TENANT_ID, &gen_id(), Client {
-            tenant_id: TENANT_ID,
+            tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Noop,
             token: TOKEN.to_string(),
         })
@@ -30,7 +30,7 @@ async fn client_creation_fcm(ctx: &mut StoreContext) {
     let res = ctx
         .clients
         .create_client(TENANT_ID, &gen_id(), Client {
-            tenant_id: TENANT_ID,
+            tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Fcm,
             token: TOKEN.to_string(),
         })
@@ -45,7 +45,7 @@ async fn client_creation_apns(ctx: &mut StoreContext) {
     let res = ctx
         .clients
         .create_client(TENANT_ID, &gen_id(), Client {
-            tenant_id: TENANT_ID,
+            tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Apns,
             token: TOKEN.to_string(),
         })
@@ -62,7 +62,7 @@ async fn client_upsert(ctx: &mut StoreContext) {
     let res = ctx
         .clients
         .create_client(TENANT_ID, &id, Client {
-            tenant_id: TENANT_ID,
+            tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Apns,
             token: TOKEN.to_string(),
         })
@@ -73,7 +73,7 @@ async fn client_upsert(ctx: &mut StoreContext) {
     let upsert_res = ctx
         .clients
         .create_client(TENANT_ID, &id, Client {
-            tenant_id: TENANT_ID,
+            tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Fcm,
             token: TOKEN.to_string(),
         })
@@ -90,7 +90,7 @@ async fn client_deletion(ctx: &mut StoreContext) {
     let res = ctx
         .clients
         .create_client(TENANT_ID, &id, Client {
-            tenant_id: TENANT_ID,
+            tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Noop,
             token: TOKEN.to_string(),
         })
@@ -111,7 +111,7 @@ async fn client_fetch(ctx: &mut StoreContext) {
     let res = ctx
         .clients
         .create_client(TENANT_ID, &id, Client {
-            tenant_id: TENANT_ID,
+            tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Noop,
             token: TOKEN.to_string(),
         })
