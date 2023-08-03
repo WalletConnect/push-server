@@ -90,6 +90,7 @@ pub async fn handler(
     state
         .client_store
         .create_client(&tenant_id, &client_id, Client {
+            tenant_id: tenant_id.clone(),
             push_type,
             token: body.token,
         })

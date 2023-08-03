@@ -9,6 +9,7 @@ use {
 
 #[derive(Debug, Clone, PartialEq, Eq, sqlx::FromRow)]
 pub struct Client {
+    pub tenant_id: String,
     pub push_type: ProviderKind,
     #[sqlx(rename = "device_token")]
     pub token: String,
@@ -49,7 +50,8 @@ impl ClientStore for sqlx::PgPool {
 
     async fn get_client(&self, tenant_id: &str, id: &str) -> stores::Result<Client> {
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Client>(
-            "SELECT push_type, device_token FROM public.clients WHERE id = $1 and tenant_id = $2",
+            "SELECT tenant_id, push_type, device_token FROM public.clients WHERE id = $1 and \
+             tenant_id = $2",
         )
         .bind(id)
         .bind(tenant_id)
