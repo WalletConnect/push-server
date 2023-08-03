@@ -2,6 +2,18 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.32.0 - 2023-08-02
+#### Bug Fixes
+- incorrect tag value (#170) - (cbf55e8) - Harry Bairstow
+#### Features
+- Web3Inbox CORS Support (#172) - (b16b97d) - Harry Bairstow
+- full/Improved pipeline (#160) - (39235fe) - Harry Bairstow
+- fcm verification (#169) - (d829e18) - Harry Bairstow
+#### Miscellaneous Chores
+- change context value (#171) - (3680820) - Harry Bairstow
+- re-enable debug logs (#167) - (219b1ec) - Harry Bairstow
+- - -
+
 ## v0.31.2 - 2023-07-25
 #### Bug Fixes
 - catch panic (#166) - (32163ef) - Harry Bairstow

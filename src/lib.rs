@@ -9,6 +9,7 @@ use {
         Router,
     },
     config::Config,
+    hyper::http::Method,
     opentelemetry::{sdk::Resource, KeyValue},
     sqlx::{
         postgres::{PgConnectOptions, PgPoolOptions},
@@ -19,15 +20,11 @@ use {
     tower::ServiceBuilder,
     tower_http::{
         catch_panic::CatchPanicLayer,
+        cors::{AllowOrigin, CorsLayer},
         request_id::{PropagateRequestIdLayer, SetRequestIdLayer},
         trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
     },
     tracing::{info, log::LevelFilter, warn, Level},
-};
-#[cfg(feature = "multitenant")]
-use {
-    hyper::http::Method,
-    tower_http::cors::{AllowOrigin, CorsLayer},
 };
 
 #[cfg(not(feature = "multitenant"))]
@@ -174,7 +171,16 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
                 ),
         )
         .layer(PropagateRequestIdLayer::new(X_REQUEST_ID.clone()))
-        .layer(CatchPanicLayer::new());
+        .layer(CatchPanicLayer::new())
+        .layer(
+            CorsLayer::new()
+                .allow_methods([Method::POST, Method::DELETE])
+                .allow_origin(AllowOrigin::any())
+                .allow_headers([
+                    hyper::http::header::CONTENT_TYPE,
+                    hyper::http::header::AUTHORIZATION,
+                ]),
+        );
 
     #[cfg(feature = "multitenant")]
     let app = {

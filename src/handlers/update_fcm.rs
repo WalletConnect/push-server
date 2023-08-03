@@ -1,6 +1,9 @@
 use {
     crate::{
-        error::{Error, Error::InvalidMultipartBody},
+        error::{
+            Error,
+            Error::{BadFcmApiKey, InvalidMultipartBody},
+        },
         increment_counter,
         state::AppState,
         stores::tenant::TenantFcmUpdateParams,
@@ -9,6 +12,7 @@ use {
         extract::{Multipart, Path, State},
         Json,
     },
+    fcm::FcmError,
     serde::Serialize,
     std::sync::Arc,
 };
@@ -49,6 +53,20 @@ pub async fn handler(
     if !body.value_changed_ {
         return Err(InvalidMultipartBody);
     }
+
+    // ---- checks
+    let fcm_api_key = body.api_key.clone();
+    let mut test_message_builder = fcm::MessageBuilder::new(&fcm_api_key, "wc-notification-test");
+    test_message_builder.dry_run(true);
+    let test_message = test_message_builder.finalize();
+    let test_notification = fcm::Client::new().send(test_message).await;
+    match test_notification {
+        Err(e) => match e {
+            FcmError::Unauthorized => Err(BadFcmApiKey),
+            _ => Ok(()),
+        },
+        Ok(_) => Ok(()),
+    }?;
 
     // ---- handler
     let update_body = TenantFcmUpdateParams {

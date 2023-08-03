@@ -165,6 +165,9 @@ pub enum Error {
 
     #[error("tenant id and client's registered tenant didn't match")]
     MissmatchedTenantId,
+
+    #[error("invalid fcm api key")]
+    BadFcmApiKey,
 }
 
 impl IntoResponse for Error {
@@ -201,6 +204,18 @@ impl IntoResponse for Error {
                     message: e.to_string(),
                 }
             ], vec![]),
+            Error::BadFcmApiKey => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
+                ResponseError {
+                    name: "bad_fcm_api_key".to_string(),
+                    message: "The provided API Key was not valid".to_string(),
+                }
+            ], vec![
+                ErrorField {
+                    field: "api_key".to_string(),
+                    description: "The provided API Key was not valid".to_string(),
+                    location: ErrorLocation::Body,
+                }
+            ]),
             Error::Database(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
                 ResponseError {
                     name: "sqlx".to_string(),
