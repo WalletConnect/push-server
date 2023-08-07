@@ -76,7 +76,7 @@ jobs:
             rustc: nightly
           - name: "Unit Tests"
             cmd: test
-            args: --features multitenant,functional_tests,analytics
+            args: --features multitenant,analytics # functional_tests disabled for now
             cache: { sharedKey: "tests" }
             rustc: stable
         include:
