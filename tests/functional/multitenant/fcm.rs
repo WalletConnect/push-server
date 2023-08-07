@@ -32,7 +32,7 @@ async fn tenant_update_fcm(ctx: &mut EchoServerContext) {
             "http://{}/tenants/{}/fcm",
             ctx.server.public_addr, &random_tenant_id
         ))
-        .multipart(&form)
+        .multipart(form)
         .send()
         .await
         .expect("Call failed");
@@ -69,7 +69,7 @@ async fn tenant_update_fcm_bad(ctx: &mut EchoServerContext) {
             "http://{}/tenants/{}/fcm",
             ctx.server.public_addr, &random_tenant_id
         ))
-        .multipart(&form)
+        .multipart(form)
         .send()
         .await
         .expect("Call failed");

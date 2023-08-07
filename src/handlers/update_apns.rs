@@ -11,7 +11,7 @@ use {
     },
     base64::Engine,
     serde::{Deserialize, Serialize},
-    std::sync::Arc,
+    std::{io::BufReader, sync::Arc},
 };
 
 #[derive(Deserialize)]
@@ -26,6 +26,7 @@ pub struct ApnsUpdateBody {
     pub apns_team_id: Option<String>,
 }
 
+#[derive(Deserialize, Clone, Debug)]
 pub struct ApnsSqlUpdate {
     pub topic: Option<String>,
 
@@ -168,6 +169,46 @@ pub async fn handler(
 
             return Ok(Json(UpdateTenantApnsResponse { success: true }));
         }
+    }
+
+    // ---- Checks
+    if let Some(auth_change) = apns_updates.auth.clone() {
+        match auth_change {
+            TenantApnsUpdateAuth::Certificate {
+                apns_certificate,
+                apns_certificate_password,
+            } => {
+                let cert_bytes = apns_certificate.into_bytes();
+                let mut reader = BufReader::new(&*cert_bytes);
+
+                match a2::Client::certificate(
+                    &mut reader,
+                    &apns_certificate_password,
+                    a2::Endpoint::Sandbox,
+                ) {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(Error::BadApnsCredentials),
+                }
+            }
+            TenantApnsUpdateAuth::Token {
+                apns_pkcs8_pem,
+                apns_key_id,
+                apns_team_id,
+            } => {
+                let pem_bytes = apns_pkcs8_pem.into_bytes();
+                let mut reader = BufReader::new(&*pem_bytes);
+
+                match a2::Client::token(
+                    &mut reader,
+                    apns_key_id,
+                    apns_team_id,
+                    a2::Endpoint::Sandbox,
+                ) {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(Error::BadApnsCredentials),
+                }
+            }
+        }?;
     }
 
     // ---- handler
