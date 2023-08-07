@@ -51,6 +51,7 @@ impl PushProvider for FcmProvider {
             let notification = notification_builder.finalize();
 
             message_builder.notification(notification);
+            message_builder.data(&payload)?;
 
             let fcm_message = message_builder.finalize();
 
