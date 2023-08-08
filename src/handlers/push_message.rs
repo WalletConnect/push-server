@@ -346,6 +346,10 @@ pub async fn handler_internal(
         "fetched tenant"
     );
 
+    if tenant.suspended {
+        return Err((Error::TenantSuspended, analytics.clone()));
+    }
+
     let mut provider = tenant
         .provider(&client.push_type)
         .map_err(|e| (e, analytics.clone()))?;
