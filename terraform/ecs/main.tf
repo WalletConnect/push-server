@@ -240,6 +240,19 @@ resource "aws_route53_record" "dns_load_balancer" {
   }
 }
 
+
+resource "aws_route53_record" "backup_dns_load_balancer" {
+  zone_id = var.backup_route53_zone_id
+  name    = var.backup_fqdn
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.application_load_balancer.dns_name
+    zone_id                = aws_lb.application_load_balancer.zone_id
+    evaluate_target_health = true
+  }
+}
+
 # Security Groups
 resource "aws_security_group" "app_ingress" {
   name        = "${var.app_name}-ingress-to-app"
