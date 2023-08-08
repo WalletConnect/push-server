@@ -2,7 +2,8 @@ locals {
   app_name    = "push"
   environment = terraform.workspace
 
-  fqdn = local.environment == "prod" ? var.public_url : "${local.environment}.${var.public_url}"
+  fqdn        = local.environment == "prod" ? var.public_url : "${local.environment}.${var.public_url}"
+  backup_fqdn = replace(local.fqdn, ".com", ".org")
 
   latest_release_name = data.github_release.latest_release.name
   version             = coalesce(var.image_version, substr(local.latest_release_name, 1, length(local.latest_release_name)))
@@ -64,6 +65,13 @@ module "dns" {
 
   hosted_zone_name = var.public_url
   fqdn             = local.fqdn
+}
+
+module "backup_dns" {
+  source = "github.com/WalletConnect/terraform-modules.git?ref=52a74ee5bcaf5cacb5664c6f88d9dbce28500581//modules/dns"
+
+  hosted_zone_name = replace(var.public_url, ".com", ".org")
+  fqdn             = local.backup_fqdn
 }
 
 module "database_cluster" {
@@ -143,25 +151,28 @@ module "analytics" {
 module "ecs" {
   source = "./ecs"
 
-  app_name               = "${local.environment}-${local.app_name}"
-  environment            = local.environment
-  prometheus_endpoint    = aws_prometheus_workspace.prometheus.prometheus_endpoint
-  database_url           = local.database_url
-  tenant_database_url    = local.tenant_database_url
-  image                  = "${data.aws_ecr_repository.repository.repository_url}:${local.version}"
-  image_version          = local.version
-  acm_certificate_arn    = module.dns.certificate_arn
-  cpu                    = 512
-  fqdn                   = local.fqdn
-  memory                 = 1024
-  private_subnets        = module.vpc.private_subnets
-  public_subnets         = module.vpc.public_subnets
-  region                 = var.region
-  route53_zone_id        = module.dns.zone_id
-  vpc_cidr               = module.vpc.vpc_cidr_block
-  vpc_id                 = module.vpc.vpc_id
-  telemetry_sample_ratio = local.environment == "prod" ? 0.25 : 1.0
-  allowed_origins        = local.environment == "prod" ? "https://cloud.walletconnect.com" : "*"
+  app_name                   = "${local.environment}-${local.app_name}"
+  environment                = local.environment
+  prometheus_endpoint        = aws_prometheus_workspace.prometheus.prometheus_endpoint
+  database_url               = local.database_url
+  tenant_database_url        = local.tenant_database_url
+  image                      = "${data.aws_ecr_repository.repository.repository_url}:${local.version}"
+  image_version              = local.version
+  acm_certificate_arn        = module.dns.certificate_arn
+  cpu                        = 512
+  fqdn                       = local.fqdn
+  memory                     = 1024
+  private_subnets            = module.vpc.private_subnets
+  public_subnets             = module.vpc.public_subnets
+  region                     = var.region
+  route53_zone_id            = module.dns.zone_id
+  backup_acm_certificate_arn = module.backup_dns.certificate_arn
+  backup_fqdn                = local.backup_fqdn
+  backup_route53_zone_id     = module.backup_dns.zone_id
+  vpc_cidr                   = module.vpc.vpc_cidr_block
+  vpc_id                     = module.vpc.vpc_id
+  telemetry_sample_ratio     = local.environment == "prod" ? 0.25 : 1.0
+  allowed_origins            = local.environment == "prod" ? "https://cloud.walletconnect.com" : "*"
 
   aws_otel_collector_ecr_repository_url = data.aws_ecr_repository.aws_otel_collector.repository_url
 
