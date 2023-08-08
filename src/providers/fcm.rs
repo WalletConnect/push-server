@@ -43,7 +43,7 @@ impl PushProvider for FcmProvider {
 
             let _ = self.client.send(fcm_message).await?;
         } else {
-            let blob = DecryptedPayloadBlob::from_base64_encoded(payload.blob)?;
+            let blob = DecryptedPayloadBlob::from_base64_encoded(payload.clone().blob)?;
 
             let mut notification_builder = NotificationBuilder::new();
             notification_builder.title(blob.title.as_str());
@@ -51,6 +51,7 @@ impl PushProvider for FcmProvider {
             let notification = notification_builder.finalize();
 
             message_builder.notification(notification);
+            message_builder.data(&payload)?;
 
             let fcm_message = message_builder.finalize();
 

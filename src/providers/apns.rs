@@ -85,10 +85,12 @@ impl PushProvider for ApnsProvider {
             false => {
                 let blob = DecryptedPayloadBlob::from_base64_encoded(payload.blob)?;
 
-                let notification_payload = a2::DefaultNotificationBuilder::new()
+                let mut notification_payload = a2::DefaultNotificationBuilder::new()
                     .set_title(&blob.title)
                     .set_body(&blob.body)
                     .build(token.as_str(), opt);
+
+                notification_payload.add_custom_data("topic", &payload.topic)?;
 
                 self.client.send(notification_payload).await
             }
