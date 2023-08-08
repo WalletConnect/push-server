@@ -95,6 +95,10 @@ pub struct Tenant {
     pub apns_key_id: Option<String>,
     pub apns_team_id: Option<String>,
 
+    // Suspension
+    pub suspended: bool,
+    pub suspended_reason: Option<String>,
+
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -261,6 +265,7 @@ pub trait TenantStore {
         id: &str,
         params: TenantApnsUpdateAuth,
     ) -> Result<Tenant>;
+    async fn suspend_tenant(&self, id: &str, reason: &str) -> Result<()>;
 }
 
 #[async_trait]
@@ -373,6 +378,18 @@ impl TenantStore for PgPool {
 
         Ok(res)
     }
+
+    async fn suspend_tenant(&self, id: &str, reason: &str) -> Result<()> {
+        sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
+            "UPDATE public.tenants SET suspended = true, suspended_reason = $2::text WHERE id = \
+             $1 RETURNING *;",
+        )
+        .bind(id)
+        .bind(reason)
+        .await?;
+
+        Ok(())
+    }
 }
 
 #[cfg(not(feature = "multitenant"))]
@@ -433,6 +450,10 @@ impl TenantStore for DefaultTenantStore {
         _id: &str,
         _params: TenantApnsUpdateAuth,
     ) -> Result<Tenant> {
+        panic!("Shouldn't have run in single tenant mode")
+    }
+
+    async fn suspend_tenant(&self, id: &str, reason: &str) -> Result<()> {
         panic!("Shouldn't have run in single tenant mode")
     }
 }

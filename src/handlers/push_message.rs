@@ -358,10 +358,29 @@ pub async fn handler_internal(
         "fetched provider"
     );
 
-    provider
-        .send_notification(client.token, body.payload)
-        .await
-        .map_err(|e| (e, analytics.clone()))?;
+    match provider.send_notification(client.token, body.payload).await {
+        Ok(_) => Ok(()),
+        Err(error) => match error {
+            Error::BadDeviceToken => {
+                state.client_store.delete_client(&tenant_id, &id);
+                Err(Error::ClientDeleted)
+            }
+            Error::BadApnsCredentials => {
+                state
+                    .tenant_store
+                    .suspend_tenant(&tenant_id, "Invalid APNS Credentials");
+                Err(Error::TenantSuspended)
+            }
+            Error::BadFcmApiKey => {
+                state
+                    .tenant_store
+                    .suspend_tenant(&tenant_id, "Invalid FCM Credentials");
+                Err(Error::TenantSuspended)
+            }
+            e => Err(e),
+        },
+    }
+    .map_err(|e| (e, analytics.clone()))?;
 
     info!(
         %request_id,

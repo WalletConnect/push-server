@@ -171,6 +171,12 @@ pub enum Error {
 
     #[error("invalid apns creds")]
     BadApnsCredentials,
+
+    #[error("invalid device token")]
+    ClientDeleted,
+
+    #[error("invalid tenant configuration")]
+    TenantSuspended,
 }
 
 impl IntoResponse for Error {
@@ -525,6 +531,18 @@ impl IntoResponse for Error {
                     location: ErrorLocation::Path,
                 }
             ]),
+            Error::ClientDeleted => crate::handlers::Response::new_failure(StatusCode::ACCEPTED, vec![
+                ResponseError {
+                    name: "client_deleted".to_string(),
+                    message: "Request Accepted, client deleted due to invalid token".to_string(),
+                },
+            ], vec![]),
+            Error::TenantSuspended => crate::handlers::Response::new_failure(StatusCode::ACCEPTED, vec![
+                ResponseError {
+                    name: "tenant_suspended".to_string(),
+                    message: "Request Accepted, tenant suspended due to invalid configuration".to_string(),
+                },
+            ], vec![]),
             e => {
                 warn!("Error does not have response clause, {:?}", e);
 
