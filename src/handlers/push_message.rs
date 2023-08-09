@@ -346,6 +346,10 @@ pub async fn handler_internal(
         "fetched tenant"
     );
 
+    if tenant.suspended {
+        return Err((Error::TenantSuspended, analytics.clone()));
+    }
+
     let mut provider = tenant
         .provider(&client.push_type)
         .map_err(|e| (e, analytics.clone()))?;
@@ -358,10 +362,64 @@ pub async fn handler_internal(
         "fetched provider"
     );
 
-    provider
-        .send_notification(client.token, body.payload)
-        .await
-        .map_err(|e| (e, analytics.clone()))?;
+    match provider.send_notification(client.token, body.payload).await {
+        Ok(_) => Ok(()),
+        Err(error) => match error {
+            Error::BadDeviceToken => {
+                state
+                    .client_store
+                    .delete_client(&tenant_id, &id)
+                    .await
+                    .map_err(|e| (Error::Store(e), analytics.clone()))?;
+                increment_counter!(state.metrics, client_suspensions);
+                warn!(
+                    %request_id,
+                    %tenant_id,
+                    client_id = %id,
+                    notification_id = %notification.id,
+                    push_type = client.push_type.as_str(),
+                    "client has been deleted due to a bad device token"
+                );
+                Err(Error::ClientDeleted)
+            }
+            Error::BadApnsCredentials => {
+                state
+                    .tenant_store
+                    .suspend_tenant(&tenant_id, "Invalid APNS Credentials")
+                    .await
+                    .map_err(|e| (e, analytics.clone()))?;
+                increment_counter!(state.metrics, tenant_suspensions);
+                warn!(
+                    %request_id,
+                    %tenant_id,
+                    client_id = %id,
+                    notification_id = %notification.id,
+                    push_type = client.push_type.as_str(),
+                    "tenant has been suspended due to invalid provider credentials"
+                );
+                Err(Error::TenantSuspended)
+            }
+            Error::BadFcmApiKey => {
+                state
+                    .tenant_store
+                    .suspend_tenant(&tenant_id, "Invalid FCM Credentials")
+                    .await
+                    .map_err(|e| (e, analytics.clone()))?;
+                increment_counter!(state.metrics, tenant_suspensions);
+                warn!(
+                    %request_id,
+                    %tenant_id,
+                    client_id = %id,
+                    notification_id = %notification.id,
+                    push_type = client.push_type.as_str(),
+                    "tenant has been suspended due to invalid provider credentials"
+                );
+                Err(Error::TenantSuspended)
+            }
+            e => Err(e),
+        },
+    }
+    .map_err(|e| (e, analytics.clone()))?;
 
     info!(
         %request_id,

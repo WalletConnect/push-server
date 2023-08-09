@@ -26,6 +26,9 @@ pub struct Metrics {
 
     pub tenant_apns_updates: Counter<u64>,
     pub tenant_fcm_updates: Counter<u64>,
+
+    pub tenant_suspensions: Counter<u64>,
+    pub client_suspensions: Counter<u64>,
 }
 
 impl Metrics {
@@ -80,7 +83,17 @@ impl Metrics {
 
         let tenant_fcm_updates_counter = meter
             .u64_counter("tenant_fcm_updates")
-            .with_description("The number of times tenants have updated their APNS")
+            .with_description("The number of times tenants have updated their FCM")
+            .init();
+
+        let tenant_suspensions_counter = meter
+            .u64_counter("tenant_suspensions")
+            .with_description("The number of tenants that have been suspended")
+            .init();
+
+        let client_suspensions_counter = meter
+            .u64_counter("client_suspensions")
+            .with_description("The number of clients that have been suspended")
             .init();
 
         Ok(Metrics {
@@ -92,6 +105,8 @@ impl Metrics {
             registered_tenants: tenants_counter,
             tenant_apns_updates: tenant_apns_updates_counter,
             tenant_fcm_updates: tenant_fcm_updates_counter,
+            tenant_suspensions: tenant_suspensions_counter,
+            client_suspensions: client_suspensions_counter,
         })
     }
 

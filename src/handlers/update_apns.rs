@@ -213,12 +213,18 @@ pub async fn handler(
 
     // ---- handler
     if let Some(auth) = apns_updates.auth {
-        let _new_tenant = state
+        let new_tenant = state
             .tenant_store
             .update_tenant_apns_auth(&id, auth)
             .await?;
 
         increment_counter!(state.metrics, tenant_apns_updates);
+
+        if new_tenant.suspended {
+            // If suspended, it can be restored now because valid credentials have been
+            // provided
+            state.tenant_store.unsuspend_tenant(&new_tenant.id).await?;
+        }
 
         return Ok(Json(UpdateTenantApnsResponse { success: true }));
     }

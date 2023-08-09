@@ -23,6 +23,8 @@ pub struct GetTenantResponse {
     enabled_providers: Vec<String>,
     apns_topic: Option<String>,
     apns_type: Option<ApnsType>,
+    suspended: bool,
+    suspended_reason: Option<String>,
 }
 
 pub async fn handler(
@@ -64,6 +66,8 @@ pub async fn handler(
         enabled_providers: tenant.providers().iter().map(Into::into).collect(),
         apns_topic: None,
         apns_type: None,
+        suspended: tenant.suspended,
+        suspended_reason: tenant.suspended_reason,
     };
 
     if providers.contains(&ProviderKind::Apns) {

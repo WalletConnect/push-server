@@ -1,11 +1,12 @@
 use {
     crate::{
         blob::DecryptedPayloadBlob,
+        error::Error,
         handlers::push_message::MessagePayload,
         providers::PushProvider,
     },
     async_trait::async_trait,
-    fcm::{MessageBuilder, NotificationBuilder},
+    fcm::{ErrorReason, FcmError, FcmResponse, MessageBuilder, NotificationBuilder},
     std::fmt::{Debug, Formatter},
     tracing::span,
 };
@@ -36,12 +37,12 @@ impl PushProvider for FcmProvider {
 
         let mut message_builder = MessageBuilder::new(self.api_key.as_str(), token.as_str());
 
-        if payload.is_encrypted() {
+        let result = if payload.is_encrypted() {
             message_builder.data(&payload)?;
 
             let fcm_message = message_builder.finalize();
 
-            let _ = self.client.send(fcm_message).await?;
+            self.client.send(fcm_message).await
         } else {
             let blob = DecryptedPayloadBlob::from_base64_encoded(payload.clone().blob)?;
 
@@ -55,10 +56,30 @@ impl PushProvider for FcmProvider {
 
             let fcm_message = message_builder.finalize();
 
-            let _ = self.client.send(fcm_message).await?;
-        }
+            self.client.send(fcm_message).await
+        };
 
-        Ok(())
+        match result {
+            Ok(val) => {
+                let FcmResponse { error, .. } = val;
+                if let Some(error) = error {
+                    match error {
+                        ErrorReason::MissingRegistration
+                        | ErrorReason::InvalidRegistration
+                        | ErrorReason::NotRegistered => Err(Error::BadDeviceToken),
+                        ErrorReason::InvalidApnsCredential => Err(Error::BadApnsCredentials),
+                        e => Err(Error::FcmResponse(e)),
+                    }
+                } else {
+                    // Note: No Errors in the response, this request was good
+                    Ok(())
+                }
+            }
+            Err(e) => match e {
+                FcmError::Unauthorized => Err(Error::BadFcmApiKey),
+                e => Err(Error::Fcm(e)),
+            },
+        }
     }
 }
 

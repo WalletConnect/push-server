@@ -95,6 +95,10 @@ pub struct Tenant {
     pub apns_key_id: Option<String>,
     pub apns_team_id: Option<String>,
 
+    // Suspension
+    pub suspended: bool,
+    pub suspended_reason: Option<String>,
+
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -261,6 +265,8 @@ pub trait TenantStore {
         id: &str,
         params: TenantApnsUpdateAuth,
     ) -> Result<Tenant>;
+    async fn suspend_tenant(&self, id: &str, reason: &str) -> Result<()>;
+    async fn unsuspend_tenant(&self, id: &str) -> Result<()>;
 }
 
 #[async_trait]
@@ -373,6 +379,32 @@ impl TenantStore for PgPool {
 
         Ok(res)
     }
+
+    async fn suspend_tenant(&self, id: &str, reason: &str) -> Result<()> {
+        let mut query_builder = sqlx::QueryBuilder::new(
+            "UPDATE public.tenants SET suspended = true, suspended_reason =",
+        );
+        query_builder.push_bind(reason);
+        query_builder.push(" WHERE id = ");
+        query_builder.push_bind(id);
+        let query = query_builder.build();
+
+        self.execute(query).await?;
+
+        Ok(())
+    }
+
+    async fn unsuspend_tenant(&self, id: &str) -> Result<()> {
+        let mut query_builder = sqlx::QueryBuilder::new(
+            "UPDATE public.tenants SET suspended = false, suspended_reason = null WHERE id = ",
+        );
+        query_builder.push_bind(id);
+        let query = query_builder.build();
+
+        self.execute(query).await?;
+
+        Ok(())
+    }
 }
 
 #[cfg(not(feature = "multitenant"))]
@@ -391,6 +423,8 @@ impl DefaultTenantStore {
             apns_pkcs8_pem: config.apns_pkcs8_pem.clone(),
             apns_key_id: config.apns_key_id.clone(),
             apns_team_id: config.apns_team_id.clone(),
+            suspended: false,
+            suspended_reason: None,
             created_at: Default::default(),
             updated_at: Default::default(),
         }))
@@ -433,6 +467,14 @@ impl TenantStore for DefaultTenantStore {
         _id: &str,
         _params: TenantApnsUpdateAuth,
     ) -> Result<Tenant> {
+        panic!("Shouldn't have run in single tenant mode")
+    }
+
+    async fn suspend_tenant(&self, _id: &str, _reason: &str) -> Result<()> {
+        panic!("Shouldn't have run in single tenant mode")
+    }
+
+    async fn unsuspend_tenant(&self, _id: &str) -> Result<()> {
         panic!("Shouldn't have run in single tenant mode")
     }
 }
