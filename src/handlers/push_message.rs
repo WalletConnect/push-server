@@ -366,19 +366,54 @@ pub async fn handler_internal(
         Ok(_) => Ok(()),
         Err(error) => match error {
             Error::BadDeviceToken => {
-                state.client_store.delete_client(&tenant_id, &id);
+                state
+                    .client_store
+                    .delete_client(&tenant_id, &id)
+                    .await
+                    .map_err(|e| (Error::Store(e), analytics.clone()))?;
+                increment_counter!(state.metrics, client_suspensions);
+                warn!(
+                    %request_id,
+                    %tenant_id,
+                    client_id = %id,
+                    notification_id = %notification.id,
+                    push_type = client.push_type.as_str(),
+                    "client has been deleted due to a bad device token"
+                );
                 Err(Error::ClientDeleted)
             }
             Error::BadApnsCredentials => {
                 state
                     .tenant_store
-                    .suspend_tenant(&tenant_id, "Invalid APNS Credentials");
+                    .suspend_tenant(&tenant_id, "Invalid APNS Credentials")
+                    .await
+                    .map_err(|e| (e, analytics.clone()))?;
+                increment_counter!(state.metrics, tenant_suspensions);
+                warn!(
+                    %request_id,
+                    %tenant_id,
+                    client_id = %id,
+                    notification_id = %notification.id,
+                    push_type = client.push_type.as_str(),
+                    "tenant has been suspended due to invalid provider credentials"
+                );
                 Err(Error::TenantSuspended)
             }
             Error::BadFcmApiKey => {
                 state
                     .tenant_store
-                    .suspend_tenant(&tenant_id, "Invalid FCM Credentials");
+                    .suspend_tenant(&tenant_id, "Invalid FCM Credentials")
+                    .await
+                    .map_err(|e| (e, analytics.clone()))?;
+                increment_counter!(state.metrics, tenant_suspensions);
+                warn!(
+                    %request_id,
+                    %tenant_id,
+                    client_id = %id,
+                    notification_id = %notification.id,
+                    push_type = client.push_type.as_str(),
+                    "tenant has been suspended due to invalid provider credentials"
+                );
                 Err(Error::TenantSuspended)
             }
             e => Err(e),

@@ -37,6 +37,9 @@ pub enum Error {
     #[error(transparent)]
     Fcm(#[from] fcm::FcmError),
 
+    #[error("FCM Responded with an error")]
+    FcmResponse(fcm::ErrorReason),
+
     #[error(transparent)]
     Io(#[from] std::io::Error),
 
@@ -172,10 +175,10 @@ pub enum Error {
     #[error("invalid apns creds")]
     BadApnsCredentials,
 
-    #[error("invalid device token")]
+    #[error("client deleted due to invalid device token")]
     ClientDeleted,
 
-    #[error("invalid tenant configuration")]
+    #[error("tenant suspended due to invalid configuration")]
     TenantSuspended,
 }
 
@@ -217,6 +220,12 @@ impl IntoResponse for Error {
                 ResponseError {
                     name: "fcm".to_string(),
                     message: e.to_string(),
+                }
+            ], vec![]),
+            Error::FcmResponse(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
+                ResponseError {
+                    name: "fcm_response".to_string(),
+                    message: format!("{:?}", e)
                 }
             ], vec![]),
             Error::BadFcmApiKey => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
