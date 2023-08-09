@@ -60,22 +60,21 @@ impl PushProvider for FcmProvider {
         };
 
         match result {
-            Ok(val) => match val {
-                FcmResponse { error, .. } => {
-                    if let Some(error) = error {
-                        match error {
-                            ErrorReason::MissingRegistration
-                            | ErrorReason::InvalidRegistration
-                            | ErrorReason::NotRegistered => Err(Error::BadDeviceToken),
-                            ErrorReason::InvalidApnsCredential => Err(Error::BadApnsCredentials),
-                            e => Err(Error::FcmResponse(e)),
-                        }
-                    } else {
-                        // Note: No Errors in the response, this request was good
-                        Ok(())
+            Ok(val) => {
+                let FcmResponse { error, .. } = val;
+                if let Some(error) = error {
+                    match error {
+                        ErrorReason::MissingRegistration
+                        | ErrorReason::InvalidRegistration
+                        | ErrorReason::NotRegistered => Err(Error::BadDeviceToken),
+                        ErrorReason::InvalidApnsCredential => Err(Error::BadApnsCredentials),
+                        e => Err(Error::FcmResponse(e)),
                     }
+                } else {
+                    // Note: No Errors in the response, this request was good
+                    Ok(())
                 }
-            },
+            }
             Err(e) => match e {
                 FcmError::Unauthorized => Err(Error::BadFcmApiKey),
                 e => Err(Error::Fcm(e)),
