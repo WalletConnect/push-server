@@ -73,10 +73,16 @@ pub async fn handler(
         fcm_api_key: body.api_key,
     };
 
-    let _new_tenant = state
+    let new_tenant = state
         .tenant_store
         .update_tenant_fcm(&id, update_body)
         .await?;
+
+    if new_tenant.suspended {
+        // If suspended, it can be restored now because valid credentials have been
+        // provided
+        state.tenant_store.unsuspend_tenant(&new_tenant.id).await?;
+    }
 
     increment_counter!(state.metrics, tenant_fcm_updates);
 
