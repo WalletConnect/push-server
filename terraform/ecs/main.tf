@@ -227,6 +227,11 @@ resource "aws_lb_listener" "listener-http" {
   }
 }
 
+resource "aws_lb_listener_certificate" "backup_cert" {
+  listener_arn    = aws_lb_listener.listener.arn
+  certificate_arn = var.backup_acm_certificate_arn
+}
+
 # DNS Records
 resource "aws_route53_record" "dns_load_balancer" {
   zone_id = var.route53_zone_id
