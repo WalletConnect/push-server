@@ -2,6 +2,17 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.33.0 - 2023-08-11
+#### Bug Fixes
+- ensure tenant_id matches the tenant a client is registered with (#168) - (b9dd96e) - Harry Bairstow
+- inherit secrets (#173) - (1441a9c) - Harry Bairstow
+#### Features
+- Suspend Broken Tenants & Delete Broken Clients (#177) - (a8e1aa7) - Harry Bairstow
+- backup domain (#179) - (f51c7c1) - Harry Bairstow
+- always include topic data for push (#175) - (7c3cd9b) - Harry Bairstow
+- APNS Verification (#174) - (fac7d6a) - Harry Bairstow
+- - -
+
 ## v0.32.0 - 2023-08-02
 #### Bug Fixes
 - incorrect tag value (#170) - (cbf55e8) - Harry Bairstow
