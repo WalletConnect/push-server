@@ -103,6 +103,8 @@ impl PushProvider for ApnsProvider {
                     None => Err(Error::Apns(a2::Error::ResponseError(res))),
                     Some(response) => match response.reason {
                         ErrorReason::BadDeviceToken => Err(Error::BadDeviceToken),
+                        // Note: This will have the device deleted because the token was not for the configured topic
+                        ErrorReason::DeviceTokenNotForTopic => Err(Error::BadDeviceToken),
                         reason => Err(Error::ApnsResponse(reason)),
                     },
                 },
