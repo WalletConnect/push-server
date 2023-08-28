@@ -60,7 +60,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
     config.is_valid()?;
 
     let pg_options = PgConnectOptions::from_str(&config.database_url)?
-        .log_statements(LevelFilter::Debug)
+        .log_statements(LevelFilter::Trace)
         .log_slow_statements(LevelFilter::Info, Duration::from_millis(250))
         .clone();
 
@@ -79,7 +79,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
     #[cfg(feature = "multitenant")]
     let tenant_store: TenantStoreArc = {
         let tenant_pg_options = PgConnectOptions::from_str(&config.tenant_database_url)?
-            .log_statements(LevelFilter::Debug)
+            .log_statements(LevelFilter::Trace)
             .log_slow_statements(LevelFilter::Info, Duration::from_millis(250))
             .clone();
 

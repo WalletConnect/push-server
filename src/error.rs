@@ -34,11 +34,11 @@ pub enum Error {
     #[error("APNS Responded with error, {0}")]
     ApnsResponse(a2::ErrorReason),
 
-    #[error(transparent)]
-    Fcm(#[from] fcm::FcmError),
-
-    #[error("FCM Responded with an error")]
-    FcmResponse(fcm::ErrorReason),
+    // #[error(transparent)]
+    // Fcm(#[from] fcm::FcmError),
+    //
+    // #[error("FCM Responded with an error")]
+    // FcmResponse(fcm::ErrorReason),
 
     #[error(transparent)]
     Io(#[from] std::io::Error),
@@ -216,18 +216,18 @@ impl IntoResponse for Error {
                     message: "Failed to validate the provided Certificate or Token".to_string(),
                 }
             ], vec![]),
-            Error::Fcm(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
-                ResponseError {
-                    name: "fcm".to_string(),
-                    message: e.to_string(),
-                }
-            ], vec![]),
-            Error::FcmResponse(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
-                ResponseError {
-                    name: "fcm_response".to_string(),
-                    message: format!("{:?}", e)
-                }
-            ], vec![]),
+            // Error::Fcm(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
+            //     ResponseError {
+            //         name: "fcm".to_string(),
+            //         message: e.to_string(),
+            //     }
+            // ], vec![]),
+            // Error::FcmResponse(e) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
+            //     ResponseError {
+            //         name: "fcm_response".to_string(),
+            //         message: format!("{:?}", e)
+            //     }
+            // ], vec![]),
             Error::BadFcmApiKey => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
                 ResponseError {
                     name: "bad_fcm_api_key".to_string(),
