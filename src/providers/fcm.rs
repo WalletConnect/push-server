@@ -68,7 +68,7 @@ impl PushProvider for FcmProvider {
                         | ErrorReason::InvalidRegistration
                         | ErrorReason::NotRegistered => Err(Error::BadDeviceToken),
                         ErrorReason::InvalidApnsCredential => Err(Error::BadApnsCredentials),
-                        e => panic!("brok"),
+                        e => Err(Error::FcmResponse(e)),
                     }
                 } else {
                     // Note: No Errors in the response, this request was good
@@ -77,7 +77,7 @@ impl PushProvider for FcmProvider {
             }
             Err(e) => match e {
                 FcmError::Unauthorized => Err(Error::BadFcmApiKey),
-                e => panic!("brok 2"),
+                e => Err(Error::Fcm(e)),
             },
         }
     }
