@@ -28,7 +28,7 @@ use {axum::extract::ConnectInfo, std::net::SocketAddr};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct MessagePayload {
-    pub topic: Option<String>,
+    pub topic: String,
     pub flags: u32,
     pub blob: String,
 }
@@ -138,12 +138,7 @@ pub async fn handler_internal(
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<(axum::response::Response, Option<MessageInfo>), (Error, Option<MessageInfo>)> {
     #[cfg(feature = "analytics")]
-    let topic: Option<Arc<str>> = body
-        .payload
-        .clone()
-        .topic
-        .as_ref()
-        .map(|t| t.clone().into());
+    let topic: Arc<str> = body.payload.clone().topic.into();
 
     #[cfg(feature = "analytics")]
     let (flags, encrypted) = (body.payload.clone().flags, body.payload.is_encrypted());

@@ -9,7 +9,7 @@ pub struct MessageInfo {
     pub continent: Option<Arc<str>>,
     pub project_id: Arc<str>,
     pub client_id: Arc<str>,
-    pub topic: Option<Arc<str>>,
+    pub topic: Arc<str>,
     pub push_provider: Arc<str>,
     pub encrypted: bool,
     pub flags: u32,
