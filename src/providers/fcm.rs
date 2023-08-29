@@ -1,4 +1,3 @@
-use tracing::error;
 use {
     crate::{
         blob::DecryptedPayloadBlob,
@@ -9,7 +8,7 @@ use {
     async_trait::async_trait,
     fcm::{ErrorReason, FcmError, FcmResponse, MessageBuilder, NotificationBuilder},
     std::fmt::{Debug, Formatter},
-    tracing::span,
+    tracing::{error, span},
 };
 
 pub struct FcmProvider {
@@ -72,7 +71,7 @@ impl PushProvider for FcmProvider {
                         e => {
                             error!("FcmResponse Error on line 82, {:?}", e);
                             Err(Error::FcmResponse(e))
-                        },
+                        }
                     }
                 } else {
                     // Note: No Errors in the response, this request was good
@@ -84,7 +83,7 @@ impl PushProvider for FcmProvider {
                 e => {
                     error!("Fcm Error on line 82, {:?}", e);
                     Err(Error::Fcm(e))
-                },
+                }
             },
         }
     }
