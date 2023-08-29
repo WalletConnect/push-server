@@ -87,6 +87,7 @@ impl PushProvider for ApnsProvider {
 
                 let mut notification_payload = a2::DefaultNotificationBuilder::new()
                     .set_content_available()
+                    .set_mutable_content()
                     .set_title(&blob.title)
                     .set_body(&blob.body)
                     .build(token.as_str(), opt);
