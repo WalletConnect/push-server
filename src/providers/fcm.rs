@@ -1,3 +1,4 @@
+use tracing::error;
 use {
     crate::{
         blob::DecryptedPayloadBlob,
@@ -68,7 +69,10 @@ impl PushProvider for FcmProvider {
                         | ErrorReason::InvalidRegistration
                         | ErrorReason::NotRegistered => Err(Error::BadDeviceToken),
                         ErrorReason::InvalidApnsCredential => Err(Error::BadApnsCredentials),
-                        e => Err(Error::FcmResponse(e)),
+                        e => {
+                            error!("FcmResponse Error on line 82, {:?}", e);
+                            Err(Error::FcmResponse(e))
+                        },
                     }
                 } else {
                     // Note: No Errors in the response, this request was good
@@ -77,7 +81,10 @@ impl PushProvider for FcmProvider {
             }
             Err(e) => match e {
                 FcmError::Unauthorized => Err(Error::BadFcmApiKey),
-                e => Err(Error::Fcm(e)),
+                e => {
+                    error!("Fcm Error on line 82, {:?}", e);
+                    Err(Error::Fcm(e))
+                },
             },
         }
     }
