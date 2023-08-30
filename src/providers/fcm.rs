@@ -69,8 +69,7 @@ impl PushProvider for FcmProvider {
                         | ErrorReason::NotRegistered => Err(Error::BadDeviceToken),
                         ErrorReason::InvalidApnsCredential => Err(Error::BadApnsCredentials),
                         e => {
-                            error!("FcmResponse Error on line 82, {:?}", e);
-                            Err(Error::FcmResponse(e))
+                            panic!("FcmResponse Error on line 82, {:?}", e);
                         }
                     }
                 } else {
@@ -82,7 +81,7 @@ impl PushProvider for FcmProvider {
                 FcmError::Unauthorized => Err(Error::BadFcmApiKey),
                 e => {
                     error!("Fcm Error on line 82, {:?}", e);
-                    Err(Error::Fcm(e))
+                    panic!("Fcm Error on line 82, {:?}", e);
                 }
             },
         }
