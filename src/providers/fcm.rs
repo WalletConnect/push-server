@@ -8,7 +8,7 @@ use {
     async_trait::async_trait,
     fcm::{ErrorReason, FcmError, FcmResponse, MessageBuilder, NotificationBuilder},
     std::fmt::{Debug, Formatter},
-    tracing::{span},
+    tracing::span,
 };
 
 pub struct FcmProvider {
@@ -68,7 +68,7 @@ impl PushProvider for FcmProvider {
                         | ErrorReason::InvalidRegistration
                         | ErrorReason::NotRegistered => Err(Error::BadDeviceToken),
                         ErrorReason::InvalidApnsCredential => Err(Error::BadApnsCredentials),
-                        e => Err(Error::FcmResponse(e))
+                        e => Err(Error::FcmResponse(e)),
                     }
                 } else {
                     // Note: No Errors in the response, this request was good
@@ -77,7 +77,7 @@ impl PushProvider for FcmProvider {
             }
             Err(e) => match e {
                 FcmError::Unauthorized => Err(Error::BadFcmApiKey),
-                e => Err(Error::Fcm(e))
+                e => Err(Error::Fcm(e)),
             },
         }
     }
