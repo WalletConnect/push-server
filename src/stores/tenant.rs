@@ -105,8 +105,6 @@ pub struct Tenant {
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct TenantUpdateParams {
-    /// Optional ID to override generated UUID, used for vanity IDs e.g.
-    /// swift-sdk
     pub id: String,
 }
 
