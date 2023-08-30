@@ -71,7 +71,6 @@ impl PushProvider for FcmProvider {
                         e => Err(Error::FcmResponse(e)),
                     }
                 } else {
-                    // Note: No Errors in the response, this request was good
                     Ok(())
                 }
             }
