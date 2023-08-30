@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.34.1 - 2023-08-30
+#### Bug Fixes
+- tidy comments - (7cd9d55) - Harry Bairstow
+#### Miscellaneous Chores
+- remove comment - (dda91f1) - Harry Bairstow
+- move migration (#186) - (8a3c9b0) - Harry Bairstow
+- - -
+
 ## v0.34.0 - 2023-08-30
 #### Bug Fixes
 - ci - (0beaa5c) - Harry Bairstow
