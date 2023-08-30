@@ -2,6 +2,21 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.34.0 - 2023-08-30
+#### Bug Fixes
+- ci - (0beaa5c) - Harry Bairstow
+- listener cert (#180) - (5dbe341) - Harry Bairstow
+#### Features
+- handle invalid topic for token (#182) - (89034b3) - Harry Bairstow
+#### Miscellaneous Chores
+- remove optional on topic (#185) - (54bdc73) - Harry Bairstow
+- extra logs for FCM Errors - (6079231) - Harry Bairstow
+- set content avaliable - (b7c019b) - Harry Bairstow
+- amend previous - (fd369b3) - Harry Bairstow
+- only log SQL statements when at trace - (e1153a9) - Harry Bairstow
+- patch clippy workflow - (3e44b92) - Harry Bairstow
+- - -
+
 ## v0.33.0 - 2023-08-11
 #### Bug Fixes
 - ensure tenant_id matches the tenant a client is registered with (#168) - (b9dd96e) - Harry Bairstow
