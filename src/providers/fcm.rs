@@ -6,7 +6,7 @@ use {
         providers::PushProvider,
     },
     async_trait::async_trait,
-    fcm::{ErrorReason, FcmError, FcmResponse, MessageBuilder, NotificationBuilder},
+    fcm::{ErrorReason, FcmError, FcmResponse, MessageBuilder, NotificationBuilder, Priority},
     std::fmt::{Debug, Formatter},
     tracing::span,
 };
@@ -39,6 +39,12 @@ impl PushProvider for FcmProvider {
 
         let result = if payload.is_encrypted() {
             message_builder.data(&payload)?;
+
+            // Must set priority=high and content-available=true on data-only messages or
+            // they don't show unless app is active
+            // https://rnfirebase.io/messaging/usage#data-only-messages
+            message_builder.priority(Priority::High);
+            message_builder.content_available(true);
 
             let fcm_message = message_builder.finalize();
 
