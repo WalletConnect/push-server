@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.34.2 - 2023-09-07
+#### Bug Fixes
+- data only messages not showing in background (#188) - (94e225f) - Chris Smith
+#### Miscellaneous Chores
+- revert to info logs (#183) - (c370719) - Harry Bairstow
+- - -
+
 ## v0.34.1 - 2023-08-30
 #### Bug Fixes
 - tidy comments - (7cd9d55) - Harry Bairstow
