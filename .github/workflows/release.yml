@@ -72,8 +72,8 @@ jobs:
         with:
           body_path: GITHUB_CHANGELOG.md
           tag_name: ${{ steps.release.outputs.version }}
-          token: ${{ secrets.PAT }}
-          
+          # token: ${{ secrets.PAT }}
+
       - id: clean_version
         run: |
           version=$(echo "${{ steps.release.outputs.version }}" | sed 's/v//g')
