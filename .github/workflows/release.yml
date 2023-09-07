@@ -72,7 +72,7 @@ jobs:
         with:
           body_path: GITHUB_CHANGELOG.md
           tag_name: ${{ steps.release.outputs.version }}
-          # token: ${{ secrets.PAT }}
+          token: ${{ secrets.RELEASE_PAT }}
 
       - id: clean_version
         run: |
