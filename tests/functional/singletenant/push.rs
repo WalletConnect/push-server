@@ -59,7 +59,7 @@ async fn test_push(ctx: &mut EchoServerContext) {
     let topic = Uuid::new_v4().to_string();
     let blob = Uuid::new_v4().to_string();
     let push_message_payload = MessagePayload {
-        topic: Some(topic.into()),
+        topic: topic.into(),
         blob: blob.to_string(),
         flags: 0,
     };

@@ -35,7 +35,7 @@ async fn notification_creation(ctx: &mut StoreContext) {
     let res = ctx
         .notifications
         .create_or_update_notification(&gen_id(), TENANT_ID, &client_id, &MessagePayload {
-            topic: None,
+            topic: String::new(),
             flags: 0,
             blob: "example-payload".to_string(),
         })
