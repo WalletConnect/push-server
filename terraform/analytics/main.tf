@@ -1,8 +1,3 @@
-### TODO: This should be removed once data is migrated
-resource "aws_s3_bucket" "analytics-data-lake_bucket" {
-  bucket = "walletconnect.${var.app_name}.${var.environment}.analytics.data-lake"
-}
-
 resource "aws_s3_bucket_acl" "analytics-data-lake_acl" {
   bucket = aws_s3_bucket.analytics-data-lake_bucket.id
   acl    = "private"
