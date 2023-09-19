@@ -142,12 +142,6 @@ module "tenant_database_cluster" {
   }
 }
 
-module "analytics" {
-  source      = "./analytics"
-  app_name    = local.app_name
-  environment = local.environment
-}
-
 module "ecs" {
   source = "./ecs"
 
