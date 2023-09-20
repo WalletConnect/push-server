@@ -1,4 +1,3 @@
-BEGIN;
 DELETE FROM public.clients
 WHERE (device_token, created_at) NOT IN 
 (
@@ -8,4 +7,3 @@ WHERE (device_token, created_at) NOT IN
 );
 ALTER TABLE public.clients 
 ADD CONSTRAINT device_token_unique UNIQUE(device_token);
-COMMIT;
