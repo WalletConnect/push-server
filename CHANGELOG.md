@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.34.3 - 2023-09-20
+#### Bug Fixes
+- removing of the deprecated S3 analytics bucket (#204) - (d85ee76) - Max Kalashnikoff
+- duplicated push tokens (#196) - (f0820f6) - Max Kalashnikoff
+- compilation errors with `functional_tests` flag (#195) - (b6c88f1) - Max Kalashnikoff
+- use RELEASE_PAT (#192) - (95474d7) - Chris Smith
+- - -
+
 ## v0.34.2 - 2023-09-07
 #### Bug Fixes
 - data only messages not showing in background (#188) - (94e225f) - Chris Smith
