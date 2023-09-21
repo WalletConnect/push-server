@@ -25,18 +25,10 @@ pub trait ClientStore {
 #[async_trait]
 impl ClientStore for sqlx::PgPool {
     async fn create_client(&self, tenant_id: &str, id: &str, client: Client) -> stores::Result<()> {
-        let mut transaction = self.begin().await?;
-
-        sqlx::query("DELETE FROM public.clients WHERE id = $1 OR device_token = $2")
-            .bind(id)
-            .bind(client.token.clone())
-            .execute(&mut transaction)
-            .await?;
-
-        let mut insert_query = sqlx::QueryBuilder::new(
+        let mut query_builder = sqlx::QueryBuilder::new(
             "INSERT INTO public.clients (id, tenant_id, push_type, device_token)",
         );
-        insert_query.push_values(
+        query_builder.push_values(
             vec![(id, tenant_id, client.push_type, client.token)],
             |mut b, client| {
                 b.push_bind(client.0)
@@ -45,8 +37,13 @@ impl ClientStore for sqlx::PgPool {
                     .push_bind(client.3);
             },
         );
-        insert_query.build().execute(&mut transaction).await?;
-        transaction.commit().await?;
+        query_builder.push(
+            " ON CONFLICT (id) DO UPDATE SET device_token = EXCLUDED.device_token, tenant_id = \
+             EXCLUDED.tenant_id, push_type = EXCLUDED.push_type",
+        );
+        let query = query_builder.build();
+
+        self.execute(query).await?;
 
         Ok(())
     }
