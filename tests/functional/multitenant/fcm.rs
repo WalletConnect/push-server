@@ -1,6 +1,8 @@
 use {
-    crate::context::EchoServerContext, echo_server::handlers::create_tenant::TenantRegisterBody,
-    random_string::generate, test_context::test_context,
+    crate::context::EchoServerContext,
+    echo_server::handlers::create_tenant::TenantRegisterBody,
+    random_string::generate,
+    test_context::test_context,
 };
 
 #[test_context(EchoServerContext)]

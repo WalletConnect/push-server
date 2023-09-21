@@ -13,15 +13,11 @@ async fn client_creation(ctx: &mut StoreContext) {
     let id = format!("id-{}", gen_id());
     let token = format!("token-{}", gen_id());
     ctx.clients
-        .create_client(
-            TENANT_ID,
-            &id,
-            Client {
-                tenant_id: TENANT_ID.to_string(),
-                push_type: ProviderKind::Noop,
-                token,
-            },
-        )
+        .create_client(TENANT_ID, &id, Client {
+            tenant_id: TENANT_ID.to_string(),
+            push_type: ProviderKind::Noop,
+            token,
+        })
         .await
         .unwrap();
     // Cleaning up records
@@ -34,15 +30,11 @@ async fn client_creation_fcm(ctx: &mut StoreContext) {
     let id = format!("id-{}", gen_id());
     let token = format!("token-{}", gen_id());
     ctx.clients
-        .create_client(
-            TENANT_ID,
-            &id,
-            Client {
-                tenant_id: TENANT_ID.to_string(),
-                push_type: ProviderKind::Fcm,
-                token,
-            },
-        )
+        .create_client(TENANT_ID, &id, Client {
+            tenant_id: TENANT_ID.to_string(),
+            push_type: ProviderKind::Fcm,
+            token,
+        })
         .await
         .unwrap();
     // Cleaning up records
@@ -55,15 +47,11 @@ async fn client_creation_apns(ctx: &mut StoreContext) {
     let id = format!("id-{}", gen_id());
     let token = format!("token-{}", gen_id());
     ctx.clients
-        .create_client(
-            TENANT_ID,
-            &id,
-            Client {
-                tenant_id: TENANT_ID.to_string(),
-                push_type: ProviderKind::Apns,
-                token,
-            },
-        )
+        .create_client(TENANT_ID, &id, Client {
+            tenant_id: TENANT_ID.to_string(),
+            push_type: ProviderKind::Apns,
+            token,
+        })
         .await
         .unwrap();
     // Cleaning up records
@@ -78,15 +66,11 @@ async fn client_upsert_token(ctx: &mut StoreContext) {
 
     // Initial Client creation
     ctx.clients
-        .create_client(
-            TENANT_ID,
-            &id,
-            Client {
-                tenant_id: TENANT_ID.to_string(),
-                push_type: ProviderKind::Fcm,
-                token: token.clone(),
-            },
-        )
+        .create_client(TENANT_ID, &id, Client {
+            tenant_id: TENANT_ID.to_string(),
+            push_type: ProviderKind::Fcm,
+            token: token.clone(),
+        })
         .await
         .unwrap();
     let insert_result = ctx.clients.get_client(TENANT_ID, &id).await.unwrap();
@@ -95,15 +79,11 @@ async fn client_upsert_token(ctx: &mut StoreContext) {
     // Updating token for the same id
     let updated_token = format!("token-{}", gen_id());
     ctx.clients
-        .create_client(
-            TENANT_ID,
-            &id,
-            Client {
-                tenant_id: TENANT_ID.to_string(),
-                push_type: ProviderKind::Apns,
-                token: updated_token.clone(),
-            },
-        )
+        .create_client(TENANT_ID, &id, Client {
+            tenant_id: TENANT_ID.to_string(),
+            push_type: ProviderKind::Apns,
+            token: updated_token.clone(),
+        })
         .await
         .unwrap();
     let updated_token_result = ctx.clients.get_client(TENANT_ID, &id).await.unwrap();
@@ -121,15 +101,11 @@ async fn client_upsert_id(ctx: &mut StoreContext) {
 
     // Initial Client creation
     ctx.clients
-        .create_client(
-            TENANT_ID,
-            &id,
-            Client {
-                tenant_id: TENANT_ID.to_string(),
-                push_type: ProviderKind::Fcm,
-                token: token.clone(),
-            },
-        )
+        .create_client(TENANT_ID, &id, Client {
+            tenant_id: TENANT_ID.to_string(),
+            push_type: ProviderKind::Fcm,
+            token: token.clone(),
+        })
         .await
         .unwrap();
     let insert_result = ctx.clients.get_client(TENANT_ID, &id).await.unwrap();
@@ -138,15 +114,11 @@ async fn client_upsert_id(ctx: &mut StoreContext) {
     // Updating id for the same token
     let updated_id = gen_id();
     ctx.clients
-        .create_client(
-            TENANT_ID,
-            &updated_id,
-            Client {
-                tenant_id: TENANT_ID.to_string(),
-                push_type: ProviderKind::Fcm,
-                token: token.clone(),
-            },
-        )
+        .create_client(TENANT_ID, &updated_id, Client {
+            tenant_id: TENANT_ID.to_string(),
+            push_type: ProviderKind::Fcm,
+            token: token.clone(),
+        })
         .await
         .unwrap();
     let updated_id_result = ctx
@@ -170,15 +142,11 @@ async fn client_deletion(ctx: &mut StoreContext) {
     let token = format!("token-{}", gen_id());
 
     ctx.clients
-        .create_client(
-            TENANT_ID,
-            &id,
-            Client {
-                tenant_id: TENANT_ID.to_string(),
-                push_type: ProviderKind::Noop,
-                token,
-            },
-        )
+        .create_client(TENANT_ID, &id, Client {
+            tenant_id: TENANT_ID.to_string(),
+            push_type: ProviderKind::Noop,
+            token,
+        })
         .await
         .unwrap();
     ctx.clients.delete_client(TENANT_ID, &id).await.unwrap();
@@ -191,15 +159,11 @@ async fn client_fetch(ctx: &mut StoreContext) {
     let token = format!("token-{}", gen_id());
 
     ctx.clients
-        .create_client(
-            TENANT_ID,
-            &id,
-            Client {
-                tenant_id: TENANT_ID.to_string(),
-                push_type: ProviderKind::Noop,
-                token: token.clone(),
-            },
-        )
+        .create_client(TENANT_ID, &id, Client {
+            tenant_id: TENANT_ID.to_string(),
+            push_type: ProviderKind::Noop,
+            token: token.clone(),
+        })
         .await
         .unwrap();
 
