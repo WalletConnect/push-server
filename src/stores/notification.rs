@@ -29,8 +29,8 @@ pub trait NotificationStore {
         client_id: &str,
         payload: &MessagePayload,
     ) -> stores::Result<Notification>;
-    async fn get_notification(&self, tenant_id: &str, id: &str) -> stores::Result<Notification>;
-    async fn delete_notification(&self, tenant_id: &str, id: &str) -> stores::Result<()>;
+    async fn get_notification(&self, id: &str, tenant_id: &str) -> stores::Result<Notification>;
+    async fn delete_notification(&self, id: &str, tenant_id: &str) -> stores::Result<()>;
 }
 
 #[async_trait]
