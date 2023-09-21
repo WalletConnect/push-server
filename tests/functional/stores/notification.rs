@@ -1,26 +1,29 @@
 use {
     crate::{
         context::StoreContext,
-        functional::stores::{client::TOKEN, gen_id, TENANT_ID},
+        functional::stores::{gen_id, TENANT_ID},
     },
     echo_server::{
-        handlers::push_message::MessagePayload,
-        providers::ProviderKind,
-        state::ClientStoreArc,
+        handlers::push_message::MessagePayload, providers::ProviderKind, state::ClientStoreArc,
         stores::client::Client,
     },
     test_context::test_context,
 };
 
 pub async fn get_client(client_store: &ClientStoreArc) -> String {
-    let id = gen_id();
+    let id = format!("id-{}", gen_id());
+    let token = format!("token-{}", gen_id());
 
     client_store
-        .create_client(TENANT_ID, &id, Client {
-            tenant_id: TENANT_ID.to_string(),
-            push_type: ProviderKind::Noop,
-            token: TOKEN.to_string(),
-        })
+        .create_client(
+            TENANT_ID,
+            &id,
+            Client {
+                tenant_id: TENANT_ID.to_string(),
+                push_type: ProviderKind::Noop,
+                token,
+            },
+        )
         .await
         .expect("failed to create client for notification test");
 
@@ -34,11 +37,16 @@ async fn notification_creation(ctx: &mut StoreContext) {
 
     let res = ctx
         .notifications
-        .create_or_update_notification(&gen_id(), TENANT_ID, &client_id, &MessagePayload {
-            topic: String::new(),
-            flags: 0,
-            blob: "example-payload".to_string(),
-        })
+        .create_or_update_notification(
+            &gen_id(),
+            TENANT_ID,
+            &client_id,
+            &MessagePayload {
+                topic: String::new(),
+                flags: 0,
+                blob: "example-payload".to_string(),
+            },
+        )
         .await;
 
     assert!(res.is_ok())
