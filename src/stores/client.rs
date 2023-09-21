@@ -26,7 +26,10 @@ pub trait ClientStore {
 #[async_trait]
 impl ClientStore for sqlx::PgPool {
     async fn create_client(&self, tenant_id: &str, id: &str, client: Client) -> stores::Result<()> {
-        info!("ClientStore::create_client tenant_id={tenant_id} id={id} token={}", client.token);
+        info!(
+            "ClientStore::create_client tenant_id={tenant_id} id={id} token={}",
+            client.token
+        );
 
         let mut transaction = self.begin().await?;
 
