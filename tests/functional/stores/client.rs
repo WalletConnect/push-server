@@ -7,72 +7,77 @@ use {
     test_context::test_context,
 };
 
-pub const TOKEN: &str = "noop-111-222-333";
-
 #[test_context(StoreContext)]
 #[tokio::test]
 async fn client_creation(ctx: &mut StoreContext) {
-    let res = ctx
-        .clients
-        .create_client(TENANT_ID, &gen_id(), Client {
+    let id = format!("id-{}", gen_id());
+    let token = format!("token-{}", gen_id());
+    ctx.clients
+        .create_client(TENANT_ID, &id, Client {
             tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Noop,
-            token: TOKEN.to_string(),
+            token,
         })
-        .await;
-
-    assert!(res.is_ok())
+        .await
+        .unwrap();
+    // Cleaning up records
+    ctx.clients.delete_client(TENANT_ID, &id).await.unwrap();
 }
 
 #[test_context(StoreContext)]
 #[tokio::test]
 async fn client_creation_fcm(ctx: &mut StoreContext) {
-    let res = ctx
-        .clients
-        .create_client(TENANT_ID, &gen_id(), Client {
+    let id = format!("id-{}", gen_id());
+    let token = format!("token-{}", gen_id());
+    ctx.clients
+        .create_client(TENANT_ID, &id, Client {
             tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Fcm,
-            token: TOKEN.to_string(),
+            token,
         })
-        .await;
-
-    assert!(res.is_ok())
+        .await
+        .unwrap();
+    // Cleaning up records
+    ctx.clients.delete_client(TENANT_ID, &id).await.unwrap();
 }
 
 #[test_context(StoreContext)]
 #[tokio::test]
 async fn client_creation_apns(ctx: &mut StoreContext) {
-    let res = ctx
-        .clients
-        .create_client(TENANT_ID, &gen_id(), Client {
+    let id = format!("id-{}", gen_id());
+    let token = format!("token-{}", gen_id());
+    ctx.clients
+        .create_client(TENANT_ID, &id, Client {
             tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Apns,
-            token: TOKEN.to_string(),
+            token,
         })
-        .await;
-
-    assert!(res.is_ok())
+        .await
+        .unwrap();
+    // Cleaning up records
+    ctx.clients.delete_client(TENANT_ID, &id).await.unwrap();
 }
 
 #[test_context(StoreContext)]
 #[tokio::test]
 async fn client_upsert_token(ctx: &mut StoreContext) {
-    let id = gen_id();
+    let id = format!("id-{}", gen_id());
+    let token = format!("token-{}", gen_id());
 
     // Initial Client creation
     ctx.clients
         .create_client(TENANT_ID, &id, Client {
             tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Fcm,
-            token: TOKEN.to_string(),
+            token: token.clone(),
         })
         .await
         .unwrap();
     let insert_result = ctx.clients.get_client(TENANT_ID, &id).await.unwrap();
-    assert_eq!(insert_result.token, TOKEN);
+    assert_eq!(insert_result.token, token);
 
     // Updating token for the same id
-    let updated_token = gen_id();
+    let updated_token = format!("token-{}", gen_id());
     ctx.clients
         .create_client(TENANT_ID, &id, Client {
             tenant_id: TENANT_ID.to_string(),
@@ -91,19 +96,20 @@ async fn client_upsert_token(ctx: &mut StoreContext) {
 #[test_context(StoreContext)]
 #[tokio::test]
 async fn client_upsert_id(ctx: &mut StoreContext) {
-    let id = gen_id();
+    let id = format!("id-{}", gen_id());
+    let token = format!("token-{}", gen_id());
 
     // Initial Client creation
     ctx.clients
         .create_client(TENANT_ID, &id, Client {
             tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Fcm,
-            token: TOKEN.to_string(),
+            token: token.clone(),
         })
         .await
         .unwrap();
     let insert_result = ctx.clients.get_client(TENANT_ID, &id).await.unwrap();
-    assert_eq!(insert_result.token, TOKEN);
+    assert_eq!(insert_result.token, token.clone());
 
     // Updating id for the same token
     let updated_id = gen_id();
@@ -111,7 +117,7 @@ async fn client_upsert_id(ctx: &mut StoreContext) {
         .create_client(TENANT_ID, &updated_id, Client {
             tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Fcm,
-            token: TOKEN.to_string(),
+            token: token.clone(),
         })
         .await
         .unwrap();
@@ -120,7 +126,7 @@ async fn client_upsert_id(ctx: &mut StoreContext) {
         .get_client(TENANT_ID, &updated_id)
         .await
         .unwrap();
-    assert_eq!(updated_id_result.token, TOKEN);
+    assert_eq!(updated_id_result.token, token);
 
     // Cleaning up records
     ctx.clients
@@ -132,46 +138,40 @@ async fn client_upsert_id(ctx: &mut StoreContext) {
 #[test_context(StoreContext)]
 #[tokio::test]
 async fn client_deletion(ctx: &mut StoreContext) {
-    let id = gen_id();
+    let id = format!("id-{}", gen_id());
+    let token = format!("token-{}", gen_id());
 
-    let res = ctx
-        .clients
+    ctx.clients
         .create_client(TENANT_ID, &id, Client {
             tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Noop,
-            token: TOKEN.to_string(),
+            token,
         })
-        .await;
-
-    assert!(res.is_ok());
-
-    let delete_res = ctx.clients.delete_client(TENANT_ID, &id).await;
-
-    assert!(delete_res.is_ok());
+        .await
+        .unwrap();
+    ctx.clients.delete_client(TENANT_ID, &id).await.unwrap();
 }
 
 #[test_context(StoreContext)]
 #[tokio::test]
 async fn client_fetch(ctx: &mut StoreContext) {
-    let id = gen_id();
+    let id = format!("id-{}", gen_id());
+    let token = format!("token-{}", gen_id());
 
-    let res = ctx
-        .clients
+    ctx.clients
         .create_client(TENANT_ID, &id, Client {
             tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Noop,
-            token: TOKEN.to_string(),
+            token: token.clone(),
         })
-        .await;
+        .await
+        .unwrap();
 
-    assert!(res.is_ok());
+    let client = ctx.clients.get_client(TENANT_ID, &id).await.unwrap();
 
-    let client_res = ctx.clients.get_client(TENANT_ID, &id).await;
-
-    assert!(client_res.is_ok());
-
-    let client = client_res.expect("failed to unwrap client");
-
-    assert_eq!(client.token, TOKEN.to_string());
+    assert_eq!(client.token, token);
     assert_eq!(client.push_type, ProviderKind::Noop);
+
+    // Cleaning up records
+    ctx.clients.delete_client(TENANT_ID, &id).await.unwrap();
 }

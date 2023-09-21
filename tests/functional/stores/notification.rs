@@ -1,7 +1,7 @@
 use {
     crate::{
         context::StoreContext,
-        functional::stores::{client::TOKEN, gen_id, TENANT_ID},
+        functional::stores::{gen_id, TENANT_ID},
     },
     echo_server::{
         handlers::push_message::MessagePayload,
@@ -13,13 +13,14 @@ use {
 };
 
 pub async fn get_client(client_store: &ClientStoreArc) -> String {
-    let id = gen_id();
+    let id = format!("id-{}", gen_id());
+    let token = format!("token-{}", gen_id());
 
     client_store
         .create_client(TENANT_ID, &id, Client {
             tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Noop,
-            token: TOKEN.to_string(),
+            token,
         })
         .await
         .expect("failed to create client for notification test");

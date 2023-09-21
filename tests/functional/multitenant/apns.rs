@@ -55,7 +55,7 @@ async fn tenant_update_apns_bad_token(ctx: &mut EchoServerContext) {
 
     // Register tenant
     let client = reqwest::Client::new();
-    let response = client
+    client
         .post(format!("http://{}/tenants", ctx.server.public_addr))
         .json(&payload)
         .send()
@@ -92,7 +92,7 @@ async fn tenant_update_apns_bad_certificate(ctx: &mut EchoServerContext) {
 
     // Register tenant
     let client = reqwest::Client::new();
-    let response = client
+    client
         .post(format!("http://{}/tenants", ctx.server.public_addr))
         .json(&payload)
         .send()

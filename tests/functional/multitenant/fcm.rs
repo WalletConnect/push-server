@@ -18,7 +18,7 @@ async fn tenant_update_fcm(ctx: &mut EchoServerContext) {
 
     // Register tenant
     let client = reqwest::Client::new();
-    let response = client
+    client
         .post(format!("http://{}/tenants", ctx.server.public_addr))
         .json(&payload)
         .send()
@@ -56,7 +56,7 @@ async fn tenant_update_fcm_bad(ctx: &mut EchoServerContext) {
 
     // Register tenant
     let client = reqwest::Client::new();
-    let response = client
+    client
         .post(format!("http://{}/tenants", ctx.server.public_addr))
         .json(&payload)
         .send()
