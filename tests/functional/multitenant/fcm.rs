@@ -1,8 +1,6 @@
 use {
-    crate::context::EchoServerContext,
-    echo_server::handlers::create_tenant::TenantRegisterBody,
-    random_string::generate,
-    test_context::test_context,
+    crate::context::EchoServerContext, echo_server::handlers::create_tenant::TenantRegisterBody,
+    random_string::generate, test_context::test_context,
 };
 
 #[test_context(EchoServerContext)]
@@ -18,7 +16,7 @@ async fn tenant_update_fcm(ctx: &mut EchoServerContext) {
 
     // Register tenant
     let client = reqwest::Client::new();
-    let response = client
+    client
         .post(format!("http://{}/tenants", ctx.server.public_addr))
         .json(&payload)
         .send()
@@ -56,7 +54,7 @@ async fn tenant_update_fcm_bad(ctx: &mut EchoServerContext) {
 
     // Register tenant
     let client = reqwest::Client::new();
-    let response = client
+    client
         .post(format!("http://{}/tenants", ctx.server.public_addr))
         .json(&payload)
         .send()
