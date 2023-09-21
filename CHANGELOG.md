@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.34.5 - 2023-09-21
+#### Bug Fixes
+- noop - (2baf8da) - Chris Smith
+#### Miscellaneous Chores
+- revert 196 (#209) - (0a55521) - Chris Smith
+- - -
+
 ## v0.34.4 - 2023-09-21
 #### Bug Fixes
 - enable functional tests in CI (#198) - (87ea075) - Max Kalashnikoff
