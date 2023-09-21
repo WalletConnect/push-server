@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.34.4 - 2023-09-21
+#### Bug Fixes
+- enable functional tests in CI (#198) - (87ea075) - Max Kalashnikoff
+#### Miscellaneous Chores
+- log client database actions (#207) - (2180574) - Chris Smith
+- fix byzantine failures on functional tests (#206) - (e0d8a39) - Max Kalashnikoff
+- - -
+
 ## v0.34.3 - 2023-09-20
 #### Bug Fixes
 - removing of the deprecated S3 analytics bucket (#204) - (d85ee76) - Max Kalashnikoff
