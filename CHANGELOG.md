@@ -2,6 +2,16 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.34.6 - 2023-09-26
+#### Bug Fixes
+- adding SQL migration for making `device_token` UNIQUE (#202) - (7b761b3) - Max Kalashnikoff
+- updating device token deduplication SQL query in `create_client` (#213) - (d727723) - Max Kalashnikoff
+- alter notifications constraint with `ON DELETE CASCADE` (#211) - (3553b2e) - Max Kalashnikoff
+#### Miscellaneous Chores
+- bumping version in `Cargo.lock` in release CI workflow (#200) - (2b83b51) - Max Kalashnikoff
+
+- - -
+
 ## v0.34.5 - 2023-09-21
 #### Bug Fixes
 - noop - (2baf8da) - Chris Smith
