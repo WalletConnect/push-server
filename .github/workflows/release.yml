@@ -28,56 +28,10 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: "Cocogitto release"
-        id: release
-        uses: cocogitto/cocogitto-action@v3
+      - name: Update and commit the release version
+        uses: WalletConnect/actions/github/update-rust-version/@2.1.4
         with:
-          check: true
-          check-latest-tag-only: true
-          release: true
-          git-user: 'github-actions[bot]'
-          git-user-email: "github-actions[bot]@users.noreply.github.com"
-
-      - name: "Update version in Cargo.toml"
-        shell: bash
-        run: |
-          version=$(echo "${{ steps.release.outputs.version }}" | sed 's/v//g')
-
-          sed "s/^version = \".*\"\$/version = \"$version\"/" ./Cargo.toml > /tmp/cargo.toml
-          mv /tmp/cargo.toml ./Cargo.toml
-
-      - name: "Commit version bump"
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: "chore: Bump version for release"
-          file_pattern: "Cargo.toml Cargo.lock"
-          commit_user_name: "github-actions[bot]"
-          commit_user_email: "github-actions[bot]@users.noreply.github.com"
-
-      - name: "Install Rust toolchain (stable)"
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          default: true
-
-      - name: Cache cargo registry
-        uses: Swatinem/rust-cache@v2
-
-      - name: "Generate Changelog"
-        run: cog changelog --at ${{ steps.release.outputs.version }} -t full_hash > GITHUB_CHANGELOG.md
-
-      - name: "Update Github release notes"
-        uses: softprops/action-gh-release@v1
-        with:
-          body_path: GITHUB_CHANGELOG.md
-          tag_name: ${{ steps.release.outputs.version }}
           token: ${{ secrets.RELEASE_PAT }}
-
-      - id: clean_version
-        run: |
-          version=$(echo "${{ steps.release.outputs.version }}" | sed 's/v//g')
-          echo "version=$version" >> $GITHUB_OUTPUT
 
   build-container:
     runs-on:
