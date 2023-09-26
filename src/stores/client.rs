@@ -31,10 +31,18 @@ impl ClientStore for sqlx::PgPool {
             client.token
         );
 
-        let mut query_builder = sqlx::QueryBuilder::new(
+        let mut transaction = self.begin().await?;
+
+        sqlx::query("DELETE FROM public.clients WHERE id = $1 OR device_token = $2")
+            .bind(id)
+            .bind(client.token.clone())
+            .execute(&mut transaction)
+            .await?;
+
+        let mut insert_query = sqlx::QueryBuilder::new(
             "INSERT INTO public.clients (id, tenant_id, push_type, device_token)",
         );
-        query_builder.push_values(
+        insert_query.push_values(
             vec![(id, tenant_id, client.push_type, client.token)],
             |mut b, client| {
                 b.push_bind(client.0)
@@ -43,13 +51,8 @@ impl ClientStore for sqlx::PgPool {
                     .push_bind(client.3);
             },
         );
-        query_builder.push(
-            " ON CONFLICT (id) DO UPDATE SET device_token = EXCLUDED.device_token, tenant_id = \
-             EXCLUDED.tenant_id, push_type = EXCLUDED.push_type",
-        );
-        let query = query_builder.build();
-
-        self.execute(query).await?;
+        insert_query.build().execute(&mut transaction).await?;
+        transaction.commit().await?;
 
         Ok(())
     }
