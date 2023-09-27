@@ -100,7 +100,6 @@ pub async fn handler(
     #[cfg(feature = "analytics")]
     if let Some(mut message_info) = analytics_option {
         message_info.status = status;
-        message_info.response_message = None;
 
         tokio::spawn(async move {
             if let Some(analytics) = &state.analytics {
