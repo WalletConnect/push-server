@@ -8,7 +8,7 @@ use {
     a2::{ErrorReason, NotificationBuilder, NotificationOptions},
     async_trait::async_trait,
     std::io::Read,
-    tracing::span,
+    tracing::{span, warn},
 };
 
 #[derive(Debug, Clone)]
@@ -99,7 +99,18 @@ impl PushProvider for ApnsProvider {
         };
 
         match result {
-            Ok(_) => Ok(()),
+            Ok(response) => {
+                if response.error.is_some() {
+                    warn!(
+                        "Unexpected APNS error. a2 lib shouldn't allow Ok result for error \
+                         response. Status: {} Error: {:?}",
+                        response.code, response.error
+                    );
+                    Err(Error::Apns(a2::Error::ResponseError(response)))
+                } else {
+                    Ok(())
+                }
+            }
             Err(e) => match e {
                 a2::Error::ResponseError(res) => match res.error {
                     None => Err(Error::Apns(a2::Error::ResponseError(res))),
