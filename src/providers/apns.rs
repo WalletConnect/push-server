@@ -102,8 +102,8 @@ impl PushProvider for ApnsProvider {
             Ok(response) => {
                 if response.error.is_some() {
                     warn!(
-                        "Unexpected APNS error. a2 lib shouldn't allow Ok result for error \
-                         response. Status: {} Error: {:?}",
+                        "Unexpected APNS error. a2 lib shouldn't allow returning Ok containing \
+                         error response. Status: {} Error: {:?}",
                         response.code, response.error
                     );
                     Err(Error::Apns(a2::Error::ResponseError(response)))
