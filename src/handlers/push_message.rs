@@ -357,7 +357,7 @@ pub async fn handler_internal(
     );
 
     match provider.send_notification(client.token, body.payload).await {
-        Ok(_) => Ok(()),
+        Ok(()) => Ok(()),
         Err(error) => match error {
             Error::BadDeviceToken => {
                 state
