@@ -2,6 +2,15 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.34.7 - 2023-09-28
+#### Bug Fixes
+- don't wipe response_message (#216) - (37a5a31) - Chris Smith
+- adding `id` for the updated release script (#214) - (e269a42) - Max Kalashnikoff
+#### Miscellaneous Chores
+- extra assert APNS response is non-error (#218) - (7bc4c8e) - Chris Smith
+
+- - -
+
 ## v0.34.6 - 2023-09-26
 #### Bug Fixes
 - adding SQL migration for making `device_token` UNIQUE (#202) - (7b761b3) - Max Kalashnikoff
