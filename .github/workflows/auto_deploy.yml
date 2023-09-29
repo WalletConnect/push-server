@@ -84,4 +84,6 @@ jobs:
     uses: ./.github/workflows/cd.yml
     with:
       image_tag: ${{ github.sha }}
+      deploy_to_staging: true
+      deploy_to_prod: false
     secrets: inherit
