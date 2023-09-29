@@ -4,11 +4,11 @@ locals {
   # net/prod-relay-load-balancer/e9a51c46020a0f85
   load_balancer                 = join("/", slice(split("/", var.load_balancer_arn), 1, 4))
   opsgenie_notification_channel = "NNOynGwVz"
-  #  notifications = (
-  #    var.environment == "prod" ?
-  #    "[{\"uid\": \"${local.opsgenie_notification_channel}\"}]" :
-  #    "[]"
-  #  )
+  notifications = (
+    var.environment == "prod" ?
+    [{ uid = local.opsgenie_notification_channel }] :
+    []
+  )
 }
 
 resource "grafana_data_source" "prometheus" {
@@ -597,7 +597,7 @@ resource "grafana_dashboard" "at_a_glance" {
           "handler" : 1,
           "name" : "${var.environment} Echo Server 5XX alert",
           "noDataState" : "no_data",
-          "notifications" : []
+          "notifications" : jsonencode(local.notifications)
         },
         "datasource" : {
           "type" : "cloudwatch",
