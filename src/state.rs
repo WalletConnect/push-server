@@ -10,6 +10,7 @@ use {
     },
     build_info::BuildInfo,
     std::{net::IpAddr, sync::Arc},
+    wc::geoip::{block::middleware::GeoBlockLayer, MaxMindResolver},
 };
 
 #[cfg(feature = "analytics")]
@@ -51,6 +52,7 @@ pub struct AppState {
     pub gotrue_client: GoTrueClient,
     pub public_ip: Option<IpAddr>,
     is_multitenant: bool,
+    pub geoblock: Option<GeoBlockLayer<Arc<MaxMindResolver>>>,
 }
 
 build_info::build_info!(fn build_info);
@@ -99,6 +101,7 @@ pub fn new_state(
         gotrue_client: GoTrueClient::new(jwt_secret),
         public_ip,
         is_multitenant,
+        geoblock: None,
     })
 }
 

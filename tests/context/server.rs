@@ -55,20 +55,22 @@ impl EchoServer {
             apns_topic: None,
             #[cfg(not(feature = "multitenant"))]
             fcm_api_key: None,
-            #[cfg(feature = "analytics")]
-            analytics_s3_endpoint: None,
+            #[cfg(any(feature = "analytics", feature = "geoblock"))]
+            s3_endpoint: None,
+            #[cfg(any(feature = "analytics", feature = "geoblock"))]
+            geoip_db_bucket: None,
+            #[cfg(any(feature = "analytics", feature = "geoblock"))]
+            geoip_db_key: None,
             #[cfg(feature = "analytics")]
             analytics_export_bucket: "example-bucket".to_string(),
-            #[cfg(feature = "analytics")]
-            analytics_geoip_db_bucket: None,
-            #[cfg(feature = "analytics")]
-            analytics_geoip_db_key: None,
             is_test: true,
             cors_allowed_origins: vec!["*".to_string()],
             #[cfg(feature = "cloud")]
             cloud_api_url: "https://example.com".to_string(),
             #[cfg(feature = "cloud")]
             cloud_api_key: "n/a".to_string(),
+            #[cfg(feature = "geoblock")]
+            blocked_countries: vec![],
         };
         let (public_addr, signal, is_shutdown) = start_server(config).await;
 

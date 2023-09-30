@@ -161,7 +161,7 @@ pub enum Error {
     JWT(#[from] jsonwebtoken::errors::Error),
 
     #[error(transparent)]
-    Parquet(#[from] gorgon::collectors::batch::BatchError<parquet::errors::ParquetError>),
+    Parquet(#[from] wc::analytics::collectors::batch::BatchError<parquet::errors::ParquetError>),
 
     #[error("failed to load geoip database from s3")]
     GeoIpS3Failed,

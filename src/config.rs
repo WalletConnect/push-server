@@ -70,14 +70,19 @@ pub struct Config {
     pub jwt_secret: String,
 
     // Analytics
-    #[cfg(feature = "analytics")]
-    pub analytics_s3_endpoint: Option<String>,
+    #[cfg(any(feature = "analytics", feature = "geoblock"))]
+    pub s3_endpoint: Option<String>,
+
+    #[cfg(any(feature = "analytics", feature = "geoblock"))]
+    pub geoip_db_bucket: Option<String>,
+    #[cfg(any(feature = "analytics", feature = "geoblock"))]
+    pub geoip_db_key: Option<String>,
+
     #[cfg(feature = "analytics")]
     pub analytics_export_bucket: String,
-    #[cfg(feature = "analytics")]
-    pub analytics_geoip_db_bucket: Option<String>,
-    #[cfg(feature = "analytics")]
-    pub analytics_geoip_db_key: Option<String>,
+
+    #[cfg(feature = "geoblock")]
+    pub blocked_countries: Vec<String>,
 
     // Cloud
     #[cfg(feature = "cloud")]
