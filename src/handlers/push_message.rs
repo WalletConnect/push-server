@@ -104,7 +104,6 @@ pub async fn handler(
         tokio::spawn(async move {
             if let Some(analytics) = &state.analytics {
                 let (country, continent, region) = analytics
-                    .geoip
                     .lookup_geo_data(addr.ip())
                     .map_or((None, None, None), |geo| {
                         (geo.country, geo.continent, geo.region)
@@ -164,7 +163,7 @@ pub async fn handler_internal(
                 flags,
                 status: 0,
                 response_message: None,
-                received_at: gorgon::time::now(),
+                received_at: wc::analytics::time::now(),
             }),
             #[cfg(not(feature = "analytics"))]
             None,
@@ -185,7 +184,7 @@ pub async fn handler_internal(
         flags,
         status: 0,
         response_message: None,
-        received_at: gorgon::time::now(),
+        received_at: wc::analytics::time::now(),
     });
 
     #[cfg(not(feature = "analytics"))]

@@ -1,3 +1,12 @@
+#[cfg(feature = "geoblock")]
+use wc::geoip::block::{middleware::GeoBlockLayer, BlockingPolicy};
+#[cfg(any(feature = "analytics", feature = "geoblock"))]
+use {
+    crate::error::Error,
+    aws_config::meta::region::RegionProviderChain,
+    aws_sdk_s3::{config::Region, Client as S3Client},
+    wc::geoip::MaxMindResolver,
+};
 use {
     crate::{
         log::prelude::*,
@@ -32,6 +41,7 @@ use crate::stores::tenant::DefaultTenantStore;
 
 #[cfg(feature = "analytics")]
 pub mod analytics;
+
 #[cfg(not(feature = "analytics"))]
 pub mod analytics {
     pub mod message_info {
@@ -39,6 +49,7 @@ pub mod analytics {
         pub struct MessageInfo;
     }
 }
+
 pub mod blob;
 pub mod config;
 pub mod error;
@@ -104,11 +115,30 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         tenant_store,
     )?;
 
-    #[cfg(feature = "analytics")]
+    #[cfg(any(feature = "analytics", feature = "geoblock"))]
     {
-        if let Some(ip) = state.public_ip {
-            let analytics = analytics::initialize(&state.config, ip).await?;
-            state.analytics = Some(analytics);
+        let s3_client = get_s3_client(&state.config).await;
+        let geoip_resolver = get_geoip_resolver(&state.config, &s3_client).await;
+
+        #[cfg(feature = "analytics")]
+        {
+            if let Some(ip) = state.public_ip {
+                let analytics =
+                    analytics::initialize(&state.config, s3_client, ip, geoip_resolver.clone())
+                        .await?;
+                state.analytics = Some(analytics);
+            }
+        }
+
+        #[cfg(feature = "geoblock")]
+        {
+            state.geoblock = geoip_resolver.map(|resolver| {
+                GeoBlockLayer::new(
+                    resolver.clone(),
+                    state.config.blocked_countries.clone(),
+                    BlockingPolicy::AllowAll,
+                )
+            });
         }
     }
 
@@ -207,7 +237,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
                 ),
             );
 
-        Router::new()
+        let app = Router::new()
             .route("/health", get(handlers::health::handler))
             .route("/info", get(handlers::info::handler))
             .nest("/tenants", tenancy_routes)
@@ -223,8 +253,15 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
                 "/:tenant_id/clients/:id",
                 post(handlers::push_message::handler),
             )
-            .layer(global_middleware)
-            .with_state(state_arc.clone())
+            .layer(global_middleware);
+
+        let app = if let Some(geoblock) = state_arc.geoblock.clone() {
+            app.layer(geoblock)
+        } else {
+            app
+        };
+
+        app.with_state(state_arc.clone())
     };
 
     #[cfg(not(feature = "multitenant"))]
@@ -243,8 +280,14 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             "/clients/:id",
             post(handlers::single_tenant_wrappers::push_handler),
         )
-        .layer(global_middleware)
-        .with_state(state_arc.clone());
+        .layer(global_middleware);
+    let app = if let Some(geoblock) = state_arc.geoblock.clone() {
+        app.layer(geoblock)
+    } else {
+        app
+    };
+
+    let app = app.with_state(state_arc.clone());
 
     let private_app = Router::new()
         .route("/metrics", get(handlers::metrics::handler))
@@ -286,4 +329,46 @@ providers: [{}]
     }
 
     Ok(())
+}
+
+#[cfg(any(feature = "analytics", feature = "geoblock"))]
+async fn get_geoip_resolver(config: &Config, s3_client: &S3Client) -> Option<Arc<MaxMindResolver>> {
+    match (&config.geoip_db_bucket, &config.geoip_db_key) {
+        (Some(bucket), Some(key)) => {
+            info!(%bucket, %key, "initializing geoip database from aws s3");
+
+            MaxMindResolver::from_aws_s3(s3_client, bucket, key)
+                .await
+                .map_err(|err| {
+                    info!(?err, "failed to load geoip resolver");
+                    Error::GeoIpS3Failed
+                })
+                .ok()
+                .map(Arc::new)
+        }
+        _ => {
+            info!("analytics geoip lookup is disabled");
+
+            None
+        }
+    }
+}
+
+#[cfg(any(feature = "analytics", feature = "geoblock"))]
+async fn get_s3_client(config: &Config) -> S3Client {
+    let region_provider = RegionProviderChain::first_try(Region::new("eu-central-1"));
+    let shared_config = aws_config::from_env().region(region_provider).load().await;
+
+    let aws_config = match &config.s3_endpoint {
+        Some(s3_endpoint) => {
+            info!(%s3_endpoint, "initializing analytics with custom s3 endpoint");
+
+            aws_sdk_s3::config::Builder::from(&shared_config)
+                .endpoint_url(s3_endpoint)
+                .build()
+        }
+        _ => aws_sdk_s3::config::Builder::from(&shared_config).build(),
+    };
+
+    S3Client::from_conf(aws_config)
 }

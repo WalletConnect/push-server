@@ -9,16 +9,21 @@ build = "build.rs"
 resolver = "2"
 
 [features]
+full= ["functional_tests", "multitenant", "analytics", "geoblock", "cloud"]
 # Used to enable functional tests
 functional_tests = []
 # Multi-tenancy mode
 multitenant = []
 # Enable analytics
 analytics = []
+# Geoblocking
+geoblock = []
 # Enable cloud app validations
 cloud = []
 
 [dependencies]
+wc = { git = "https://github.com/WalletConnect/utils-rs.git", tag = "v0.5.1", features = ["analytics", "geoip", "geoblock"] }
+
 tokio = { version = "1", features = ["full"] }
 axum = { version = "0.6", features = ["json", "multipart", "tokio"] }
 tower = "0.4"
@@ -65,11 +70,10 @@ jsonwebtoken = "8.1"
 data-encoding = "2.3"
 
 # Analytics
-aws-config = "0.55"
-aws-sdk-s3 = "0.25"
+aws-config = "0.56"
+aws-sdk-s3 = "0.31"
 parquet = { git = "https://github.com/WalletConnect/arrow-rs.git", rev = "99a1cc3", default-features = false, features = ["flate2"] }
 parquet_derive = { git = "https://github.com/WalletConnect/arrow-rs.git", rev = "99a1cc3" }
-gorgon = { git = "https://github.com/WalletConnect/gorgon.git", tag = "v0.5.1" }
 
 # Misc
 reqwest = { version = "0.11", features = ["multipart"] }
