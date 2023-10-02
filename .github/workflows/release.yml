@@ -2,6 +2,17 @@ name: release
 
 on:
   workflow_dispatch:
+    inputs:
+      deploy_to_staging:
+        description: "Deploy to staging"
+        type: boolean
+        required: true
+        default: true
+      deploy_to_prod:
+        description: "Deploy to production"
+        type: boolean
+        required: true
+        default: false
 
 permissions:
   contents: write
@@ -108,3 +119,15 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  run-cd:
+    needs:
+      - release
+      - build-container
+    # call the cd.yml file with image tag from the new release
+    uses: ./.github/workflows/cd.yml
+    with:
+      image_tag: ${{ needs.release.outputs.version }}
+      deploy_to_staging: ${{ inputs.deploy_to_staging }}
+      deploy_to_prod: ${{ inputs.deploy_to_prod }}
+    secrets: inherit

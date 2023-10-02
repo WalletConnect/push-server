@@ -1,15 +1,32 @@
 name: cd
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - "main"
-    paths:
-      - "terraform/**"
-  release:
-    types: ["published"]
+    inputs:
+      deploy_to_staging:
+        description: "Deploy to staging"
+        type: boolean
+        required: true
+        default: true
+      deploy_to_prod:
+        description: "Deploy to production"
+        type: boolean
+        required: true
+        default: false
+      image_tag:
+          description: "App image tag. Default: latest release"
+          type: string
+          required: false
+          default: ""
   workflow_call:
     inputs:
+      deploy_to_staging:
+        type: boolean
+        required: true
+        default: true
+      deploy_to_prod:
+        type: boolean
+        required: false
+        default: false
       image_tag:
         type: string
         required: true
@@ -21,41 +38,12 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  get-version:
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.clean_version.outputs.version }}
-    steps:
-      - id: get
-        uses: actions/github-script@v6
-        env:
-          LATEST_TAG: ${{ steps.latest_release.outputs.release }}
-        with:
-          result-encoding: string
-          script: |
-            if (context.eventName == "release") {
-              // remove the v from the tag
-              let tag = context.payload.release.tag_name.replace("v", "")
-              return tag
-            } else if (context.eventName == "workflow_call") {
-              return context.payload.inputs.image_tag
-            } else {
-              return ""
-            }
-
-      - id: clean_version
-        run: |
-          version=$(echo "${{ steps.get.outputs.result }}")
-          echo "version=$version" >> $GITHUB_OUTPUT
-
-
   deploy-infra-staging:
+    if: ${{ inputs.deploy_to_staging }}
     runs-on: ubuntu-latest
     environment:
       name: staging
       url: https://staging.echo.walletconnect.com/health
-    needs:
-      - get-version
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -97,6 +85,7 @@ jobs:
           TF_VAR_grafana_endpoint: ${{ steps.grafana-get-details.outputs.endpoint }}
           TF_VAR_cloud_api_key: ${{ secrets.CLOUD_API_KEY }}
           TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
+          TF_VAR_image_version: ${{ inputs.image_tag }}
         with:
           environment: "staging"
 
@@ -109,6 +98,7 @@ jobs:
           workspace-id: ${{ steps.grafana-get-details.outputs.workspace-id }}
 
   validate_staging:
+    if: ${{ inputs.deploy_to_staging }}
     needs: [deploy-infra-staging]
     uses: ./.github/workflows/validate.yml
     with:
@@ -117,12 +107,12 @@ jobs:
       TEST_TENANT_ID: ${{ secrets.TEST_TENANT_ID }}
 
   deploy-infra-prod:
+    if: ${{ inputs.deploy_to_prod }}
     runs-on: ubuntu-latest
     environment:
       name: prod
       url: https://echo.walletconnect.com/health
     needs:
-      - get-version
       - validate_staging
     steps:
       - name: Checkout
@@ -165,6 +155,7 @@ jobs:
           TF_VAR_grafana_endpoint: ${{ steps.grafana-get-details.outputs.endpoint }}
           TF_VAR_cloud_api_key: ${{ secrets.CLOUD_API_KEY }}
           TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
+          TF_VAR_image_version: ${{ inputs.image_tag }}
         with:
           environment: "prod"
 
