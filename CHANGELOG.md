@@ -2,6 +2,15 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.35.0 - 2023-10-02
+#### Features
+- geo-blocking, replace `gorgon` with `utils-rs` (#227) - (40e6d51) - Xavier Basty
+#### Miscellaneous Chores
+- enabling alarm notifications (#219) - (00eaa3b) - Max Kalashnikoff
+- fixing output variable name in the `release` step (#221) - (48a605d) - Max Kalashnikoff
+
+- - -
+
 ## v0.34.7 - 2023-09-28
 #### Bug Fixes
 - don't wipe response_message (#216) - (37a5a31) - Chris Smith
