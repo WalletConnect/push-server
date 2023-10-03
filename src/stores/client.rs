@@ -33,11 +33,15 @@ impl ClientStore for sqlx::PgPool {
 
         let mut transaction = self.begin().await?;
 
-        sqlx::query("DELETE FROM public.clients WHERE id = $1 OR device_token = $2")
-            .bind(id)
-            .bind(client.token.clone())
-            .execute(&mut transaction)
-            .await?;
+        sqlx::query(
+            "DELETE FROM public.clients \
+            WHERE id = $1 OR device_token = $2 \
+            OR (id = $1 AND device_token = $2)",
+        )
+        .bind(id)
+        .bind(client.token.clone())
+        .execute(&mut transaction)
+        .await?;
 
         let mut insert_query = sqlx::QueryBuilder::new(
             "INSERT INTO public.clients (id, tenant_id, push_type, device_token)",
