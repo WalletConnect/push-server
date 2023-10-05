@@ -41,7 +41,7 @@ jobs:
 
       - name: Update and commit the release version
         id: release
-        uses: WalletConnect/actions/github/update-rust-version/@2.1.4
+        uses: WalletConnect/actions/github/update-rust-version/@2.1.5
         with:
           token: ${{ secrets.RELEASE_PAT }}
 
