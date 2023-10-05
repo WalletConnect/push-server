@@ -33,6 +33,13 @@ impl ClientStore for sqlx::PgPool {
 
         let mut transaction = self.begin().await?;
 
+        // Statement for locking the row. Issue #230
+        sqlx::query("SELECT * FROM public.clients WHERE id = $1 OR device_token = $2 FOR UPDATE")
+            .bind(id)
+            .bind(client.token.clone())
+            .execute(&mut transaction)
+            .await?;
+
         sqlx::query("DELETE FROM public.clients WHERE id = $1 OR device_token = $2")
             .bind(id)
             .bind(client.token.clone())
