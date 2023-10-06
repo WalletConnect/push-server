@@ -27,16 +27,15 @@ pub trait ClientStore {
 impl ClientStore for sqlx::PgPool {
     async fn create_client(&self, tenant_id: &str, id: &str, client: Client) -> stores::Result<()> {
         info!(
-            "ClientStore::create_client tenant_id={tenant_id} id={id} token={}",
+            "ClientStore::create_client tenant_id={tenant_id} id={id} token={} with locking",
             client.token
         );
 
         let mut transaction = self.begin().await?;
 
-        // Statement for locking the row. Issue #230
-        sqlx::query("SELECT * FROM public.clients WHERE id = $1 OR device_token = $2 FOR UPDATE")
+        // Statement for locking to prevent an issue #230
+        sqlx::query("SELECT pg_advisory_xact_lock(abs(hashtext($1::text)))")
             .bind(id)
-            .bind(client.token.clone())
             .execute(&mut transaction)
             .await?;
 
