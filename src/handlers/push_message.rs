@@ -1,3 +1,5 @@
+#[cfg(feature = "analytics")]
+use axum_client_ip::SecureClientIp;
 use {
     crate::{
         analytics::message_info::MessageInfo,
@@ -23,8 +25,6 @@ use {
     serde::{Deserialize, Serialize},
     std::sync::Arc,
 };
-#[cfg(feature = "analytics")]
-use {axum::extract::ConnectInfo, std::net::SocketAddr};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct MessagePayload {
@@ -46,7 +46,7 @@ pub struct PushMessageBody {
 }
 
 pub async fn handler(
-    #[cfg(feature = "analytics")] ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    #[cfg(feature = "analytics")] SecureClientIp(client_ip): SecureClientIp,
     Path((tenant_id, id)): Path<(String, String)>,
     StateExtractor(state): StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
@@ -104,7 +104,7 @@ pub async fn handler(
         tokio::spawn(async move {
             if let Some(analytics) = &state.analytics {
                 let (country, continent, region) = analytics
-                    .lookup_geo_data(addr.ip())
+                    .lookup_geo_data(client_ip)
                     .map_or((None, None, None), |geo| {
                         (geo.country, geo.continent, geo.region)
                     });
@@ -113,7 +113,7 @@ pub async fn handler(
                     %request_id,
                     %tenant_id,
                     client_id = %id,
-                    ip = %addr.ip(),
+                    ip = %client_ip,
                     "loaded geo data"
                 );
 

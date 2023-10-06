@@ -17,6 +17,7 @@ use {
         routing::{delete, get, post},
         Router,
     },
+    axum_client_ip::SecureClientIpSource,
     config::Config,
     hyper::http::Method,
     opentelemetry::{sdk::Resource, KeyValue},
@@ -210,7 +211,8 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
                     hyper::http::header::CONTENT_TYPE,
                     hyper::http::header::AUTHORIZATION,
                 ]),
-        );
+        )
+        .layer(SecureClientIpSource::RightmostXForwardedFor.into_extension());
 
     #[cfg(feature = "multitenant")]
     let app = {
