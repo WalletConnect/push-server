@@ -24,8 +24,7 @@ pub struct Config {
     pub log_level_otel: String,
     #[serde(default = "default_disable_header")]
     pub disable_header: bool,
-    #[serde(default = "default_relay_url")]
-    pub relay_url: String,
+    pub relay_public_key: String,
     #[serde(default = "default_validate_signatures")]
     pub validate_signatures: bool,
     pub database_url: String,
@@ -110,6 +109,13 @@ impl Config {
             Err(NoApnsConfigured) => Ok(()),
             Err(e) => Err(e),
         }?;
+
+        // Empty Relay public key is not allowed
+        if self.relay_public_key.is_empty() {
+            return Err(InvalidConfiguration(
+                "`RELAY_PUBLIC_KEY` cannot be empty".to_string(),
+            ));
+        }
 
         Ok(())
     }

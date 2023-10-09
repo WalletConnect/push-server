@@ -126,6 +126,7 @@ jobs:
           TF_VAR_grafana_endpoint: ${{ steps.grafana-get-details.outputs.endpoint }}
           TF_VAR_cloud_api_key: ${{ secrets.CLOUD_API_KEY }}
           TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
+          TF_VAR_relay_public_key: ${{ secrets.RELAY_PUBLIC_KEY }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           environment: staging
