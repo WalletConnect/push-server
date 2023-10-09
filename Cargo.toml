@@ -26,6 +26,7 @@ wc = { git = "https://github.com/WalletConnect/utils-rs.git", tag = "v0.5.1", fe
 
 tokio = { version = "1", features = ["full"] }
 axum = { version = "0.6", features = ["json", "multipart", "tokio"] }
+axum-client-ip = "0.4"
 tower = "0.4"
 tower-http = { version = "0.4", features = ["trace", "cors", "request-id", "propagate-header", "catch-panic"] }
 hyper = "0.14"

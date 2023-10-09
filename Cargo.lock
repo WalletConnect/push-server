@@ -1187,7 +1187,7 @@ checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
 
 [[package]]
 name = "echo-server"
-version = "0.34.7"
+version = "0.35.0"
 dependencies = [
  "a2",
  "async-recursion",
@@ -1196,6 +1196,7 @@ dependencies = [
  "aws-config",
  "aws-sdk-s3",
  "axum",
+ "axum-client-ip",
  "base64 0.21.4",
  "build-info",
  "build-info-build",

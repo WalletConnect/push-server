@@ -1,3 +1,5 @@
+#[cfg(feature = "analytics")]
+use axum_client_ip::SecureClientIp;
 use {
     crate::{
         error::Result,
@@ -13,8 +15,6 @@ use {
     hyper::HeaderMap,
     std::sync::Arc,
 };
-#[cfg(feature = "analytics")]
-use {axum::extract::ConnectInfo, std::net::SocketAddr};
 
 #[cfg(feature = "multitenant")]
 use crate::error::Error::MissingTenantId;
@@ -37,7 +37,7 @@ pub async fn delete_handler(
 }
 
 pub async fn push_handler(
-    #[cfg(feature = "analytics")] addr: ConnectInfo<SocketAddr>,
+    #[cfg(feature = "analytics")] SecureClientIp(client_ip): SecureClientIp,
     Path(id): Path<String>,
     state: StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
@@ -48,7 +48,7 @@ pub async fn push_handler(
 
     #[cfg(all(not(feature = "multitenant"), feature = "analytics"))]
     return crate::handlers::push_message::handler(
-        addr,
+        SecureClientIp(client_ip),
         Path((DEFAULT_TENANT_ID.to_string(), id)),
         state,
         headers,
@@ -67,7 +67,7 @@ pub async fn push_handler(
 }
 
 pub async fn register_handler(
-    #[cfg(feature = "analytics")] addr: ConnectInfo<SocketAddr>,
+    #[cfg(feature = "analytics")] SecureClientIp(client_ip): SecureClientIp,
     state: StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
     body: Json<RegisterBody>,
@@ -77,7 +77,7 @@ pub async fn register_handler(
 
     #[cfg(all(not(feature = "multitenant"), feature = "analytics"))]
     return crate::handlers::register_client::handler(
-        addr,
+        SecureClientIp(client_ip),
         Path(DEFAULT_TENANT_ID.to_string()),
         state,
         headers,
