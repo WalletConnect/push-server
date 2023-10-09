@@ -30,7 +30,6 @@ impl EchoServer {
             log_level: "info,echo-server=info".into(),
             log_level_otel: "info,echo-server=trace".into(),
             disable_header: true,
-            relay_url: "https://relay.walletconnect.com".into(),
             validate_signatures: false,
             database_url: DATABASE_URL.into(),
             #[cfg(feature = "multitenant")]

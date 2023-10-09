@@ -1,62 +1,26 @@
-use {
-    chrono::{DateTime, Duration, Utc},
-    ed25519_dalek::VerifyingKey,
-    std::ops::Add,
-};
-
-const PUBLIC_KEY_TTL_HOURS: i64 = 6;
+use ed25519_dalek::VerifyingKey;
 
 #[derive(Clone)]
 pub struct RelayClient {
-    http_client: reqwest::Client,
-    base_url: String,
-    public_key: Option<VerifyingKey>,
-    public_key_last_fetched: DateTime<Utc>,
+    public_key: VerifyingKey,
 }
 
 impl RelayClient {
-    pub fn new(base_url: String) -> RelayClient {
-        RelayClient {
-            http_client: reqwest::Client::new(),
-            base_url,
-            public_key: None,
-            public_key_last_fetched: DateTime::<Utc>::MIN_UTC,
-        }
+    pub fn new(string_public_key: String) -> crate::error::Result<RelayClient> {
+        let verifying_key = Self::string_to_verifying_key(&string_public_key)?;
+        Ok(RelayClient {
+            public_key: verifying_key,
+        })
     }
 
-    /// Fetches the public key with a TTL
-    pub async fn public_key(&mut self) -> crate::error::Result<VerifyingKey> {
-        if let Some(public_key) = self.public_key {
-            // TTL Not exceeded
-            if self
-                .public_key_last_fetched
-                .add(Duration::hours(PUBLIC_KEY_TTL_HOURS))
-                < Utc::now()
-            {
-                return Ok(public_key);
-            }
-        }
-
-        let public_key = self.fetch_public_key().await?;
-        self.public_key = Some(public_key);
-        self.public_key_last_fetched = Utc::now();
-        Ok(public_key)
+    pub fn get_verifying_key(&self) -> &VerifyingKey {
+        &self.public_key
     }
 
-    async fn fetch_public_key(&self) -> crate::error::Result<VerifyingKey> {
-        let response = self
-            .http_client
-            .get(self.get_url("public-key"))
-            .send()
-            .await?;
-        let body = response.text().await?;
-        let key_bytes = hex::decode(body)?;
-        let public_key =
-            VerifyingKey::from_bytes(<&[u8; 32]>::try_from(key_bytes.as_slice()).unwrap())?;
-        Ok(public_key)
-    }
-
-    fn get_url(&self, path: &str) -> String {
-        format!("{}/{}", self.base_url, path)
+    fn string_to_verifying_key(string_key: &str) -> crate::error::Result<VerifyingKey> {
+        let key_bytes = hex::decode(string_key)?;
+        Ok(VerifyingKey::from_bytes(
+            <&[u8; 32]>::try_from(key_bytes.as_slice()).unwrap(),
+        )?)
     }
 }
