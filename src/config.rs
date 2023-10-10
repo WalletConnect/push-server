@@ -17,6 +17,7 @@ use crate::providers::ProviderKind;
 pub struct Config {
     #[serde(default = "default_port")]
     pub port: u16,
+    #[serde(default = "default_public_url")]
     pub public_url: String,
     #[serde(default = "default_log_level")]
     pub log_level: String,
@@ -63,9 +64,9 @@ pub struct Config {
     pub fcm_api_key: Option<String>,
 
     // Multi-tenancy
-    #[cfg(feature = "multitenant")]
     pub tenant_database_url: String,
     #[cfg(feature = "multitenant")]
+    #[serde(default = "default_jwt_secret")]
     pub jwt_secret: String,
 
     // Analytics
@@ -78,9 +79,11 @@ pub struct Config {
     pub geoip_db_key: Option<String>,
 
     #[cfg(feature = "analytics")]
+    #[serde(default = "default_analytics_export_bucket")]
     pub analytics_export_bucket: String,
 
     #[cfg(feature = "geoblock")]
+    #[serde(default = "default_blocked_countries")]
     pub blocked_countries: Vec<String>,
 
     // Cloud
@@ -181,6 +184,10 @@ fn default_port() -> u16 {
     3000
 }
 
+fn default_public_url() -> String {
+    format!("http://127.0.0.1:{}", default_port())
+}
+
 fn default_log_level() -> String {
     "info,echo-server=info".to_string()
 }
@@ -203,6 +210,18 @@ fn default_is_test() -> bool {
 
 fn default_cors_allowed_origins() -> Vec<String> {
     vec!["*".to_string()]
+}
+
+fn default_jwt_secret() -> String {
+    "n/a".to_string()
+}
+
+fn default_analytics_export_bucket() -> String {
+    "example-bucket".to_string()
+}
+
+fn default_blocked_countries() -> Vec<String> {
+    vec![]
 }
 
 pub fn get_config() -> error::Result<Config> {

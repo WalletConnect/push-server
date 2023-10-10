@@ -1,5 +1,4 @@
 use {
-    crate::context::DATABASE_URL,
     echo_server::config::Config,
     std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4, TcpListener},
     tokio::{
@@ -8,9 +7,6 @@ use {
         time::{sleep, Duration},
     },
 };
-
-#[cfg(feature = "multitenant")]
-use crate::context::TENANT_DATABASE_URL;
 
 pub struct EchoServer {
     pub public_addr: SocketAddr,
@@ -22,18 +18,18 @@ pub struct EchoServer {
 pub enum Error {}
 
 impl EchoServer {
-    pub async fn start() -> Self {
+    pub async fn start(config_from_env: &Config) -> Self {
         let public_port = get_random_port();
-        let config: Config = Config {
+        let config = Config {
             port: public_port,
             public_url: format!("http://127.0.0.1:{public_port}"),
             log_level: "info,echo-server=info".into(),
             log_level_otel: "info,echo-server=trace".into(),
             disable_header: true,
+            relay_public_key: config_from_env.relay_public_key.clone(),
             validate_signatures: false,
-            database_url: DATABASE_URL.into(),
-            #[cfg(feature = "multitenant")]
-            tenant_database_url: TENANT_DATABASE_URL.into(),
+            database_url: config_from_env.database_url.clone(),
+            tenant_database_url: config_from_env.tenant_database_url.clone(),
             #[cfg(feature = "multitenant")]
             jwt_secret: "n/a".to_string(),
             otel_exporter_otlp_endpoint: None,
