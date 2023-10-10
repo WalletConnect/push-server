@@ -6,7 +6,7 @@ use {
         state::{ClientStoreArc, NotificationStoreArc, TenantStoreArc},
     },
     sqlx::{Pool, Postgres},
-    std::sync::Arc,
+    std::{env, sync::Arc},
     test_context::{AsyncTestContext, TestContext},
 };
 
@@ -14,7 +14,7 @@ mod server;
 mod stores;
 
 pub struct ConfigContext {
-    pub config_from_env: Config,
+    pub config: Config,
 }
 
 pub struct EchoServerContext {
@@ -32,16 +32,62 @@ pub struct StoreContext {
 
 impl TestContext for ConfigContext {
     fn setup() -> Self {
-        let config_from_env = envy::from_env::<Config>().unwrap();
-        Self { config_from_env }
+        let public_port = self::server::get_random_port();
+        let config = Config {
+            port: public_port,
+            public_url: format!("http://127.0.0.1:{public_port}"),
+            log_level: "info,echo-server=info".into(),
+            log_level_otel: "info,echo-server=trace".into(),
+            disable_header: true,
+            validate_signatures: false,
+            relay_public_key: env::var("RELAY_PUBLIC_KEY").unwrap_or("none".to_string()),
+            database_url: env::var("DATABASE_URL").unwrap(),
+            tenant_database_url: env::var("TENANT_DATABASE_URL").unwrap(),
+            #[cfg(feature = "multitenant")]
+            jwt_secret: "n/a".to_string(),
+            otel_exporter_otlp_endpoint: None,
+            telemetry_prometheus_port: Some(self::server::get_random_port()),
+            #[cfg(not(feature = "multitenant"))]
+            apns_type: None,
+            #[cfg(not(feature = "multitenant"))]
+            apns_certificate: None,
+            #[cfg(not(feature = "multitenant"))]
+            apns_certificate_password: None,
+            #[cfg(not(feature = "multitenant"))]
+            apns_pkcs8_pem: None,
+            #[cfg(not(feature = "multitenant"))]
+            apns_team_id: None,
+            #[cfg(not(feature = "multitenant"))]
+            apns_key_id: None,
+            #[cfg(not(feature = "multitenant"))]
+            apns_topic: None,
+            #[cfg(not(feature = "multitenant"))]
+            fcm_api_key: None,
+            #[cfg(any(feature = "analytics", feature = "geoblock"))]
+            s3_endpoint: None,
+            #[cfg(any(feature = "analytics", feature = "geoblock"))]
+            geoip_db_bucket: None,
+            #[cfg(any(feature = "analytics", feature = "geoblock"))]
+            geoip_db_key: None,
+            #[cfg(feature = "analytics")]
+            analytics_export_bucket: "example-bucket".to_string(),
+            is_test: true,
+            cors_allowed_origins: vec!["*".to_string()],
+            #[cfg(feature = "cloud")]
+            cloud_api_url: "https://example.com".to_string(),
+            #[cfg(feature = "cloud")]
+            cloud_api_key: "n/a".to_string(),
+            #[cfg(feature = "geoblock")]
+            blocked_countries: vec![],
+        };
+        Self { config }
     }
 }
 
 #[async_trait]
 impl AsyncTestContext for EchoServerContext {
     async fn setup() -> Self {
-        let config_from_env = ConfigContext::setup().config_from_env;
-        let server = EchoServer::start(&config_from_env).await;
+        let server = EchoServer::start(ConfigContext::setup().config).await;
         Self { server }
     }
 }
@@ -49,12 +95,9 @@ impl AsyncTestContext for EchoServerContext {
 #[async_trait]
 impl AsyncTestContext for StoreContext {
     async fn setup() -> Self {
-        let config_from_env = ConfigContext::setup().config_from_env;
-        let (db, tenant_db) = stores::open_pg_connections(
-            &config_from_env.database_url,
-            &config_from_env.tenant_database_url,
-        )
-        .await;
+        let config = ConfigContext::setup().config;
+        let (db, tenant_db) =
+            stores::open_pg_connections(&config.database_url, &config.tenant_database_url).await;
 
         let db_arc = Arc::new(db);
         let tenant_db_arc = Arc::new(tenant_db);
