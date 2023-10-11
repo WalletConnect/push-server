@@ -34,7 +34,7 @@ use {
         request_id::{PropagateRequestIdLayer, SetRequestIdLayer},
         trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
     },
-    tracing::{info, log::LevelFilter, warn, Level},
+    tracing::{info, log::LevelFilter, Level},
 };
 
 #[cfg(not(feature = "multitenant"))]
@@ -154,12 +154,6 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         .map(Into::into)
         .collect::<Vec<&str>>()
         .join(", ");
-
-    // Fetch public key so it's cached for the first 6hrs
-    let public_key = state.relay_client.public_key().await;
-    if public_key.is_err() {
-        warn!("Failed initial fetch of Relay's Public Key, this may prevent webhook validation.")
-    }
 
     if state.config.telemetry_prometheus_port.is_some() {
         state.set_metrics(metrics::Metrics::new(Resource::new(vec![

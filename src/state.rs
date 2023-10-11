@@ -71,8 +71,6 @@ pub fn new_state(
     #[cfg(not(feature = "multitenant"))]
     let is_multitenant = false;
 
-    let relay_url = config.relay_url.to_string();
-
     #[cfg(feature = "cloud")]
     let (cloud_url, cloud_api_key) = (config.cloud_api_url.clone(), config.cloud_api_key.clone());
 
@@ -86,7 +84,7 @@ pub fn new_state(
     };
 
     Ok(AppState {
-        config,
+        config: config.clone(),
         build_info: build_info.clone(),
         metrics: None,
         #[cfg(feature = "analytics")]
@@ -94,7 +92,7 @@ pub fn new_state(
         client_store,
         notification_store,
         tenant_store,
-        relay_client: RelayClient::new(relay_url),
+        relay_client: RelayClient::new(config.relay_public_key)?,
         #[cfg(feature = "cloud")]
         registry_client: RegistryHttpClient::new(cloud_url, cloud_api_key.as_str())?,
         #[cfg(feature = "multitenant")]

@@ -44,7 +44,8 @@ where
         let s = span!(tracing::Level::DEBUG, "validate_signature");
         let _ = s.enter();
 
-        let public_key = state.relay_client().public_key().await?;
+        let state_binding = state.relay_client();
+        let public_key = state_binding.get_verifying_key();
 
         let (parts, body_raw) = req.into_parts();
         let bytes = hyper::body::to_bytes(body_raw)
@@ -64,7 +65,7 @@ where
 
         match (signature_header, timestamp_header) {
             (Some(signature), Some(timestamp))
-                if signature_is_valid(signature, timestamp, &body, &public_key).await? =>
+                if signature_is_valid(signature, timestamp, &body, public_key).await? =>
             {
                 let req = Request::<B>::from_parts(parts, bytes.into());
                 Ok(T::from_request(req, state)

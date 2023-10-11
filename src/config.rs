@@ -24,8 +24,7 @@ pub struct Config {
     pub log_level_otel: String,
     #[serde(default = "default_disable_header")]
     pub disable_header: bool,
-    #[serde(default = "default_relay_url")]
-    pub relay_url: String,
+    pub relay_public_key: String,
     #[serde(default = "default_validate_signatures")]
     pub validate_signatures: bool,
     pub database_url: String,
@@ -64,7 +63,6 @@ pub struct Config {
     pub fcm_api_key: Option<String>,
 
     // Multi-tenancy
-    #[cfg(feature = "multitenant")]
     pub tenant_database_url: String,
     #[cfg(feature = "multitenant")]
     pub jwt_secret: String,
@@ -110,6 +108,13 @@ impl Config {
             Err(NoApnsConfigured) => Ok(()),
             Err(e) => Err(e),
         }?;
+
+        // Empty Relay public key is not allowed
+        if self.relay_public_key.is_empty() {
+            return Err(InvalidConfiguration(
+                "`RELAY_PUBLIC_KEY` cannot be empty".to_string(),
+            ));
+        }
 
         Ok(())
     }
@@ -189,12 +194,6 @@ fn default_disable_header() -> bool {
 
 fn default_validate_signatures() -> bool {
     true
-}
-
-pub const RELAY_URL: &str = "https://relay.walletconnect.com";
-
-fn default_relay_url() -> String {
-    RELAY_URL.to_string()
 }
 
 fn default_is_test() -> bool {
