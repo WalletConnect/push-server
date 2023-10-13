@@ -12,6 +12,7 @@ use {
     base64::Engine,
     serde::{Deserialize, Serialize},
     std::{io::BufReader, sync::Arc},
+    tracing::warn,
 };
 
 #[derive(Deserialize)]
@@ -187,7 +188,10 @@ pub async fn handler(
                     a2::Endpoint::Sandbox,
                 ) {
                     Ok(_) => Ok(()),
-                    Err(_) => Err(Error::BadApnsCredentials),
+                    Err(e) => {
+                        warn!("Error validating APNS certificate on update: {:?}", e);
+                        Err(Error::BadApnsCredentials)
+                    }
                 }
             }
             TenantApnsUpdateAuth::Token {
@@ -205,7 +209,10 @@ pub async fn handler(
                     a2::Endpoint::Sandbox,
                 ) {
                     Ok(_) => Ok(()),
-                    Err(_) => Err(Error::BadApnsCredentials),
+                    Err(e) => {
+                        warn!("Error validating APNS token on update: {:?}", e);
+                        Err(Error::BadApnsCredentials)
+                    }
                 }
             }
         }?;
