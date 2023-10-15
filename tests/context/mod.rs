@@ -19,6 +19,7 @@ pub struct ConfigContext {
 
 pub struct EchoServerContext {
     pub server: EchoServer,
+    pub config: Config,
 }
 
 pub struct StoreContext {
@@ -41,8 +42,10 @@ impl TestContext for ConfigContext {
             disable_header: true,
             validate_signatures: false,
             relay_public_key: env::var("RELAY_PUBLIC_KEY").unwrap_or("none".to_string()),
-            database_url: env::var("DATABASE_URL").unwrap(),
-            tenant_database_url: env::var("TENANT_DATABASE_URL").unwrap(),
+            database_url: env::var("DATABASE_URL")
+                .expect("DATABASE_URL environment variable is not set"),
+            tenant_database_url: env::var("TENANT_DATABASE_URL")
+                .expect("TENANT_DATABASE_URL environment variable is not set"),
             #[cfg(feature = "multitenant")]
             jwt_secret: "n/a".to_string(),
             otel_exporter_otlp_endpoint: None,
@@ -87,8 +90,9 @@ impl TestContext for ConfigContext {
 #[async_trait]
 impl AsyncTestContext for EchoServerContext {
     async fn setup() -> Self {
+        let config = ConfigContext::setup().config;
         let server = EchoServer::start(ConfigContext::setup().config).await;
-        Self { server }
+        Self { server, config }
     }
 }
 
