@@ -63,11 +63,25 @@ impl ApnsUpdateBody {
                     }),
                 })
             }
+            (Some(topic), Some(certificate), None, None, None, None) => Ok(ApnsSqlUpdate {
+                topic: Some(topic.clone()),
+                auth: Some(TenantApnsUpdateAuth::Certificate {
+                    apns_certificate: certificate.clone(),
+                    apns_certificate_password: String::new(),
+                }),
+            }),
             (None, Some(certificate), Some(password), None, None, None) => Ok(ApnsSqlUpdate {
                 topic: None,
                 auth: Some(TenantApnsUpdateAuth::Certificate {
                     apns_certificate: certificate.clone(),
                     apns_certificate_password: password.clone(),
+                }),
+            }),
+            (None, Some(certificate), None, None, None, None) => Ok(ApnsSqlUpdate {
+                topic: None,
+                auth: Some(TenantApnsUpdateAuth::Certificate {
+                    apns_certificate: certificate.clone(),
+                    apns_certificate_password: String::new(),
                 }),
             }),
             // Update Token
@@ -136,9 +150,7 @@ pub async fn handler(
                 body.apns_certificate_password = Some(field.text().await?);
             }
             "apns_pkcs8_pem" => {
-                let data = field.bytes().await?;
-                let encoded_pem = base64::engine::general_purpose::STANDARD.encode(&data);
-                body.apns_pkcs8_pem = Some(encoded_pem);
+                body.apns_pkcs8_pem = Some(field.text().await?);
             }
             "apns_key_id" => {
                 body.apns_key_id = Some(field.text().await?);
@@ -179,11 +191,10 @@ pub async fn handler(
                 apns_certificate,
                 apns_certificate_password,
             } => {
-                let cert_bytes = apns_certificate.into_bytes();
-                let mut reader = BufReader::new(&*cert_bytes);
-
+                let decoded = base64::engine::general_purpose::STANDARD
+                    .decode(apns_certificate.into_bytes())?;
                 match a2::Client::certificate(
-                    &mut reader,
+                    &mut std::io::Cursor::new(decoded),
                     &apns_certificate_password,
                     a2::Endpoint::Sandbox,
                 ) {
@@ -199,11 +210,8 @@ pub async fn handler(
                 apns_key_id,
                 apns_team_id,
             } => {
-                let pem_bytes = apns_pkcs8_pem.into_bytes();
-                let mut reader = BufReader::new(&*pem_bytes);
-
                 match a2::Client::token(
-                    &mut reader,
+                    &mut std::io::Cursor::new(apns_pkcs8_pem.into_bytes()),
                     apns_key_id,
                     apns_team_id,
                     a2::Endpoint::Sandbox,
