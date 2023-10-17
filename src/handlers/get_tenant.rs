@@ -13,11 +13,11 @@ use {
         http::HeaderMap,
         Json,
     },
-    serde::Serialize,
+    serde::{Deserialize, Serialize},
     std::sync::Arc,
 };
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct GetTenantResponse {
     url: String,
     enabled_providers: Vec<String>,

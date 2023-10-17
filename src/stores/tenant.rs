@@ -218,10 +218,7 @@ impl Tenant {
                         &self.apns_team_id,
                     ) {
                         (Some(topic), Some(pkcs8_pem), Some(key_id), Some(team_id)) => {
-                            let decoded =
-                                base64::engine::general_purpose::STANDARD.decode(pkcs8_pem)?;
-                            let mut reader = BufReader::new(&*decoded);
-
+                            let mut reader = BufReader::new(pkcs8_pem.as_bytes());
                             let apns_client = ApnsProvider::new_token(
                                 &mut reader,
                                 key_id.clone(),
