@@ -547,7 +547,7 @@ resource "grafana_dashboard" "at_a_glance" {
             {
               "evaluator" : {
                 "params" : [
-                  5
+                  1
                 ],
                 "type" : "gt"
               },
@@ -570,7 +570,7 @@ resource "grafana_dashboard" "at_a_glance" {
             {
               "evaluator" : {
                 "params" : [
-                  5
+                  1
                 ],
                 "type" : "gt"
               },
@@ -592,12 +592,11 @@ resource "grafana_dashboard" "at_a_glance" {
             }
           ],
           "executionErrorState" : "alerting",
-          "for" : "5m",
           "frequency" : "1m",
           "handler" : 1,
           "name" : "${var.environment} Echo Server 5XX alert",
-          "noDataState" : "no_data",
-          "notifications" : jsonencode(local.notifications)
+          "noDataState" : "keep_state",
+          "notifications" : local.notifications
         },
         "datasource" : {
           "type" : "cloudwatch",
