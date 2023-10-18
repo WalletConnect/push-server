@@ -24,6 +24,7 @@ use {
     },
     serde::{Deserialize, Serialize},
     std::sync::Arc,
+    tap::TapFallible,
     tracing::instrument,
 };
 
@@ -294,6 +295,7 @@ pub async fn handler_internal(
         .notification_store
         .create_or_update_notification(&body.id, &tenant_id, &id, &body.payload)
         .await
+        .tap_err(|e| warn!("error create_or_update_notification: {e:?}"))
         .map_err(|e| (Error::Store(e), analytics.clone()))?;
 
     info!(
@@ -334,6 +336,7 @@ pub async fn handler_internal(
         .tenant_store
         .get_tenant(&tenant_id)
         .await
+        .tap_err(|e| warn!("error fetching tenant: {e:?}"))
         .map_err(|e| (e, analytics.clone()))?;
     debug!(
         %request_id,
@@ -350,6 +353,7 @@ pub async fn handler_internal(
 
     let mut provider = tenant
         .provider(&client.push_type)
+        .tap_err(|e| warn!("error fetching provider: {e:?}"))
         .map_err(|e| (e, analytics.clone()))?;
     debug!(
         %request_id,
