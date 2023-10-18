@@ -592,7 +592,7 @@ resource "grafana_dashboard" "at_a_glance" {
             }
           ],
           "executionErrorState" : "alerting",
-          "frequency" : "5m",
+          "frequency" : "1m",
           "handler" : 1,
           "name" : "${var.environment} Echo Server 5XX alert",
           "noDataState" : "keep_state",
