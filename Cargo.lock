@@ -1229,6 +1229,7 @@ dependencies = [
  "serde_json",
  "serial_test",
  "sqlx",
+ "tap",
  "test-context",
  "thiserror",
  "tokio",

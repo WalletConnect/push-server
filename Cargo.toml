@@ -90,6 +90,7 @@ pnet_datalink = "0.31"
 ipnet = "2.5"
 cerberus = { git = "https://github.com/WalletConnect/cerberus.git", tag = "v0.5.0" }
 async-recursion = "1.0.4"
+tap = "1.0.1"
 
 [dev-dependencies]
 serial_test = "1.0"
