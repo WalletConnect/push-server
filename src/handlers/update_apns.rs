@@ -150,7 +150,10 @@ pub async fn handler(
                 body.apns_certificate_password = Some(field.text().await?);
             }
             "apns_pkcs8_pem" => {
-                body.apns_pkcs8_pem = Some(field.text().await?);
+                let data = field.bytes().await?;
+                let encoded_p8_certificate =
+                    base64::engine::general_purpose::STANDARD.encode(&data);
+                body.apns_pkcs8_pem = Some(encoded_p8_certificate);
             }
             "apns_key_id" => {
                 body.apns_key_id = Some(field.text().await?);
@@ -210,8 +213,10 @@ pub async fn handler(
                 apns_key_id,
                 apns_team_id,
             } => {
+                let decoded = base64::engine::general_purpose::STANDARD
+                    .decode(apns_pkcs8_pem.into_bytes())?;
                 match a2::Client::token(
-                    &mut std::io::Cursor::new(apns_pkcs8_pem.into_bytes()),
+                    &mut std::io::Cursor::new(decoded),
                     apns_key_id,
                     apns_team_id,
                     a2::Endpoint::Sandbox,

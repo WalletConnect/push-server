@@ -19,7 +19,7 @@ use {
     chrono::{DateTime, Utc},
     serde::{Deserialize, Serialize},
     sqlx::{Executor, PgPool},
-    std::io::BufReader,
+    tracing::{info, instrument},
 };
 
 #[cfg(any(debug_assertions, test))]
@@ -178,6 +178,7 @@ impl Tenant {
         }
     }
 
+    #[instrument(skip_all, fields(tenant_id = %self.id, provider = %provider.as_str()))]
     pub fn provider(&self, provider: &ProviderKind) -> Result<Provider> {
         if !self.providers().contains(provider) {
             return Err(ProviderNotAvailable(provider.into()));
@@ -196,12 +197,11 @@ impl Tenant {
                         &self.apns_topic,
                     ) {
                         (Some(certificate), Some(password), Some(topic)) => {
+                            info!("apns certificate (p12) provider is matched");
                             let decoded =
                                 base64::engine::general_purpose::STANDARD.decode(certificate)?;
-                            let mut reader = BufReader::new(&*decoded);
-
                             let apns_client = ApnsProvider::new_cert(
-                                &mut reader,
+                                &mut &mut std::io::Cursor::new(decoded),
                                 password.clone(),
                                 endpoint,
                                 topic.clone(),
@@ -218,9 +218,11 @@ impl Tenant {
                         &self.apns_team_id,
                     ) {
                         (Some(topic), Some(pkcs8_pem), Some(key_id), Some(team_id)) => {
-                            let mut reader = BufReader::new(pkcs8_pem.as_bytes());
+                            info!("apns token (p8) provider is matched");
+                            let p8_token =
+                                base64::engine::general_purpose::STANDARD.decode(pkcs8_pem)?;
                             let apns_client = ApnsProvider::new_token(
-                                &mut reader,
+                                &mut std::io::Cursor::new(p8_token),
                                 key_id.clone(),
                                 team_id.clone(),
                                 endpoint,
@@ -236,13 +238,17 @@ impl Tenant {
             }
             ProviderKind::Fcm => match self.fcm_api_key.clone() {
                 Some(api_key) => {
+                    info!("fcm provider is matched");
                     let fcm = FcmProvider::new(api_key);
                     Ok(Fcm(fcm))
                 }
                 None => Err(ProviderNotAvailable(provider.into())),
             },
             #[cfg(any(debug_assertions, test))]
-            ProviderKind::Noop => Ok(Noop(NoopProvider::new())),
+            ProviderKind::Noop => {
+                info!("noop provider is matched");
+                Ok(Noop(NoopProvider::new()))
+            }
         }
     }
 }
