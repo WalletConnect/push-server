@@ -133,7 +133,7 @@ pub async fn handler(
     Ok(response)
 }
 
-#[instrument(skip_all, fields(tenant_id, client_id = id, id = body.id))]
+#[instrument(name = "push_message_internal", skip_all, fields(tenant_id = tenant_id, client_id = id, id = body.id))]
 pub async fn handler_internal(
     Path((tenant_id, id)): Path<(String, String)>,
     StateExtractor(state): StateExtractor<Arc<AppState>>,
