@@ -184,8 +184,8 @@ pub enum Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        error!("responding with error ({:?})", self);
-        match self {
+        warn!("responding with error: {self:?}");
+        let response = match &self {
             Error::BadDeviceToken => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
                 ResponseError {
                     name: "invalid_token".to_string(),
@@ -445,7 +445,7 @@ impl IntoResponse for Error {
                 },
             ], vec![
                 ErrorField {
-                    field: f,
+                    field: f.to_owned(),
                     description: "missing from request".to_string(),
                     // Note (Harry Bairstow): Currently only used in body
                     location: ErrorLocation::Body,
@@ -566,6 +566,12 @@ impl IntoResponse for Error {
                     },
                 ], vec![])
             }
-        }.into_response()
+        }.into_response();
+
+        if response.status().is_server_error() {
+            error!("Internal Server Error: {self:?}");
+        }
+
+        response
     }
 }
