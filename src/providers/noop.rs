@@ -40,6 +40,6 @@ impl PushProvider for NoopProvider {
 impl NoopProvider {
     /// Insert empty notifications for a new token
     fn bootstrap(&mut self, token: String) {
-        self.notifications.entry(token).or_insert_with(Vec::new);
+        self.notifications.entry(token).or_default();
     }
 }

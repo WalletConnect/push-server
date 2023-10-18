@@ -24,6 +24,7 @@ use {
     },
     serde::{Deserialize, Serialize},
     std::sync::Arc,
+    tracing::instrument,
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
@@ -66,6 +67,8 @@ pub async fn handler(
     let inner_packed = match res {
         Ok((res, analytics_options_inner)) => (res.status().as_u16(), res, analytics_options_inner),
         Err((error, analytics_option_inner)) => {
+            warn!("error handling push message: {error:?}");
+
             #[cfg(feature = "analytics")]
             let error_str = format!("{:?}", &error);
             let res = error.into_response();
@@ -129,6 +132,7 @@ pub async fn handler(
     Ok(response)
 }
 
+#[instrument(skip_all, fields(tenant_id, client_id = id, id = body.id))]
 pub async fn handler_internal(
     Path((tenant_id, id)): Path<(String, String)>,
     StateExtractor(state): StateExtractor<Arc<AppState>>,
@@ -340,6 +344,7 @@ pub async fn handler_internal(
     );
 
     if tenant.suspended {
+        warn!("tenant suspended");
         return Err((Error::TenantSuspended, analytics.clone()));
     }
 
@@ -357,60 +362,63 @@ pub async fn handler_internal(
 
     match provider.send_notification(client.token, body.payload).await {
         Ok(()) => Ok(()),
-        Err(error) => match error {
-            Error::BadDeviceToken => {
-                state
-                    .client_store
-                    .delete_client(&tenant_id, &id)
-                    .await
-                    .map_err(|e| (Error::Store(e), analytics.clone()))?;
-                increment_counter!(state.metrics, client_suspensions);
-                warn!(
-                    %request_id,
-                    %tenant_id,
-                    client_id = %id,
-                    notification_id = %notification.id,
-                    push_type = client.push_type.as_str(),
-                    "client has been deleted due to a bad device token"
-                );
-                Err(Error::ClientDeleted)
+        Err(error) => {
+            warn!("error sending notification: {error:?}");
+            match error {
+                Error::BadDeviceToken => {
+                    state
+                        .client_store
+                        .delete_client(&tenant_id, &id)
+                        .await
+                        .map_err(|e| (Error::Store(e), analytics.clone()))?;
+                    increment_counter!(state.metrics, client_suspensions);
+                    warn!(
+                        %request_id,
+                        %tenant_id,
+                        client_id = %id,
+                        notification_id = %notification.id,
+                        push_type = client.push_type.as_str(),
+                        "client has been deleted due to a bad device token"
+                    );
+                    Err(Error::ClientDeleted)
+                }
+                Error::BadApnsCredentials => {
+                    state
+                        .tenant_store
+                        .suspend_tenant(&tenant_id, "Invalid APNS Credentials")
+                        .await
+                        .map_err(|e| (e, analytics.clone()))?;
+                    increment_counter!(state.metrics, tenant_suspensions);
+                    warn!(
+                        %request_id,
+                        %tenant_id,
+                        client_id = %id,
+                        notification_id = %notification.id,
+                        push_type = client.push_type.as_str(),
+                        "tenant has been suspended due to invalid provider credentials"
+                    );
+                    Err(Error::TenantSuspended)
+                }
+                Error::BadFcmApiKey => {
+                    state
+                        .tenant_store
+                        .suspend_tenant(&tenant_id, "Invalid FCM Credentials")
+                        .await
+                        .map_err(|e| (e, analytics.clone()))?;
+                    increment_counter!(state.metrics, tenant_suspensions);
+                    warn!(
+                        %request_id,
+                        %tenant_id,
+                        client_id = %id,
+                        notification_id = %notification.id,
+                        push_type = client.push_type.as_str(),
+                        "tenant has been suspended due to invalid provider credentials"
+                    );
+                    Err(Error::TenantSuspended)
+                }
+                e => Err(e),
             }
-            Error::BadApnsCredentials => {
-                state
-                    .tenant_store
-                    .suspend_tenant(&tenant_id, "Invalid APNS Credentials")
-                    .await
-                    .map_err(|e| (e, analytics.clone()))?;
-                increment_counter!(state.metrics, tenant_suspensions);
-                warn!(
-                    %request_id,
-                    %tenant_id,
-                    client_id = %id,
-                    notification_id = %notification.id,
-                    push_type = client.push_type.as_str(),
-                    "tenant has been suspended due to invalid provider credentials"
-                );
-                Err(Error::TenantSuspended)
-            }
-            Error::BadFcmApiKey => {
-                state
-                    .tenant_store
-                    .suspend_tenant(&tenant_id, "Invalid FCM Credentials")
-                    .await
-                    .map_err(|e| (e, analytics.clone()))?;
-                increment_counter!(state.metrics, tenant_suspensions);
-                warn!(
-                    %request_id,
-                    %tenant_id,
-                    client_id = %id,
-                    notification_id = %notification.id,
-                    push_type = client.push_type.as_str(),
-                    "tenant has been suspended due to invalid provider credentials"
-                );
-                Err(Error::TenantSuspended)
-            }
-            e => Err(e),
-        },
+        }
     }
     .map_err(|e| (e, analytics.clone()))?;
 
