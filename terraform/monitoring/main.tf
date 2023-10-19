@@ -593,9 +593,11 @@ resource "grafana_dashboard" "at_a_glance" {
           ],
           "executionErrorState" : "alerting",
           "frequency" : "1m",
+          "for" : "5m",
           "handler" : 1,
           "name" : "${var.environment} Echo Server 5XX alert",
           "noDataState" : "keep_state",
+          "message" : "Echo server - Prod - 5XX error",
           "notifications" : local.notifications
         },
         "datasource" : {
