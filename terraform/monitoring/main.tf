@@ -596,7 +596,7 @@ resource "grafana_dashboard" "at_a_glance" {
           "for" : "5m",
           "handler" : 1,
           "name" : "${var.environment} Echo Server 5XX alert",
-          "noDataState" : "keep_state",
+          "noDataState" : "no_data",
           "message" : "Echo server - Prod - 5XX error",
           "notifications" : local.notifications
         },
