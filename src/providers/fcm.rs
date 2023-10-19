@@ -70,9 +70,15 @@ impl PushProvider for FcmProvider {
                 let FcmResponse { error, .. } = val;
                 if let Some(error) = error {
                     match error {
-                        ErrorReason::MissingRegistration
-                        | ErrorReason::InvalidRegistration
-                        | ErrorReason::NotRegistered => Err(Error::BadDeviceToken),
+                        ErrorReason::MissingRegistration => Err(Error::BadDeviceToken(
+                            "Missing registration for token".into(),
+                        )),
+                        ErrorReason::InvalidRegistration => {
+                            Err(Error::BadDeviceToken("Invalid token registration".into()))
+                        }
+                        ErrorReason::NotRegistered => {
+                            Err(Error::BadDeviceToken("Token is not registered".into()))
+                        }
                         ErrorReason::InvalidApnsCredential => Err(Error::BadApnsCredentials),
                         e => Err(Error::FcmResponse(e)),
                     }
