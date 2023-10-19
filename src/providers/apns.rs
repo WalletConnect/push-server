@@ -115,10 +115,17 @@ impl PushProvider for ApnsProvider {
                 a2::Error::ResponseError(res) => match res.error {
                     None => Err(Error::Apns(a2::Error::ResponseError(res))),
                     Some(response) => match response.reason {
-                        ErrorReason::BadDeviceToken => Err(Error::BadDeviceToken),
+                        ErrorReason::BadDeviceToken => {
+                            Err(Error::BadDeviceToken("Bad device token".to_string()))
+                        }
                         // Note: This will have the device deleted because the token was not for the
                         // configured topic
-                        ErrorReason::DeviceTokenNotForTopic => Err(Error::BadDeviceToken),
+                        ErrorReason::DeviceTokenNotForTopic => Err(Error::BadDeviceToken(
+                            "The device token does not match the specified topic".to_string(),
+                        )),
+                        ErrorReason::Unregistered => Err(Error::BadDeviceToken(
+                            "The device token is inactive for the specified topic".to_string(),
+                        )),
                         reason => Err(Error::ApnsResponse(reason)),
                     },
                 },

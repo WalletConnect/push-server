@@ -369,7 +369,7 @@ pub async fn handler_internal(
         Err(error) => {
             warn!("error sending notification: {error:?}");
             match error {
-                Error::BadDeviceToken => {
+                Error::BadDeviceToken(_) => {
                     state
                         .client_store
                         .delete_client(&tenant_id, &id)
