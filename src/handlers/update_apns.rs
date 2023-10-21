@@ -1,18 +1,21 @@
 use {
     crate::{
         error::{Error, Error::InvalidMultipartBody},
+        handlers::validate_tenant_request,
         increment_counter,
+        request_id::get_req_id,
         state::AppState,
         stores::tenant::{TenantApnsUpdateAuth, TenantApnsUpdateParams},
     },
     axum::{
         extract::{Multipart, Path, State},
+        http::HeaderMap,
         Json,
     },
     base64::Engine,
     serde::{Deserialize, Serialize},
     std::{io::BufReader, sync::Arc},
-    tracing::warn,
+    tracing::{error, warn},
 };
 
 #[derive(Deserialize)]
@@ -117,10 +120,36 @@ pub struct UpdateTenantApnsResponse {
 pub async fn handler(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
+    headers: HeaderMap,
     mut form_body: Multipart,
 ) -> Result<Json<UpdateTenantApnsResponse>, Error> {
     // Ensure tenant real
     let _existing_tenant = state.tenant_store.get_tenant(&id).await?;
+
+    // JWT verification
+    let req_id = get_req_id(&headers);
+    #[cfg(feature = "cloud")]
+    let jwt_verification_result = validate_tenant_request(
+        &state.registry_client,
+        &state.gotrue_client,
+        &headers,
+        id.clone(),
+        None,
+    )
+    .await;
+
+    #[cfg(not(feature = "cloud"))]
+    let jwt_verification_result = validate_tenant_request(&state.gotrue_client, &headers);
+
+    if let Err(e) = jwt_verification_result {
+        error!(
+            request_id = %req_id,
+            tenant_id = %id,
+            err = ?e,
+            "JWT verification failed"
+        );
+        return Err(e);
+    }
 
     // ---- retrieve body from form
     let mut body = ApnsUpdateBody {
