@@ -4,17 +4,21 @@ use {
             Error,
             Error::{BadFcmApiKey, InvalidMultipartBody},
         },
+        handlers::validate_tenant_request,
         increment_counter,
+        request_id::get_req_id,
         state::AppState,
         stores::tenant::TenantFcmUpdateParams,
     },
     axum::{
         extract::{Multipart, Path, State},
+        http::HeaderMap,
         Json,
     },
     fcm::FcmError,
     serde::Serialize,
     std::sync::Arc,
+    tracing::error,
 };
 
 pub struct FcmUpdateBody {
@@ -31,10 +35,36 @@ pub struct UpdateTenantFcmResponse {
 pub async fn handler(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
+    headers: HeaderMap,
     mut form_body: Multipart,
 ) -> Result<Json<UpdateTenantFcmResponse>, Error> {
     // -- check if tenant is real
     let _existing_tenant = state.tenant_store.get_tenant(&id).await?;
+
+    // JWT token verification
+    let req_id = get_req_id(&headers);
+    #[cfg(feature = "cloud")]
+    let jwt_verification_result = validate_tenant_request(
+        &state.registry_client,
+        &state.gotrue_client,
+        &headers,
+        id.clone(),
+        None,
+    )
+    .await;
+
+    #[cfg(not(feature = "cloud"))]
+    let jwt_verification_result = validate_tenant_request(&state.gotrue_client, &headers);
+
+    if let Err(e) = jwt_verification_result {
+        error!(
+            request_id = %req_id,
+            tenant_id = %id,
+            err = ?e,
+            "JWT verification failed"
+        );
+        return Err(e);
+    }
 
     // ---- retrieve body from form
     let mut body = FcmUpdateBody {
