@@ -61,6 +61,7 @@ async fn tenant_update_apns_valid_token(ctx: &mut EchoServerContext) {
             "http://{}/tenants/{}/apns",
             ctx.server.public_addr, &tenant_id
         ))
+        .header("AUTHORIZATION", jwt_token.clone())
         .multipart(form)
         .send()
         .await
