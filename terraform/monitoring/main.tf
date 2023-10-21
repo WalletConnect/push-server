@@ -593,7 +593,7 @@ resource "grafana_dashboard" "at_a_glance" {
           ],
           "executionErrorState" : "alerting",
           "frequency" : "1m",
-          "for" : "5m",
+          "for" : "",
           "handler" : 1,
           "name" : "${var.environment} Echo Server 5XX alert",
           "noDataState" : "no_data",
@@ -619,7 +619,8 @@ resource "grafana_dashboard" "at_a_glance" {
               "hideFrom" : {
                 "legend" : false,
                 "tooltip" : false,
-                "viz" : false
+                "viz" : false,
+                "mode" : "dashed",
               },
               "lineInterpolation" : "linear",
               "lineWidth" : 1,
@@ -718,6 +719,14 @@ resource "grafana_dashboard" "at_a_glance" {
             "region" : "default",
             "sqlExpression" : "",
             "statistic" : "Sum"
+          }
+        ],
+        "thresholds" : [
+          {
+            "colorMode" : "critical",
+            "op" : "gt",
+            "value" : 1,
+            "visible" : true
           }
         ],
         "title" : "5XX",
