@@ -1,9 +1,18 @@
 /// Tests against the handlers
-use {crate::context::EchoServerContext, test_context::test_context};
+use {crate::context::EchoServerContext, serde::Serialize, test_context::test_context};
 
 mod apns;
 mod fcm;
 mod tenancy;
+
+/// Struct to hold claims for JWT validation
+#[derive(Serialize)]
+pub struct ClaimsForValidation {
+    sub: String,
+    aud: String,
+    role: String,
+    exp: usize,
+}
 
 #[test_context(EchoServerContext)]
 #[tokio::test]
