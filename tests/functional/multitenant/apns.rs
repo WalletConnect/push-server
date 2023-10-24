@@ -1,61 +1,12 @@
 use {
-    crate::context::EchoServerContext,
-    echo_server::handlers::{create_tenant::TenantRegisterBody, get_tenant::GetTenantResponse},
+    crate::{context::EchoServerContext, functional::multitenant::ClaimsForValidation},
+    echo_server::handlers::create_tenant::TenantRegisterBody,
     jsonwebtoken::{encode, EncodingKey, Header},
     random_string::generate,
-    serde::Serialize,
     std::time::SystemTime,
     test_context::test_context,
     uuid::Uuid,
 };
-
-/// Struct to hold claims for JWT validation
-#[derive(Serialize)]
-struct ClaimsForValidation {
-    sub: String,
-    aud: String,
-    role: String,
-    exp: usize,
-}
-
-// #[test_context(EchoServerContext)]
-// #[tokio::test]
-// async fn tenant_update_apns(ctx: &mut EchoServerContext) {
-//     let charset = "1234567890";
-//     let random_tenant_id = generate(12, charset);
-//     let payload = TenantRegisterBody {
-//         id: random_tenant_id.clone(),
-//     };
-//
-//     // Register tenant
-//     let client = reqwest::Client::new();
-//     let response = client
-//         .post(format!("http://{}/tenants", ctx.server.public_addr))
-//         .json(&payload)
-//         .send()
-//         .await
-//         .expect("Call failed");
-//
-//     // Send valid token/cert
-//     // TODO figure out how to get valid creds into test!
-//     let api_key = env!("ECHO_TEST_FCM_KEY");
-//     let form = reqwest::multipart::Form::new().text("api_key", api_key);
-//
-//     let response = client
-//         .post(format!(
-//             "http://{}/tenants/{}/apns",
-//             ctx.server.public_addr, &random_tenant_id
-//         ))
-//         .multipart(form)
-//         .send()
-//         .await
-//         .expect("Call failed");
-//
-//     assert!(
-//         response.status().is_success(),
-//         "Response was not successful"
-//     );
-// }
 
 #[test_context(EchoServerContext)]
 #[tokio::test]
