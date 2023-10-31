@@ -90,7 +90,7 @@ resource "aws_ecs_task_definition" "app_task_definition" {
         { name = "ANALYTICS_ENABLED", value = "true" },
         { name = "ANALYTICS_EXPORT_BUCKET", value = var.analytics_datalake_bucket_name },
 
-        { name = "BLOCKED_COUNTRIES", value = "KP,IR,CU,SY" },
+        { name = "BLOCKED_COUNTRIES", value = "KP,IR,CU,SY,RU,UA" },
 
         { name = "CLOUD_API_KEY", value = var.cloud_api_key },
         { name = "CLOUD_API_URL", value = var.cloud_api_url },
