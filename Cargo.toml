@@ -22,7 +22,7 @@ geoblock = []
 cloud = []
 
 [dependencies]
-wc = { git = "https://github.com/WalletConnect/utils-rs.git", tag = "v0.5.1", features = ["analytics", "geoip", "geoblock"] }
+wc = { git = "https://github.com/WalletConnect/utils-rs.git", tag = "v0.7.0", features = ["analytics", "geoip", "geoblock"] }
 
 tokio = { version = "1", features = ["full"] }
 axum = { version = "0.6", features = ["json", "multipart", "tokio"] }
