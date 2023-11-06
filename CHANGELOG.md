@@ -2,6 +2,39 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.35.1 - 2023-11-06
+#### Bug Fixes
+- adding jwt verification to the apns and fcm update handler (#261) - (2c454eb) - Max Kalashnikoff
+- fixing and enabling ignored tests (#263) - (7bf555a) - Max Kalashnikoff
+- remove `for` from evaluation and adding a threshold line (#260) - (a070782) - Max Kalashnikoff
+- `notification` variable is encoded as a string, fix alert thresholds (#231) - (8028744) - Max Kalashnikoff
+- revert to the base64 encoded p8 key (#253) - (0339004) - Max Kalashnikoff
+- fixing apns keys encoding (#246) - (2e6a9fe) - Max Kalashnikoff
+- spacing fix in the terraform main file (#243) - (9d37d66) - Max Kalashnikoff
+- using relay public key from environment variable (#241) - (0934fd2) - Max Kalashnikoff
+- use `axum-client-ip` to get the real client IP (#240) - (591effe) - Max Kalashnikoff
+- add advisory locking to the client create (#239) - (46d1797) - Max Kalashnikoff
+- adding `... FOR UPDATE` to lock the row while client creation (#235) - (1de1a69) - Max Kalashnikoff
+#### Continuous Integration
+- bump `update_rust_version` to 2.1.5 (#237) - (066bd18) - Max Kalashnikoff
+#### Miscellaneous Chores
+- update `utils` version (#269) - (5695fa3) - Xavier Basty
+- remove Ukraine from list of OFAC blocked countries (#268) - (a8b467a) - Xavier Basty
+- add Russia and Ukraine to list of OFAC blocked countries (#336) (#266) - (e7344b1) - Xavier Basty
+- change no data state for 5xx monitoring (#259) - (190a1ed) - Max Kalashnikoff
+- distinguish bad device token errors (#257) - (733c152) - Max Kalashnikoff
+- fix tenant ID log (#255) - (3902a9c) - Chris Smith
+- adding `for` and `message` for 5xx alerts (#258) - (3acf35a) - Max Kalashnikoff
+- tap err (#252) - (bbdf178) - Chris Smith
+- distinguish 500s from other errors (#248) - (b1135ce) - Chris Smith
+- more logging (#250) - (45902c7) - Chris Smith
+- adding logs to apns update (#245) - (80e3bf5) - Max Kalashnikoff
+- deploy to production became optional with choice for the `image_tag` (#226) - (3b10917) - Max Kalashnikoff
+#### Tests
+- adding `client_create_same_id_and_token` test (#234) - (c7b14ff) - Max Kalashnikoff
+
+- - -
+
 ## v0.35.0 - 2023-10-02
 #### Features
 - geo-blocking, replace `gorgon` with `utils-rs` (#227) - (40e6d51) - Xavier Basty
