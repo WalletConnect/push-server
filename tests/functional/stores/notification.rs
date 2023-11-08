@@ -12,7 +12,7 @@ use {
     test_context::test_context,
 };
 
-pub async fn get_client(client_store: &ClientStoreArc) -> String {
+pub async fn create_client(client_store: &ClientStoreArc) -> String {
     let id = format!("id-{}", gen_id());
     let token = format!("token-{}", gen_id());
 
@@ -30,8 +30,8 @@ pub async fn get_client(client_store: &ClientStoreArc) -> String {
 
 #[test_context(StoreContext)]
 #[tokio::test]
-async fn notification_creation(ctx: &mut StoreContext) {
-    let client_id = get_client(&ctx.clients).await;
+async fn notification(ctx: &mut StoreContext) {
+    let client_id = create_client(&ctx.clients).await;
 
     let res = ctx
         .notifications
@@ -42,5 +42,30 @@ async fn notification_creation(ctx: &mut StoreContext) {
         })
         .await;
 
-    assert!(res.is_ok())
+    assert!(res.is_ok());
+}
+
+#[test_context(StoreContext)]
+#[tokio::test]
+async fn notification_multiple_clients_same_payload(ctx: &mut StoreContext) {
+    let message_id = gen_id();
+    let payload = MessagePayload {
+        topic: String::new(),
+        flags: 0,
+        blob: "example-payload".to_string(),
+    };
+
+    let client_id = create_client(&ctx.clients).await;
+    let res = ctx
+        .notifications
+        .create_or_update_notification(&message_id, TENANT_ID, &client_id, &payload)
+        .await;
+    assert!(res.is_ok());
+
+    let client_id = create_client(&ctx.clients).await;
+    let res = ctx
+        .notifications
+        .create_or_update_notification(&message_id, TENANT_ID, &client_id, &payload)
+        .await;
+    assert!(res.is_ok());
 }
