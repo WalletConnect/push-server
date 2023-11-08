@@ -29,7 +29,7 @@ pub trait NotificationStore {
         client_id: &str,
         payload: &MessagePayload,
     ) -> stores::Result<Notification>;
-    async fn get_notification(&self, id: &str, tenant_id: &str) -> stores::Result<Notification>;
+    async fn get_notification(&self, id: &str, client_id: &str, tenant_id: &str) -> stores::Result<Notification>;
     async fn delete_notification(&self, id: &str, tenant_id: &str) -> stores::Result<()>;
 }
 
@@ -62,11 +62,12 @@ RETURNING *;",
         }
     }
 
-    async fn get_notification(&self, id: &str, tenant_id: &str) -> stores::Result<Notification> {
+    async fn get_notification(&self, id: &str, client_id: &str, tenant_id: &str) -> stores::Result<Notification> {
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Notification>(
-            "SELECT * FROM public.notifications WHERE id = $1 and tenant_id = $2",
+            "SELECT * FROM public.notifications WHERE id = $1 AND client_id = $2 AND tenant_id = $3",
         )
         .bind(id)
+        .bind(client_id)
         .bind(tenant_id)
         .fetch_one(self)
         .await;

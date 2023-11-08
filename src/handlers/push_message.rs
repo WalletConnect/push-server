@@ -199,14 +199,14 @@ pub async fn handler_internal(
 
     increment_counter!(state.metrics, received_notifications);
 
-    let id = id
+    let client_id = id
         .trim_start_matches(DECENTRALIZED_IDENTIFIER_PREFIX)
         .to_string();
 
     debug!(
         %request_id,
         %tenant_id,
-        client_id = %id,
+        client_id = %client_id,
         "fetched client to send notification"
     );
 
@@ -214,7 +214,7 @@ pub async fn handler_internal(
         warn!(
             %request_id,
             %tenant_id,
-            client_id = %id,
+            client_id = %client_id,
             "client tenant id does not match request tenant id"
         );
 
@@ -265,13 +265,13 @@ pub async fn handler_internal(
 
     if let Ok(notification) = state
         .notification_store
-        .get_notification(&body.id, &tenant_id)
+        .get_notification(&body.id, &client_id, &tenant_id)
         .await
     {
         warn!(
             %request_id,
             %tenant_id,
-            client_id = %id,
+            client_id = %client_id,
             notification_id = %notification.id,
             last_recieved_at = %notification.last_received_at,
             "notification has already been received"
@@ -293,7 +293,7 @@ pub async fn handler_internal(
 
     let notification = state
         .notification_store
-        .create_or_update_notification(&body.id, &tenant_id, &id, &body.payload)
+        .create_or_update_notification(&body.id, &tenant_id, &client_id, &body.payload)
         .await
         .tap_err(|e| warn!("error create_or_update_notification: {e:?}"))
         .map_err(|e| (Error::Store(e), analytics.clone()))?;
@@ -301,7 +301,7 @@ pub async fn handler_internal(
     info!(
         %request_id,
         %tenant_id,
-        client_id = %id,
+        client_id = %client_id,
         notification_id = %notification.id,
         "stored notification",
     );
@@ -312,7 +312,7 @@ pub async fn handler_internal(
         warn!(
             %request_id,
             %tenant_id,
-            client_id = %id,
+            client_id = %client_id,
             notification_id = %notification.id,
             last_recieved_at = %notification.last_received_at,
             "notification has already been processed"
@@ -341,7 +341,7 @@ pub async fn handler_internal(
     debug!(
         %request_id,
         %tenant_id,
-        client_id = %id,
+        client_id = %client_id,
         notification_id = %notification.id,
         "fetched tenant"
     );
@@ -358,7 +358,7 @@ pub async fn handler_internal(
     debug!(
         %request_id,
         %tenant_id,
-        client_id = %id,
+        client_id = %client_id,
         notification_id = %notification.id,
         push_type = client.push_type.as_str(),
         "fetched provider"
@@ -372,14 +372,14 @@ pub async fn handler_internal(
                 Error::BadDeviceToken(_) => {
                     state
                         .client_store
-                        .delete_client(&tenant_id, &id)
+                        .delete_client(&tenant_id, &client_id)
                         .await
                         .map_err(|e| (Error::Store(e), analytics.clone()))?;
                     increment_counter!(state.metrics, client_suspensions);
                     warn!(
                         %request_id,
                         %tenant_id,
-                        client_id = %id,
+                        client_id = %client_id,
                         notification_id = %notification.id,
                         push_type = client.push_type.as_str(),
                         "client has been deleted due to a bad device token"
@@ -396,7 +396,7 @@ pub async fn handler_internal(
                     warn!(
                         %request_id,
                         %tenant_id,
-                        client_id = %id,
+                        client_id = %client_id,
                         notification_id = %notification.id,
                         push_type = client.push_type.as_str(),
                         "tenant has been suspended due to invalid provider credentials"
@@ -413,7 +413,7 @@ pub async fn handler_internal(
                     warn!(
                         %request_id,
                         %tenant_id,
-                        client_id = %id,
+                        client_id = %client_id,
                         notification_id = %notification.id,
                         push_type = client.push_type.as_str(),
                         "tenant has been suspended due to invalid provider credentials"
@@ -429,7 +429,7 @@ pub async fn handler_internal(
     info!(
         %request_id,
         %tenant_id,
-        client_id = %id,
+        client_id = %client_id,
         notification_id = %notification.id,
         push_type = client.push_type.as_str(),
         "sent notification"
