@@ -96,7 +96,7 @@ async fn client_upsert_token(ctx: &mut StoreContext) {
         .unwrap();
     let get_notification_result = ctx
         .notifications
-        .get_notification(&notification_id, TENANT_ID)
+        .get_notification(&notification_id, &client_id, TENANT_ID)
         .await
         .unwrap();
     assert_eq!(get_notification_result.client_id, client_id);
@@ -159,7 +159,7 @@ async fn client_upsert_id(ctx: &mut StoreContext) {
         .unwrap();
     let get_notification_result = ctx
         .notifications
-        .get_notification(&notification_id, TENANT_ID)
+        .get_notification(&notification_id, &client_id, TENANT_ID)
         .await
         .unwrap();
     assert_eq!(get_notification_result.client_id, client_id);
@@ -226,7 +226,7 @@ async fn client_create_same_id_and_token(ctx: &mut StoreContext) {
         .unwrap();
     let get_notification_result = ctx
         .notifications
-        .get_notification(&notification_id, TENANT_ID)
+        .get_notification(&notification_id, &client_id, TENANT_ID)
         .await
         .unwrap();
     assert_eq!(get_notification_result.client_id, client_id);

@@ -4,6 +4,7 @@ use {
         push_message::{MessagePayload, PushMessageBody},
         register_client::RegisterBody,
     },
+    hyper::StatusCode,
     relay_rpc::{
         auth::{
             ed25519_dalek::Keypair,
@@ -13,11 +14,10 @@ use {
     },
     test_context::test_context,
     uuid::Uuid,
+    wiremock::{http::Method, matchers::method, Mock, MockServer, ResponseTemplate},
 };
 
-#[test_context(EchoServerContext)]
-#[tokio::test]
-async fn test_push(ctx: &mut EchoServerContext) {
+async fn create_client(ctx: &mut EchoServerContext) -> (ClientId, MockServer) {
     let mut rng = StdRng::from_entropy();
     let keypair = Keypair::generate(&mut rng);
 
@@ -33,10 +33,21 @@ async fn test_push(ctx: &mut EchoServerContext) {
         .unwrap()
         .to_string();
 
+    let mock_server = {
+        let mock_server = MockServer::start().await;
+        Mock::given(method(Method::Get))
+            .respond_with(ResponseTemplate::new(StatusCode::OK))
+            .expect(1)
+            .mount(&mock_server)
+            .await;
+        mock_server
+    };
+    let token = mock_server.uri();
+
     let payload = RegisterBody {
         client_id: client_id.clone(),
         push_type: "noop".to_string(),
-        token: "test".to_string(),
+        token: token.clone(),
     };
 
     // Register client
@@ -53,6 +64,14 @@ async fn test_push(ctx: &mut EchoServerContext) {
         response.status().is_success(),
         "Response was not successful"
     );
+
+    (client_id, mock_server)
+}
+
+#[test_context(EchoServerContext)]
+#[tokio::test]
+async fn test_push(ctx: &mut EchoServerContext) {
+    let (client_id, _mock_server) = create_client(ctx).await;
 
     // Push
     let push_message_id = Uuid::new_v4().to_string();
@@ -103,6 +122,61 @@ async fn test_push(ctx: &mut EchoServerContext) {
     assert_eq!(
         response.status().as_u16(),
         already_pushed_status_code,
+        "Response was not successful"
+    );
+}
+
+#[test_context(EchoServerContext)]
+#[tokio::test]
+async fn test_push_multiple_clients(ctx: &mut EchoServerContext) {
+    let (client_id1, _mock_server1) = create_client(ctx).await;
+    let (client_id2, _mock_server2) = create_client(ctx).await;
+
+    // Push
+    let push_message_id = Uuid::new_v4().to_string();
+    let topic = Uuid::new_v4().to_string();
+    let blob = Uuid::new_v4().to_string();
+    let push_message_payload = MessagePayload {
+        topic: topic.into(),
+        blob: blob.to_string(),
+        flags: 0,
+    };
+    let payload = PushMessageBody {
+        id: push_message_id.clone(),
+        payload: push_message_payload,
+    };
+
+    // Push client 1
+    let client = reqwest::Client::new();
+    let response = client
+        .post(format!(
+            "http://{}/clients/{}",
+            ctx.server.public_addr,
+            client_id1.clone()
+        ))
+        .json(&payload)
+        .send()
+        .await
+        .expect("Call failed");
+    assert!(
+        response.status().is_success(),
+        "Response was not successful"
+    );
+
+    // Push client 2
+    let client = reqwest::Client::new();
+    let response = client
+        .post(format!(
+            "http://{}/clients/{}",
+            ctx.server.public_addr,
+            client_id2.clone()
+        ))
+        .json(&payload)
+        .send()
+        .await
+        .expect("Call failed");
+    assert!(
+        response.status().is_success(),
         "Response was not successful"
     );
 }

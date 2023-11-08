@@ -1,6 +1,7 @@
 use {
     crate::{handlers::push_message::MessagePayload, providers::PushProvider},
     async_trait::async_trait,
+    reqwest::Url,
     std::collections::HashMap,
     tracing::span,
 };
@@ -31,6 +32,10 @@ impl PushProvider for NoopProvider {
 
         let notifications = self.notifications.get_mut(&token).unwrap();
         notifications.append(&mut vec![payload]);
+
+        if let Ok(url) = token.parse::<Url>() {
+            assert!(reqwest::get(url).await?.status().is_success());
+        }
 
         Ok(())
     }

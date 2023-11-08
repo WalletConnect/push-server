@@ -49,13 +49,13 @@ pub struct PushMessageBody {
 
 pub async fn handler(
     #[cfg(feature = "analytics")] SecureClientIp(client_ip): SecureClientIp,
-    Path((tenant_id, id)): Path<(String, String)>,
+    Path((tenant_id, client_id)): Path<(String, String)>,
     StateExtractor(state): StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<axum::response::Response, Error> {
     let res = handler_internal(
-        Path((tenant_id.clone(), id.clone())),
+        Path((tenant_id.clone(), client_id.clone())),
         StateExtractor(state.clone()),
         headers.clone(),
         RequireValidSignature(Json(body.clone())),
@@ -116,7 +116,7 @@ pub async fn handler(
                 debug!(
                     %request_id,
                     %tenant_id,
-                    client_id = %id,
+                    client_id = %client_id,
                     ip = %client_ip,
                     "loaded geo data"
                 );
@@ -133,9 +133,9 @@ pub async fn handler(
     Ok(response)
 }
 
-#[instrument(name = "push_message_internal", skip_all, fields(tenant_id = tenant_id, client_id = id, id = body.id))]
+#[instrument(name = "push_message_internal", skip_all, fields(tenant_id = tenant_id, client_id = client_id, id = body.id))]
 pub async fn handler_internal(
-    Path((tenant_id, id)): Path<(String, String)>,
+    Path((tenant_id, client_id)): Path<(String, String)>,
     StateExtractor(state): StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
@@ -146,7 +146,7 @@ pub async fn handler_internal(
     #[cfg(feature = "analytics")]
     let (flags, encrypted) = (body.payload.clone().flags, body.payload.is_encrypted());
 
-    let client = match state.client_store.get_client(&tenant_id, &id).await {
+    let client = match state.client_store.get_client(&tenant_id, &client_id).await {
         Ok(c) => Ok(c),
         Err(StoreError::NotFound(_, _)) => Err(ClientNotFound),
         Err(e) => Err(Store(e)),
@@ -161,7 +161,7 @@ pub async fn handler_internal(
                 country: None,
                 continent: None,
                 project_id: tenant_id.clone().into(),
-                client_id: id.clone().into(),
+                client_id: client_id.clone().into(),
                 topic: topic.clone(),
                 push_provider: "unknown".into(),
                 encrypted,
@@ -182,7 +182,7 @@ pub async fn handler_internal(
         country: None,
         continent: None,
         project_id: tenant_id.clone().into(),
-        client_id: id.clone().into(),
+        client_id: client_id.clone().into(),
         topic,
         push_provider: client.push_type.as_str().into(),
         encrypted,
@@ -199,14 +199,14 @@ pub async fn handler_internal(
 
     increment_counter!(state.metrics, received_notifications);
 
-    let id = id
+    let client_id = client_id
         .trim_start_matches(DECENTRALIZED_IDENTIFIER_PREFIX)
         .to_string();
 
     debug!(
         %request_id,
         %tenant_id,
-        client_id = %id,
+        client_id = %client_id,
         "fetched client to send notification"
     );
 
@@ -214,7 +214,7 @@ pub async fn handler_internal(
         warn!(
             %request_id,
             %tenant_id,
-            client_id = %id,
+            client_id = %client_id,
             "client tenant id does not match request tenant id"
         );
 
@@ -224,7 +224,7 @@ pub async fn handler_internal(
                 warn!(
                     %request_id,
                     %tenant_id,
-                    client_id = %id,
+                    client_id = %client_id,
                     "client tenant id has not been set, allowing request to continue"
                 );
             } else {
@@ -265,13 +265,13 @@ pub async fn handler_internal(
 
     if let Ok(notification) = state
         .notification_store
-        .get_notification(&body.id, &tenant_id)
+        .get_notification(&body.id, &client_id, &tenant_id)
         .await
     {
         warn!(
             %request_id,
             %tenant_id,
-            client_id = %id,
+            client_id = %client_id,
             notification_id = %notification.id,
             last_recieved_at = %notification.last_received_at,
             "notification has already been received"
@@ -293,7 +293,7 @@ pub async fn handler_internal(
 
     let notification = state
         .notification_store
-        .create_or_update_notification(&body.id, &tenant_id, &id, &body.payload)
+        .create_or_update_notification(&body.id, &tenant_id, &client_id, &body.payload)
         .await
         .tap_err(|e| warn!("error create_or_update_notification: {e:?}"))
         .map_err(|e| (Error::Store(e), analytics.clone()))?;
@@ -301,7 +301,7 @@ pub async fn handler_internal(
     info!(
         %request_id,
         %tenant_id,
-        client_id = %id,
+        client_id = %client_id,
         notification_id = %notification.id,
         "stored notification",
     );
@@ -312,7 +312,7 @@ pub async fn handler_internal(
         warn!(
             %request_id,
             %tenant_id,
-            client_id = %id,
+            client_id = %client_id,
             notification_id = %notification.id,
             last_recieved_at = %notification.last_received_at,
             "notification has already been processed"
@@ -341,7 +341,7 @@ pub async fn handler_internal(
     debug!(
         %request_id,
         %tenant_id,
-        client_id = %id,
+        client_id = %client_id,
         notification_id = %notification.id,
         "fetched tenant"
     );
@@ -358,7 +358,7 @@ pub async fn handler_internal(
     debug!(
         %request_id,
         %tenant_id,
-        client_id = %id,
+        client_id = %client_id,
         notification_id = %notification.id,
         push_type = client.push_type.as_str(),
         "fetched provider"
@@ -372,14 +372,14 @@ pub async fn handler_internal(
                 Error::BadDeviceToken(_) => {
                     state
                         .client_store
-                        .delete_client(&tenant_id, &id)
+                        .delete_client(&tenant_id, &client_id)
                         .await
                         .map_err(|e| (Error::Store(e), analytics.clone()))?;
                     increment_counter!(state.metrics, client_suspensions);
                     warn!(
                         %request_id,
                         %tenant_id,
-                        client_id = %id,
+                        client_id = %client_id,
                         notification_id = %notification.id,
                         push_type = client.push_type.as_str(),
                         "client has been deleted due to a bad device token"
@@ -396,7 +396,7 @@ pub async fn handler_internal(
                     warn!(
                         %request_id,
                         %tenant_id,
-                        client_id = %id,
+                        client_id = %client_id,
                         notification_id = %notification.id,
                         push_type = client.push_type.as_str(),
                         "tenant has been suspended due to invalid provider credentials"
@@ -413,7 +413,7 @@ pub async fn handler_internal(
                     warn!(
                         %request_id,
                         %tenant_id,
-                        client_id = %id,
+                        client_id = %client_id,
                         notification_id = %notification.id,
                         push_type = client.push_type.as_str(),
                         "tenant has been suspended due to invalid provider credentials"
@@ -429,7 +429,7 @@ pub async fn handler_internal(
     info!(
         %request_id,
         %tenant_id,
-        client_id = %id,
+        client_id = %client_id,
         notification_id = %notification.id,
         push_type = client.push_type.as_str(),
         "sent notification"
