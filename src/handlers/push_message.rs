@@ -116,7 +116,7 @@ pub async fn handler(
                 debug!(
                     %request_id,
                     %tenant_id,
-                    client_id = %id,
+                    client_id = %client_id,
                     ip = %client_ip,
                     "loaded geo data"
                 );
@@ -224,7 +224,7 @@ pub async fn handler_internal(
                 warn!(
                     %request_id,
                     %tenant_id,
-                    client_id = %id,
+                    client_id = %client_id,
                     "client tenant id has not been set, allowing request to continue"
                 );
             } else {
