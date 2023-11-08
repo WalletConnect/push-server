@@ -37,7 +37,7 @@ async fn create_client(ctx: &mut EchoServerContext) -> (ClientId, String, MockSe
         let mock_server = MockServer::start().await;
         Mock::given(method(Method::Get))
             .respond_with(ResponseTemplate::new(StatusCode::OK))
-            .expect(0..0)
+            .expect(1)
             .mount(&mock_server)
             .await;
         mock_server
