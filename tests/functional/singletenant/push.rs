@@ -17,7 +17,7 @@ use {
     wiremock::{http::Method, matchers::method, Mock, MockServer, ResponseTemplate},
 };
 
-async fn create_client(ctx: &mut EchoServerContext) -> (ClientId, String, MockServer) {
+async fn create_client(ctx: &mut EchoServerContext) -> (ClientId, MockServer) {
     let mut rng = StdRng::from_entropy();
     let keypair = Keypair::generate(&mut rng);
 
@@ -65,13 +65,13 @@ async fn create_client(ctx: &mut EchoServerContext) -> (ClientId, String, MockSe
         "Response was not successful"
     );
 
-    (client_id, token, mock_server)
+    (client_id, mock_server)
 }
 
 #[test_context(EchoServerContext)]
 #[tokio::test]
 async fn test_push(ctx: &mut EchoServerContext) {
-    let (client_id, token, _mock_server) = create_client(ctx).await;
+    let (client_id, _mock_server) = create_client(ctx).await;
 
     // Push
     let push_message_id = Uuid::new_v4().to_string();
@@ -129,8 +129,8 @@ async fn test_push(ctx: &mut EchoServerContext) {
 #[test_context(EchoServerContext)]
 #[tokio::test]
 async fn test_push_multiple_clients(ctx: &mut EchoServerContext) {
-    let (client_id1, token1, _mock_server1) = create_client(ctx).await;
-    let (client_id2, token2, _mock_server2) = create_client(ctx).await;
+    let (client_id1, _mock_server1) = create_client(ctx).await;
+    let (client_id2, _mock_server2) = create_client(ctx).await;
 
     // Push
     let push_message_id = Uuid::new_v4().to_string();
