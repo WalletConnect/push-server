@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.35.2 - 2023-11-08
+#### Bug Fixes
+- idempotency per client (#274) - (2002cba) - Chris Smith
+#### Miscellaneous Chores
+- remove linked issues check (#272) - (cb945d8) - Xavier Basty
+
+- - -
+
 ## v0.35.1 - 2023-11-06
 #### Bug Fixes
 - adding jwt verification to the apns and fcm update handler (#261) - (2c454eb) - Max Kalashnikoff
