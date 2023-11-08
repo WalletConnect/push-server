@@ -133,9 +133,9 @@ pub async fn handler(
     Ok(response)
 }
 
-#[instrument(name = "push_message_internal", skip_all, fields(tenant_id = tenant_id, client_id = id, id = body.id))]
+#[instrument(name = "push_message_internal", skip_all, fields(tenant_id = tenant_id, client_id = client_id, id = body.id))]
 pub async fn handler_internal(
-    Path((tenant_id, id)): Path<(String, String)>,
+    Path((tenant_id, client_id)): Path<(String, String)>,
     StateExtractor(state): StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
@@ -146,7 +146,7 @@ pub async fn handler_internal(
     #[cfg(feature = "analytics")]
     let (flags, encrypted) = (body.payload.clone().flags, body.payload.is_encrypted());
 
-    let client = match state.client_store.get_client(&tenant_id, &id).await {
+    let client = match state.client_store.get_client(&tenant_id, &client_id).await {
         Ok(c) => Ok(c),
         Err(StoreError::NotFound(_, _)) => Err(ClientNotFound),
         Err(e) => Err(Store(e)),
@@ -161,7 +161,7 @@ pub async fn handler_internal(
                 country: None,
                 continent: None,
                 project_id: tenant_id.clone().into(),
-                client_id: id.clone().into(),
+                client_id: client_id.clone().into(),
                 topic: topic.clone(),
                 push_provider: "unknown".into(),
                 encrypted,
@@ -182,7 +182,7 @@ pub async fn handler_internal(
         country: None,
         continent: None,
         project_id: tenant_id.clone().into(),
-        client_id: id.clone().into(),
+        client_id: client_id.clone().into(),
         topic,
         push_provider: client.push_type.as_str().into(),
         encrypted,
@@ -199,7 +199,7 @@ pub async fn handler_internal(
 
     increment_counter!(state.metrics, received_notifications);
 
-    let client_id = id
+    let client_id = client_id
         .trim_start_matches(DECENTRALIZED_IDENTIFIER_PREFIX)
         .to_string();
 
