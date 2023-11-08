@@ -49,13 +49,13 @@ pub struct PushMessageBody {
 
 pub async fn handler(
     #[cfg(feature = "analytics")] SecureClientIp(client_ip): SecureClientIp,
-    Path((tenant_id, id)): Path<(String, String)>,
+    Path((tenant_id, client_id)): Path<(String, String)>,
     StateExtractor(state): StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<axum::response::Response, Error> {
     let res = handler_internal(
-        Path((tenant_id.clone(), id.clone())),
+        Path((tenant_id.clone(), client_id.clone())),
         StateExtractor(state.clone()),
         headers.clone(),
         RequireValidSignature(Json(body.clone())),
