@@ -37,7 +37,7 @@ pub fn check_payload_not_encrypted() {
         blob: EXAMPLE_CLEARTEXT_ENCODED_BLOB.to_string(),
     };
 
-    assert_eq!(payload.is_encrypted(), false)
+    assert!(!payload.is_encrypted());
 }
 
 #[test]

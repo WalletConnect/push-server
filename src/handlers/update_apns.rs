@@ -14,7 +14,7 @@ use {
     },
     base64::Engine,
     serde::{Deserialize, Serialize},
-    std::{io::BufReader, sync::Arc},
+    std::sync::Arc,
     tracing::{error, warn},
 };
 

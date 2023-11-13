@@ -47,7 +47,7 @@ async fn start_server(
     bool,
 ) {
     let rt = Handle::current();
-    let port = config.port.clone();
+    let port = config.port;
     let public_addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), port);
 
     let (signal, shutdown) = broadcast::channel(1);
