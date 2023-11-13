@@ -55,17 +55,31 @@ async fn notification_multiple_clients_same_payload(ctx: &mut StoreContext) {
         blob: "example-payload".to_string(),
     };
 
-    let client_id = create_client(&ctx.clients).await;
+    let client_id1 = create_client(&ctx.clients).await;
     let res = ctx
         .notifications
-        .create_or_update_notification(&message_id, TENANT_ID, &client_id, &payload)
+        .create_or_update_notification(&message_id, TENANT_ID, &client_id1, &payload)
         .await;
     assert!(res.is_ok());
 
-    let client_id = create_client(&ctx.clients).await;
+    let client_id2 = create_client(&ctx.clients).await;
     let res = ctx
         .notifications
-        .create_or_update_notification(&message_id, TENANT_ID, &client_id, &payload)
+        .create_or_update_notification(&message_id, TENANT_ID, &client_id2, &payload)
         .await;
     assert!(res.is_ok());
+
+    let notification1 = ctx
+        .notifications
+        .get_notification(&message_id, &client_id1, TENANT_ID)
+        .await
+        .unwrap();
+    assert_eq!(notification1.client_id, client_id1);
+
+    let notification2 = ctx
+        .notifications
+        .get_notification(&message_id, &client_id2, TENANT_ID)
+        .await
+        .unwrap();
+    assert_eq!(notification2.client_id, client_id2);
 }
