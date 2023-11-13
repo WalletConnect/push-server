@@ -48,11 +48,12 @@ impl NotificationStore for sqlx::PgPool {
         payload: &MessagePayload,
     ) -> stores::Result<Notification> {
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Notification>(
-            "INSERT INTO public.notifications (id, tenant_id, client_id, last_payload)
-VALUES ($1, $2, $3, $4)
-ON CONFLICT (id)
-    DO UPDATE SET last_received_at  = now()
-RETURNING *;",
+            "
+            INSERT INTO public.notifications (id, tenant_id, client_id, last_payload)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (id, client_id)
+                DO UPDATE SET last_received_at  = now()
+            RETURNING *;",
         )
         .bind(id)
         .bind(tenant_id)
