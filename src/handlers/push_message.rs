@@ -240,6 +240,7 @@ pub async fn handler_internal(
                     return Err((Error::MissmatchedTenantId, analytics));
                 }
 
+                #[cfg(not(feature = "analytics"))]
                 return Err((Error::MissmatchedTenantId, None));
             }
         }
@@ -453,5 +454,6 @@ pub async fn handler_internal(
         return Ok(((StatusCode::ACCEPTED).into_response(), analytics));
     }
 
+    #[cfg(not(feature = "analytics"))]
     Ok(((StatusCode::ACCEPTED).into_response(), None))
 }

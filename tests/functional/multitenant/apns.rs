@@ -3,7 +3,7 @@ use {
     echo_server::handlers::create_tenant::TenantRegisterBody,
     jsonwebtoken::{encode, EncodingKey, Header},
     random_string::generate,
-    std::time::SystemTime,
+    std::{env, time::SystemTime},
     test_context::test_context,
     uuid::Uuid,
 };
@@ -47,11 +47,14 @@ async fn tenant_update_apns_valid_token(ctx: &mut EchoServerContext) {
     let form = reqwest::multipart::Form::new()
         .text("apns_type", "token")
         .text("apns_topic", "app.test")
-        .text("apns_key_id", env!("ECHO_TEST_APNS_P8_KEY_ID"))
-        .text("apns_team_id", env!("ECHO_TEST_APNS_P8_TEAM_ID"))
+        .text("apns_key_id", env::var("ECHO_TEST_APNS_P8_KEY_ID").unwrap())
+        .text(
+            "apns_team_id",
+            env::var("ECHO_TEST_APNS_P8_TEAM_ID").unwrap(),
+        )
         .part(
             "apns_pkcs8_pem",
-            reqwest::multipart::Part::text(env!("ECHO_TEST_APNS_P8_PEM"))
+            reqwest::multipart::Part::text(env::var("ECHO_TEST_APNS_P8_PEM").unwrap())
                 .file_name("apns.p8")
                 .mime_str("text/plain")
                 .expect("Error on passing multipart stream to the form request"),

@@ -3,7 +3,7 @@ use {
     echo_server::handlers::create_tenant::TenantRegisterBody,
     jsonwebtoken::{encode, EncodingKey, Header},
     random_string::generate,
-    std::time::SystemTime,
+    std::{env, time::SystemTime},
     test_context::test_context,
 };
 
@@ -44,7 +44,7 @@ async fn tenant_update_fcm_valid(ctx: &mut EchoServerContext) {
     assert_eq!(register_response.status(), reqwest::StatusCode::OK);
 
     // Send valid API Key
-    let api_key = env!("ECHO_TEST_FCM_KEY");
+    let api_key = env::var("ECHO_TEST_FCM_KEY").unwrap();
     let form = reqwest::multipart::Form::new().text("api_key", api_key);
 
     let response_fcm_update = client

@@ -64,9 +64,19 @@ jobs:
         os:
           - ubuntu-latest
         cargo:
-          - name: "Clippy"
+          - name: "Clippy default features"
             cmd: clippy
-            args: --all-features --release -- -D clippy::all
+            args: --tests -- -D warnings
+            cache: {}
+            rustc: stable
+          - name: "Clippy multitenant feature, no analytics feature"
+            cmd: clippy
+            args: --features=multitenant --tests -- -D warnings
+            cache: {}
+            rustc: stable
+          - name: "Clippy all features"
+            cmd: clippy
+            args: --all-features --tests -- -D warnings
             cache: {}
             rustc: stable
           - name: "Formatting"

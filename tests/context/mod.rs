@@ -94,6 +94,10 @@ impl AsyncTestContext for EchoServerContext {
         let server = EchoServer::start(ConfigContext::setup().config).await;
         Self { server, config }
     }
+
+    async fn teardown(mut self) {
+        self.server.shutdown().await;
+    }
 }
 
 #[async_trait]

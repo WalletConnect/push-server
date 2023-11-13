@@ -47,7 +47,7 @@ pub async fn invalid_signature_not_hex() {
     // Should error
     assert!(res.is_err());
 
-    let error = res.err().expect("Couldn't unwrap error");
+    let error = res.expect_err("Couldn't unwrap error");
     assert!(error.is_hex());
 }
 
@@ -67,7 +67,7 @@ pub async fn invalid_signature_hex() {
     // Should error
     assert!(res.is_err());
 
-    let error = res.err().expect("Couldn't unwrap error");
+    let error = res.expect_err("Couldn't unwrap error");
     // Note: should be a from slice error as the signature
     assert!(error.is_ed_25519());
 }
