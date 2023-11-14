@@ -48,6 +48,7 @@ async fn create_client(ctx: &mut EchoServerContext) -> (ClientId, MockServer) {
         client_id: client_id.clone(),
         push_type: "noop".to_string(),
         token: token.clone(),
+        always_raw: Some(false),
     };
 
     // Register client

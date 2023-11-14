@@ -17,6 +17,7 @@ async fn client_creation(ctx: &mut StoreContext) {
             tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Noop,
             token,
+            always_raw: false,
         })
         .await
         .unwrap();
@@ -34,6 +35,7 @@ async fn client_creation_fcm(ctx: &mut StoreContext) {
             tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Fcm,
             token,
+            always_raw: false,
         })
         .await
         .unwrap();
@@ -51,6 +53,7 @@ async fn client_creation_apns(ctx: &mut StoreContext) {
             tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Apns,
             token,
+            always_raw: false,
         })
         .await
         .unwrap();
@@ -70,6 +73,7 @@ async fn client_upsert_token(ctx: &mut StoreContext) {
             tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Fcm,
             token: token.clone(),
+            always_raw: false,
         })
         .await
         .unwrap();
@@ -108,11 +112,13 @@ async fn client_upsert_token(ctx: &mut StoreContext) {
             tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Apns,
             token: updated_token.clone(),
+            always_raw: true,
         })
         .await
         .unwrap();
     let updated_token_result = ctx.clients.get_client(TENANT_ID, &client_id).await.unwrap();
     assert_eq!(updated_token_result.token, updated_token);
+    assert!(updated_token_result.always_raw);
 
     // Cleaning up records
     ctx.clients
@@ -133,6 +139,7 @@ async fn client_upsert_id(ctx: &mut StoreContext) {
             tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Fcm,
             token: token.clone(),
+            always_raw: false,
         })
         .await
         .unwrap();
@@ -171,6 +178,7 @@ async fn client_upsert_id(ctx: &mut StoreContext) {
             tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Fcm,
             token: token.clone(),
+            always_raw: false,
         })
         .await
         .unwrap();
@@ -200,6 +208,7 @@ async fn client_create_same_id_and_token(ctx: &mut StoreContext) {
             tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Fcm,
             token: token.clone(),
+            always_raw: false,
         })
         .await
         .unwrap();
@@ -238,6 +247,7 @@ async fn client_create_same_id_and_token(ctx: &mut StoreContext) {
             tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Noop,
             token: token.clone(),
+            always_raw: false,
         })
         .await
         .unwrap();
@@ -263,6 +273,7 @@ async fn client_deletion(ctx: &mut StoreContext) {
             tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Noop,
             token,
+            always_raw: false,
         })
         .await
         .unwrap();
@@ -280,6 +291,7 @@ async fn client_fetch(ctx: &mut StoreContext) {
             tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Noop,
             token: token.clone(),
+            always_raw: false,
         })
         .await
         .unwrap();

@@ -23,6 +23,7 @@ async fn test_registration(ctx: &mut EchoServerContext) {
         client_id: client_id.clone(),
         push_type: "noop".to_string(),
         token: "test".to_string(),
+        always_raw: Some(false),
     };
 
     let jwt = relay_rpc::auth::AuthToken::new(client_id.value().clone())
@@ -54,6 +55,7 @@ async fn test_registration(ctx: &mut EchoServerContext) {
         client_id,
         push_type: "noop".to_string(),
         token: "new_token".to_string(),
+        always_raw: Some(false),
     };
     let response = client
         .post(format!("http://{}/clients", ctx.server.public_addr))
@@ -91,6 +93,7 @@ async fn test_deregistration(ctx: &mut EchoServerContext) {
         client_id: client_id.clone(),
         push_type: "noop".to_string(),
         token: "test".to_string(),
+        always_raw: Some(false),
     };
 
     let client = reqwest::Client::new();
