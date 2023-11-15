@@ -1,5 +1,5 @@
-alter table public.clients
-    add tenant_id varchar(255) not null default '0000-0000-0000-0000';
+ALTER TABLE public.clients
+    ADD tenant_id varchar(255) NOT NULL DEFAULT '0000-0000-0000-0000';
 
-alter table public.notifications
-    add tenant_id varchar(255) not null default '0000-0000-0000-0000';
+ALTER table public.notifications
+    ADD tenant_id varchar(255) NOT NULL DEFAULT '0000-0000-0000-0000';
