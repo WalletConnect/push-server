@@ -2,13 +2,13 @@ use {
     crate::{
         blob::DecryptedPayloadBlob,
         error::Error,
-        handlers::push_message::MessagePayload,
+        handlers::push_message::{PushMessageBody, RawMessagePayload},
         providers::PushProvider,
     },
     async_trait::async_trait,
     fcm::{ErrorReason, FcmError, FcmResponse, MessageBuilder, NotificationBuilder, Priority},
     std::fmt::{Debug, Formatter},
-    tracing::span,
+    tracing::{info, instrument},
 };
 
 pub struct FcmProvider {
@@ -27,30 +27,43 @@ impl FcmProvider {
 
 #[async_trait]
 impl PushProvider for FcmProvider {
+    #[instrument(name = "send_fcm_notification")]
     async fn send_notification(
         &mut self,
         token: String,
-        payload: MessagePayload,
+        body: PushMessageBody,
+        always_raw: bool,
     ) -> crate::error::Result<()> {
-        let s = span!(tracing::Level::DEBUG, "send_fcm_notification");
-        let _ = s.enter();
-
         let mut message_builder = MessageBuilder::new(self.api_key.as_str(), token.as_str());
 
-        let result = if payload.is_encrypted() {
-            message_builder.data(&payload)?;
+        // Sending `always_raw` encrypted message
+        let result = if always_raw {
+            info!("Sending raw encrypted message");
+            if let (Some(topic), Some(tag), Some(message)) = (body.topic, body.tag, body.message) {
+                message_builder.data(&RawMessagePayload {
+                    topic,
+                    tag,
+                    message,
+                })?;
+            } else {
+                return Err(Error::BadPayload(
+                    "Missing required arguments for `always_raw`: topic, tag or message".into(),
+                ));
+            };
+            set_message_priority_high(&mut message_builder);
+            let fcm_message = message_builder.finalize();
 
-            // Must set priority=high and content-available=true on data-only messages or
-            // they don't show unless app is active
-            // https://rnfirebase.io/messaging/usage#data-only-messages
-            message_builder.priority(Priority::High);
-            message_builder.content_available(true);
-
+            self.client.send(fcm_message).await
+        } else if body.payload.is_encrypted() {
+            info!("Sending legacy `is_encrypted` message");
+            message_builder.data(&body.payload)?;
+            set_message_priority_high(&mut message_builder);
             let fcm_message = message_builder.finalize();
 
             self.client.send(fcm_message).await
         } else {
-            let blob = DecryptedPayloadBlob::from_base64_encoded(payload.clone().blob)?;
+            info!("Sending plain message");
+            let blob = DecryptedPayloadBlob::from_base64_encoded(body.payload.clone().blob)?;
 
             let mut notification_builder = NotificationBuilder::new();
             notification_builder.title(blob.title.as_str());
@@ -58,7 +71,7 @@ impl PushProvider for FcmProvider {
             let notification = notification_builder.finalize();
 
             message_builder.notification(notification);
-            message_builder.data(&payload)?;
+            message_builder.data(&body.payload.to_owned())?;
 
             let fcm_message = message_builder.finalize();
 
@@ -121,4 +134,12 @@ impl Debug for FcmProvider {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "[FcmProvider] api_key = {}", self.api_key)
     }
+}
+
+/// Setting message priority to high and content-available to true
+/// on data-only messages or they don't show unless app is active
+/// https://rnfirebase.io/messaging/usage#data-only-messages
+fn set_message_priority_high(builder: &mut MessageBuilder) {
+    builder.priority(Priority::High);
+    builder.content_available(true);
 }

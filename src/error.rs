@@ -180,6 +180,9 @@ pub enum Error {
 
     #[error("tenant suspended due to invalid configuration")]
     TenantSuspended,
+
+    #[error("Bad payload provided: {0}")]
+    BadPayload(String),
 }
 
 impl IntoResponse for Error {

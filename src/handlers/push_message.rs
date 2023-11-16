@@ -41,8 +41,25 @@ impl MessagePayload {
     }
 }
 
+/// Encrypted notify message payload
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
+pub struct RawMessagePayload {
+    pub topic: String,
+    pub tag: usize,
+    pub message: String,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct PushMessageBody {
+    /// Topic is used by the SDKs to decrypt
+    /// encrypted payloads on the client side
+    pub topic: Option<String>,
+    /// Filtering tag
+    pub tag: Option<usize>,
+    /// The payload message
+    pub message: Option<String>,
+
+    // Legacy (deprecating) fields
     pub id: String,
     pub payload: MessagePayload,
 }
@@ -174,6 +191,19 @@ pub async fn handler_internal(
             None,
         )
     })?;
+
+    // Check for required fields if the client has `always_raw = true`
+    if client.always_raw {
+        if body.topic.is_none() {
+            return Err((Error::EmptyField("topic".to_string()), None));
+        }
+        if body.message.is_none() {
+            return Err((Error::EmptyField("message".to_string()), None));
+        }
+        if body.tag.is_none() {
+            return Err((Error::EmptyField("tag".to_string()), None));
+        }
+    }
 
     #[cfg(feature = "analytics")]
     let mut analytics = Some(MessageInfo {
@@ -365,7 +395,10 @@ pub async fn handler_internal(
         "fetched provider"
     );
 
-    match provider.send_notification(client.token, body.payload).await {
+    match provider
+        .send_notification(client.token, body, client.always_raw)
+        .await
+    {
         Ok(()) => Ok(()),
         Err(error) => {
             warn!("error sending notification: {error:?}");

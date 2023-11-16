@@ -17,7 +17,7 @@ use {
     wiremock::{http::Method, matchers::method, Mock, MockServer, ResponseTemplate},
 };
 
-async fn create_client(ctx: &mut EchoServerContext) -> (ClientId, MockServer) {
+async fn create_client(ctx: &mut EchoServerContext, always_raw: bool) -> (ClientId, MockServer) {
     let mut rng = StdRng::from_entropy();
     let keypair = Keypair::generate(&mut rng);
 
@@ -48,7 +48,7 @@ async fn create_client(ctx: &mut EchoServerContext) -> (ClientId, MockServer) {
         client_id: client_id.clone(),
         push_type: "noop".to_string(),
         token: token.clone(),
-        always_raw: Some(false),
+        always_raw: Some(always_raw),
     };
 
     // Register client
@@ -72,7 +72,7 @@ async fn create_client(ctx: &mut EchoServerContext) -> (ClientId, MockServer) {
 #[test_context(EchoServerContext)]
 #[tokio::test]
 async fn test_push(ctx: &mut EchoServerContext) {
-    let (client_id, _mock_server) = create_client(ctx).await;
+    let (client_id, _mock_server) = create_client(ctx, false).await;
 
     // Push
     let push_message_id = Uuid::new_v4().to_string();
@@ -86,6 +86,9 @@ async fn test_push(ctx: &mut EchoServerContext) {
     let payload = PushMessageBody {
         id: push_message_id.clone(),
         payload: push_message_payload,
+        topic: None,
+        tag: None,
+        message: None,
     };
 
     // Push
@@ -130,8 +133,8 @@ async fn test_push(ctx: &mut EchoServerContext) {
 #[test_context(EchoServerContext)]
 #[tokio::test]
 async fn test_push_multiple_clients(ctx: &mut EchoServerContext) {
-    let (client_id1, _mock_server1) = create_client(ctx).await;
-    let (client_id2, _mock_server2) = create_client(ctx).await;
+    let (client_id1, _mock_server1) = create_client(ctx, false).await;
+    let (client_id2, _mock_server2) = create_client(ctx, false).await;
 
     // Push
     let push_message_id = Uuid::new_v4().to_string();
@@ -145,6 +148,9 @@ async fn test_push_multiple_clients(ctx: &mut EchoServerContext) {
     let payload = PushMessageBody {
         id: push_message_id.clone(),
         payload: push_message_payload,
+        topic: None,
+        tag: None,
+        message: None,
     };
 
     // Push client 1
@@ -180,4 +186,63 @@ async fn test_push_multiple_clients(ctx: &mut EchoServerContext) {
         response.status().is_success(),
         "Response was not successful"
     );
+}
+
+#[test_context(EchoServerContext)]
+#[tokio::test]
+async fn test_push_always_raw(ctx: &mut EchoServerContext) {
+    // Create client with always_raw = true
+    let (client_id, _mock_server) = create_client(ctx, true).await;
+
+    let push_message_id = Uuid::new_v4().to_string();
+    let topic = Uuid::new_v4().to_string();
+    let blob = Uuid::new_v4().to_string();
+    let push_message_payload = MessagePayload {
+        topic: topic.clone().into(),
+        blob: blob.to_string(),
+        flags: 0,
+    };
+    let client = reqwest::Client::new();
+
+    // Send push with WRONG payload without necessary fields for always_raw
+    let wrong_payload = PushMessageBody {
+        topic: None,
+        tag: Some(1100),
+        message: None,
+        // Legacy fields
+        id: push_message_id.clone(),
+        payload: push_message_payload.clone(),
+    };
+    let response = client
+        .post(format!(
+            "http://{}/clients/{}",
+            ctx.server.public_addr,
+            client_id.clone()
+        ))
+        .json(&wrong_payload)
+        .send()
+        .await
+        .expect("Call failed");
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    // Send push with good payload without necessary fields for always_raw
+    let good_payload = PushMessageBody {
+        topic: Some(topic),
+        tag: Some(1100),
+        message: Some(blob),
+        // Legacy fields
+        id: push_message_id.clone(),
+        payload: push_message_payload,
+    };
+    let response = client
+        .post(format!(
+            "http://{}/clients/{}",
+            ctx.server.public_addr,
+            client_id.clone()
+        ))
+        .json(&good_payload)
+        .send()
+        .await
+        .expect("Call failed");
+    assert_eq!(response.status(), StatusCode::ACCEPTED);
 }
