@@ -6,12 +6,12 @@ pub mod noop;
 use {
     crate::{
         error::{self},
-        handlers::push_message::MessagePayload,
+        handlers::push_message::PushMessageBody,
         providers::{apns::ApnsProvider, fcm::FcmProvider},
     },
     async_trait::async_trait,
     std::fmt::{Display, Formatter},
-    tracing::span,
+    tracing::instrument,
 };
 
 #[cfg(any(debug_assertions, test))]
@@ -22,7 +22,8 @@ pub trait PushProvider {
     async fn send_notification(
         &mut self,
         token: String,
-        payload: MessagePayload,
+        body: PushMessageBody,
+        always_raw: bool,
     ) -> error::Result<()>;
 }
 
@@ -95,6 +96,7 @@ impl TryFrom<&str> for ProviderKind {
 }
 
 #[allow(clippy::large_enum_variant)]
+#[derive(Debug)]
 pub enum Provider {
     Fcm(FcmProvider),
     Apns(ApnsProvider),
@@ -104,19 +106,18 @@ pub enum Provider {
 
 #[async_trait]
 impl PushProvider for Provider {
+    #[instrument(name = "send_notification")]
     async fn send_notification(
         &mut self,
         token: String,
-        payload: MessagePayload,
+        body: PushMessageBody,
+        always_raw: bool,
     ) -> error::Result<()> {
-        let s = span!(tracing::Level::INFO, "send_notification");
-        let _ = s.enter();
-
         match self {
-            Provider::Fcm(p) => p.send_notification(token, payload).await,
-            Provider::Apns(p) => p.send_notification(token, payload).await,
+            Provider::Fcm(p) => p.send_notification(token, body, always_raw).await,
+            Provider::Apns(p) => p.send_notification(token, body, always_raw).await,
             #[cfg(any(debug_assertions, test))]
-            Provider::Noop(p) => p.send_notification(token, payload).await,
+            Provider::Noop(p) => p.send_notification(token, body, always_raw).await,
         }
     }
 }
