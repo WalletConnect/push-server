@@ -195,7 +195,7 @@ async fn test_push_always_raw(ctx: &mut EchoServerContext) {
     // Create client with always_raw = true
     let (client_id, _mock_server) = create_client(ctx, true).await;
 
-    let push_message_id = Uuid::new_v4().to_string();
+    let push_message_id = Uuid::new_v4().to_string().into();
     let topic: Arc<str> = Uuid::new_v4().to_string().into();
     let blob: Arc<str> = Uuid::new_v4().to_string().into();
     let push_message_payload = MessagePayload {
@@ -209,7 +209,7 @@ async fn test_push_always_raw(ctx: &mut EchoServerContext) {
     let wrong_payload = PushMessageBody {
         new: None,
         old: Some(OldPushMessage {
-            id: push_message_id.clone().into(),
+            id: push_message_id,
             payload: push_message_payload,
         }),
     };
