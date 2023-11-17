@@ -1,8 +1,8 @@
 use {
     crate::context::EchoServerContext,
-    echo_server::handlers::{
-        push_message::{MessagePayload, PushMessageBody},
-        register_client::RegisterBody,
+    echo_server::{
+        handlers::{push_message::PushMessageBody, register_client::RegisterBody},
+        providers::{MessagePayload, NewPushMessage, OldPushMessage},
     },
     hyper::StatusCode,
     relay_rpc::{
@@ -12,6 +12,7 @@ use {
         },
         domain::{ClientId, DecodedClientId},
     },
+    std::sync::Arc,
     test_context::test_context,
     uuid::Uuid,
     wiremock::{http::Method, matchers::method, Mock, MockServer, ResponseTemplate},
@@ -24,7 +25,7 @@ async fn create_client(ctx: &mut EchoServerContext, always_raw: bool) -> (Client
     let random_client_id = DecodedClientId(*keypair.public_key().as_bytes());
     let client_id = ClientId::from(random_client_id);
 
-    let jwt = relay_rpc::auth::AuthToken::new(client_id.value().clone())
+    let jwt = relay_rpc::auth::AuthToken::new(client_id.value().to_string())
         .aud(format!(
             "http://127.0.0.1:{}",
             ctx.server.public_addr.port()
@@ -75,20 +76,20 @@ async fn test_push(ctx: &mut EchoServerContext) {
     let (client_id, _mock_server) = create_client(ctx, false).await;
 
     // Push
-    let push_message_id = Uuid::new_v4().to_string();
-    let topic = Uuid::new_v4().to_string();
-    let blob = Uuid::new_v4().to_string();
+    let push_message_id = Uuid::new_v4().to_string().into();
+    let topic = Uuid::new_v4().to_string().into();
+    let blob = Uuid::new_v4().to_string().into();
     let push_message_payload = MessagePayload {
-        topic: topic.into(),
-        blob: blob.to_string(),
+        topic,
+        blob,
         flags: 0,
     };
     let payload = PushMessageBody {
-        id: push_message_id.clone(),
-        payload: push_message_payload,
-        topic: None,
-        tag: None,
-        message: None,
+        new: None,
+        old: Some(OldPushMessage {
+            id: push_message_id,
+            payload: push_message_payload,
+        }),
     };
 
     // Push
@@ -137,20 +138,20 @@ async fn test_push_multiple_clients(ctx: &mut EchoServerContext) {
     let (client_id2, _mock_server2) = create_client(ctx, false).await;
 
     // Push
-    let push_message_id = Uuid::new_v4().to_string();
-    let topic = Uuid::new_v4().to_string();
-    let blob = Uuid::new_v4().to_string();
+    let push_message_id: Arc<str> = Uuid::new_v4().to_string().into();
+    let topic = Uuid::new_v4().to_string().into();
+    let blob = Uuid::new_v4().to_string().into();
     let push_message_payload = MessagePayload {
-        topic: topic.into(),
-        blob: blob.to_string(),
+        topic,
+        blob,
         flags: 0,
     };
     let payload = PushMessageBody {
-        id: push_message_id.clone(),
-        payload: push_message_payload,
-        topic: None,
-        tag: None,
-        message: None,
+        new: None,
+        old: Some(OldPushMessage {
+            id: push_message_id.clone(),
+            payload: push_message_payload,
+        }),
     };
 
     // Push client 1
@@ -195,23 +196,22 @@ async fn test_push_always_raw(ctx: &mut EchoServerContext) {
     let (client_id, _mock_server) = create_client(ctx, true).await;
 
     let push_message_id = Uuid::new_v4().to_string();
-    let topic = Uuid::new_v4().to_string();
-    let blob = Uuid::new_v4().to_string();
+    let topic: Arc<str> = Uuid::new_v4().to_string().into();
+    let blob: Arc<str> = Uuid::new_v4().to_string().into();
     let push_message_payload = MessagePayload {
-        topic: topic.clone().into(),
-        blob: blob.to_string(),
+        topic: topic.clone(),
+        blob: blob.clone(),
         flags: 0,
     };
     let client = reqwest::Client::new();
 
     // Send push with WRONG payload without necessary fields for always_raw
     let wrong_payload = PushMessageBody {
-        topic: None,
-        tag: Some(1100),
-        message: None,
-        // Legacy fields
-        id: push_message_id.clone(),
-        payload: push_message_payload.clone(),
+        new: None,
+        old: Some(OldPushMessage {
+            id: push_message_id.clone().into(),
+            payload: push_message_payload,
+        }),
     };
     let response = client
         .post(format!(
@@ -227,12 +227,12 @@ async fn test_push_always_raw(ctx: &mut EchoServerContext) {
 
     // Send push with good payload without necessary fields for always_raw
     let good_payload = PushMessageBody {
-        topic: Some(topic),
-        tag: Some(1100),
-        message: Some(blob),
-        // Legacy fields
-        id: push_message_id.clone(),
-        payload: push_message_payload,
+        new: Some(NewPushMessage {
+            topic,
+            tag: 1100,
+            message: blob,
+        }),
+        old: None,
     };
     let response = client
         .post(format!(
