@@ -11,6 +11,7 @@ pub struct MessageInfo {
     pub client_id: Arc<str>,
     pub topic: Arc<str>,
     pub push_provider: Arc<str>,
+    pub always_encrypted: bool,
     pub encrypted: bool,
     pub flags: u32,
     pub status: u16,

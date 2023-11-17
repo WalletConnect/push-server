@@ -1,6 +1,6 @@
 use echo_server::{
     blob::{DecryptedPayloadBlob, ENCRYPTED_FLAG},
-    handlers::push_message::MessagePayload,
+    providers::MessagePayload,
 };
 
 const EXAMPLE_TOPIC: &str = "example-topic";
@@ -21,9 +21,9 @@ const EXAMPLE_ENCRYPTED_BLOB: &str = "encrypted-blob";
 #[test]
 pub fn check_payload_encrypted() {
     let payload = MessagePayload {
-        topic: EXAMPLE_TOPIC.to_string(),
+        topic: EXAMPLE_TOPIC.to_string().into(),
         flags: ENCRYPTED_FLAG,
-        blob: EXAMPLE_ENCRYPTED_BLOB.to_string(),
+        blob: EXAMPLE_ENCRYPTED_BLOB.to_string().into(),
     };
 
     assert!(payload.is_encrypted())
@@ -32,9 +32,9 @@ pub fn check_payload_encrypted() {
 #[test]
 pub fn check_payload_not_encrypted() {
     let payload = MessagePayload {
-        topic: EXAMPLE_TOPIC.to_string(),
+        topic: EXAMPLE_TOPIC.to_string().into(),
         flags: 0,
-        blob: EXAMPLE_CLEARTEXT_ENCODED_BLOB.to_string(),
+        blob: EXAMPLE_CLEARTEXT_ENCODED_BLOB.to_string().into(),
     };
 
     assert!(!payload.is_encrypted());
@@ -43,12 +43,12 @@ pub fn check_payload_not_encrypted() {
 #[test]
 pub fn parse_blob_from_payload() {
     let payload = MessagePayload {
-        topic: EXAMPLE_TOPIC.to_string(),
+        topic: EXAMPLE_TOPIC.to_string().into(),
         flags: 0,
-        blob: EXAMPLE_CLEARTEXT_ENCODED_BLOB.to_string(),
+        blob: EXAMPLE_CLEARTEXT_ENCODED_BLOB.to_string().into(),
     };
 
-    let blob = DecryptedPayloadBlob::from_base64_encoded(payload.blob)
+    let blob = DecryptedPayloadBlob::from_base64_encoded(&payload.blob)
         .expect("Failed to parse payload's blob");
 
     assert_eq!(blob, DecryptedPayloadBlob {
@@ -61,9 +61,8 @@ pub fn parse_blob_from_payload() {
 
 #[test]
 pub fn parse_encoded_blob() {
-    let blob =
-        DecryptedPayloadBlob::from_base64_encoded(EXAMPLE_CLEARTEXT_ENCODED_BLOB.to_string())
-            .expect("Failed to parse encoded blob");
+    let blob = DecryptedPayloadBlob::from_base64_encoded(EXAMPLE_CLEARTEXT_ENCODED_BLOB)
+        .expect("Failed to parse encoded blob");
 
     assert_eq!(blob, DecryptedPayloadBlob {
         title: EXAMPLE_CLEARTEXT_BLOB_TITLE.to_string(),

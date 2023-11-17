@@ -4,7 +4,7 @@ use {
         functional::stores::{gen_id, TENANT_ID},
     },
     echo_server::{
-        handlers::push_message::MessagePayload,
+        handlers::push_message::PushMessageBody,
         providers::ProviderKind,
         state::ClientStoreArc,
         stores::client::Client,
@@ -36,10 +36,9 @@ async fn notification(ctx: &mut StoreContext) {
 
     let res = ctx
         .notifications
-        .create_or_update_notification(&gen_id(), TENANT_ID, &client_id, &MessagePayload {
-            topic: String::new(),
-            flags: 0,
-            blob: "example-payload".to_string(),
+        .create_or_update_notification(&gen_id(), TENANT_ID, &client_id, &PushMessageBody {
+            new: None,
+            old: None,
         })
         .await;
 
@@ -50,10 +49,9 @@ async fn notification(ctx: &mut StoreContext) {
 #[tokio::test]
 async fn notification_multiple_clients_same_payload(ctx: &mut StoreContext) {
     let message_id = gen_id();
-    let payload = MessagePayload {
-        topic: String::new(),
-        flags: 0,
-        blob: "example-payload".to_string(),
+    let payload = PushMessageBody {
+        new: None,
+        old: None,
     };
 
     let client_id1 = create_client(&ctx.clients).await;

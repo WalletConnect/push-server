@@ -20,7 +20,7 @@ impl DecryptedPayloadBlob {
         Ok(serde_json::from_str(&blob_string)?)
     }
 
-    pub fn from_base64_encoded(blob_string: String) -> Result<DecryptedPayloadBlob> {
+    pub fn from_base64_encoded(blob_string: &str) -> Result<DecryptedPayloadBlob> {
         let blob_decoded = base64::engine::general_purpose::STANDARD.decode(blob_string)?;
         Ok(serde_json::from_slice(&blob_decoded)?)
     }

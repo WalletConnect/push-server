@@ -5,26 +5,78 @@ pub mod noop;
 
 use {
     crate::{
+        blob::ENCRYPTED_FLAG,
         error::{self},
-        handlers::push_message::PushMessageBody,
         providers::{apns::ApnsProvider, fcm::FcmProvider},
     },
     async_trait::async_trait,
-    std::fmt::{Display, Formatter},
+    relay_rpc::rpc::msg_id::get_message_id,
+    serde::{Deserialize, Serialize},
+    std::{
+        fmt::{Display, Formatter},
+        sync::Arc,
+    },
     tracing::instrument,
 };
 
 #[cfg(any(debug_assertions, test))]
 use crate::providers::noop::NoopProvider;
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum PushMessage {
+    OldPushMessage(OldPushMessage),
+    NewPushMessage(NewPushMessage),
+}
+
+impl PushMessage {
+    pub fn message_id(&self) -> Arc<str> {
+        match self {
+            Self::NewPushMessage(msg) => get_message_id(&msg.message).into(),
+            Self::OldPushMessage(msg) => msg.id.clone(),
+        }
+    }
+
+    pub fn topic(&self) -> Arc<str> {
+        match self {
+            Self::NewPushMessage(msg) => msg.topic.clone(),
+            Self::OldPushMessage(msg) => msg.payload.topic.clone(),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct OldPushMessage {
+    pub id: Arc<str>,
+    pub payload: MessagePayload,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
+pub struct MessagePayload {
+    pub topic: Arc<str>,
+    pub flags: u32,
+    pub blob: Arc<str>,
+}
+
+impl MessagePayload {
+    pub fn is_encrypted(&self) -> bool {
+        (self.flags & ENCRYPTED_FLAG) == ENCRYPTED_FLAG
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct NewPushMessage {
+    /// Topic is used by the SDKs to decrypt
+    /// encrypted payloads on the client side
+    pub topic: Arc<str>,
+    /// Filtering tag
+    pub tag: u32,
+    /// The payload message
+    pub message: Arc<str>,
+}
+
 #[async_trait]
 pub trait PushProvider {
-    async fn send_notification(
-        &mut self,
-        token: String,
-        body: PushMessageBody,
-        always_raw: bool,
-    ) -> error::Result<()>;
+    async fn send_notification(&mut self, token: String, body: PushMessage) -> error::Result<()>;
 }
 
 const PROVIDER_APNS: &str = "apns";
@@ -107,17 +159,12 @@ pub enum Provider {
 #[async_trait]
 impl PushProvider for Provider {
     #[instrument(name = "send_notification")]
-    async fn send_notification(
-        &mut self,
-        token: String,
-        body: PushMessageBody,
-        always_raw: bool,
-    ) -> error::Result<()> {
+    async fn send_notification(&mut self, token: String, body: PushMessage) -> error::Result<()> {
         match self {
-            Provider::Fcm(p) => p.send_notification(token, body, always_raw).await,
-            Provider::Apns(p) => p.send_notification(token, body, always_raw).await,
+            Provider::Fcm(p) => p.send_notification(token, body).await,
+            Provider::Apns(p) => p.send_notification(token, body).await,
             #[cfg(any(debug_assertions, test))]
-            Provider::Noop(p) => p.send_notification(token, body, always_raw).await,
+            Provider::Noop(p) => p.send_notification(token, body).await,
         }
     }
 }
