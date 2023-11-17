@@ -11,7 +11,7 @@ use {
         increment_counter,
         log::prelude::*,
         middleware::validate_signature::RequireValidSignature,
-        providers::{NewPushMessage, OldPushMessage, Provider, PushMessage, PushProvider},
+        providers::{LegacyPushMessage, Provider, PushMessage, PushProvider, RawPushMessage},
         request_id::get_req_id,
         state::AppState,
         stores::StoreError,
@@ -30,11 +30,11 @@ use {
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct PushMessageBody {
     #[serde(flatten)]
-    pub new: Option<NewPushMessage>,
+    pub raw: Option<RawPushMessage>,
 
     // Legacy (deprecating) fields
     #[serde(flatten)]
-    pub old: Option<OldPushMessage>,
+    pub legacy: Option<LegacyPushMessage>,
 }
 
 pub async fn handler(
@@ -141,11 +141,11 @@ pub async fn handler_internal(
             #[cfg(feature = "analytics")]
             Some(MessageInfo {
                 msg_id: body
-                    .new
+                    .raw
                     .as_ref()
                     .map(|msg| relay_rpc::rpc::msg_id::get_message_id(&msg.message).into())
                     .unwrap_or(
-                        body.old
+                        body.legacy
                             .as_ref()
                             .map(|msg| msg.id.clone())
                             .unwrap_or("error: no message id".to_owned().into()),
@@ -155,20 +155,20 @@ pub async fn handler_internal(
                 continent: None,
                 project_id: tenant_id.clone().into(),
                 client_id: client_id.clone().into(),
-                topic: body.new.as_ref().map(|m| m.topic.clone()).unwrap_or(
-                    body.old
+                topic: body.raw.as_ref().map(|m| m.topic.clone()).unwrap_or(
+                    body.legacy
                         .as_ref()
                         .map(|m| m.payload.topic.clone())
                         .unwrap_or("error: no topic".to_owned().into()),
                 ),
                 push_provider: "unknown".into(),
-                always_encrypted: body.new.is_some(),
+                always_encrypted: body.raw.is_some(),
                 encrypted: body
-                    .old
+                    .legacy
                     .as_ref()
                     .map(|m| m.payload.is_encrypted())
                     .unwrap_or(false),
-                flags: body.old.as_ref().map(|m| m.payload.flags).unwrap_or(0),
+                flags: body.legacy.as_ref().map(|m| m.payload.flags).unwrap_or(0),
                 status: 0,
                 response_message: None,
                 received_at: wc::analytics::time::now(),
@@ -180,8 +180,8 @@ pub async fn handler_internal(
 
     let cloned_body = body.clone();
     let push_message = if client.always_raw {
-        if let Some(body) = body.new {
-            PushMessage::NewPushMessage(body)
+        if let Some(body) = body.raw {
+            PushMessage::RawPushMessage(body)
         } else {
             return Err((
                 Error::EmptyField("missing topic, tag, or message field".to_string()),
@@ -190,8 +190,8 @@ pub async fn handler_internal(
         }
     } else {
         #[allow(clippy::collapsible_else_if)]
-        if let Some(body) = body.old {
-            PushMessage::OldPushMessage(body)
+        if let Some(body) = body.legacy {
+            PushMessage::LegacyPushMessage(body)
         } else {
             return Err((
                 Error::EmptyField("missing id or payload field".to_string()),
@@ -213,16 +213,16 @@ pub async fn handler_internal(
         topic: push_message.topic(),
         push_provider: client.push_type.as_str().into(),
         always_encrypted: match push_message {
-            PushMessage::NewPushMessage(_) => true,
-            PushMessage::OldPushMessage(_) => false,
+            PushMessage::RawPushMessage(_) => true,
+            PushMessage::LegacyPushMessage(_) => false,
         },
         encrypted: match push_message {
-            PushMessage::NewPushMessage(_) => false,
-            PushMessage::OldPushMessage(ref msg) => msg.payload.is_encrypted(),
+            PushMessage::RawPushMessage(_) => false,
+            PushMessage::LegacyPushMessage(ref msg) => msg.payload.is_encrypted(),
         },
         flags: match push_message {
-            PushMessage::NewPushMessage(_) => 0,
-            PushMessage::OldPushMessage(ref msg) => msg.payload.flags,
+            PushMessage::RawPushMessage(_) => 0,
+            PushMessage::LegacyPushMessage(ref msg) => msg.payload.flags,
         },
         status: 0,
         response_message: None,

@@ -2,7 +2,7 @@ use {
     crate::context::EchoServerContext,
     echo_server::{
         handlers::{push_message::PushMessageBody, register_client::RegisterBody},
-        providers::{MessagePayload, NewPushMessage, OldPushMessage},
+        providers::{LegacyPushMessage, MessagePayload, RawPushMessage},
     },
     hyper::StatusCode,
     relay_rpc::{
@@ -85,8 +85,8 @@ async fn test_push(ctx: &mut EchoServerContext) {
         flags: 0,
     };
     let payload = PushMessageBody {
-        new: None,
-        old: Some(OldPushMessage {
+        raw: None,
+        legacy: Some(LegacyPushMessage {
             id: push_message_id,
             payload: push_message_payload,
         }),
@@ -147,8 +147,8 @@ async fn test_push_multiple_clients(ctx: &mut EchoServerContext) {
         flags: 0,
     };
     let payload = PushMessageBody {
-        new: None,
-        old: Some(OldPushMessage {
+        raw: None,
+        legacy: Some(LegacyPushMessage {
             id: push_message_id.clone(),
             payload: push_message_payload,
         }),
@@ -207,8 +207,8 @@ async fn test_push_always_raw(ctx: &mut EchoServerContext) {
 
     // Send push with WRONG payload without necessary fields for always_raw
     let wrong_payload = PushMessageBody {
-        new: None,
-        old: Some(OldPushMessage {
+        raw: None,
+        legacy: Some(LegacyPushMessage {
             id: push_message_id,
             payload: push_message_payload,
         }),
@@ -227,12 +227,12 @@ async fn test_push_always_raw(ctx: &mut EchoServerContext) {
 
     // Send push with good payload without necessary fields for always_raw
     let good_payload = PushMessageBody {
-        new: Some(NewPushMessage {
+        raw: Some(RawPushMessage {
             topic,
             tag: 1100,
             message: blob,
         }),
-        old: None,
+        legacy: None,
     };
     let response = client
         .post(format!(
