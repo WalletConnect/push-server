@@ -1,10 +1,6 @@
 use {
-    crate::{
-        blob::DecryptedPayloadBlob,
-        error::Error,
-        handlers::push_message::PushMessageBody,
-        providers::PushProvider,
-    },
+    super::{NewPushMessage, OldPushMessage, PushMessage},
+    crate::{blob::DecryptedPayloadBlob, error::Error, providers::PushProvider},
     a2::{ErrorReason, NotificationBuilder, NotificationOptions},
     async_trait::async_trait,
     std::io::Read,
@@ -56,8 +52,7 @@ impl PushProvider for ApnsProvider {
     async fn send_notification(
         &mut self,
         token: String,
-        body: PushMessageBody,
-        always_raw: bool,
+        body: PushMessage,
     ) -> crate::error::Result<()> {
         let opt = NotificationOptions {
             apns_id: None,
@@ -67,52 +62,56 @@ impl PushProvider for ApnsProvider {
             apns_collapse_id: None,
         };
 
-        // TODO tidy after https://github.com/WalletConnect/a2/issues/67 is closed
-        // Sending `always_raw` encrypted message
-        let result = if always_raw {
-            info!("Sending raw encrypted message");
-            let mut notification_payload = a2::DefaultNotificationBuilder::new()
-                .set_content_available()
-                .set_mutable_content()
-                .set_title("You have new notifications. Open to view")
-                .build(token.as_str(), opt);
+        let result = match body {
+            PushMessage::NewPushMessage(NewPushMessage {
+                topic,
+                tag,
+                message,
+            }) => {
+                // Sending `always_raw` encrypted message
+                info!("Sending raw encrypted message");
+                let mut notification_payload = a2::DefaultNotificationBuilder::new()
+                    .set_content_available()
+                    .set_mutable_content()
+                    .set_title("You have new notifications. Open to view")
+                    .build(token.as_str(), opt);
 
-            if let (Some(topic), Some(message)) = (body.topic, body.message) {
                 notification_payload.add_custom_data("topic", &topic)?;
+                notification_payload.add_custom_data("tag", &tag)?;
                 notification_payload.add_custom_data("message", &message)?;
-            } else {
-                return Err(Error::BadPayload(
-                    "Missing required arguments for `always_raw`: topic, tag or message".into(),
-                ));
+
+                self.client.send(notification_payload).await
             }
+            PushMessage::OldPushMessage(OldPushMessage { id: _, payload }) => {
+                // TODO tidy after https://github.com/WalletConnect/a2/issues/67 is closed
+                if payload.is_encrypted() {
+                    info!("Sending legacy `is_encrypted` message");
+                    let mut notification_payload = a2::DefaultNotificationBuilder::new()
+                        .set_content_available()
+                        .set_mutable_content()
+                        .set_title("You have new notifications. Open to view")
+                        .build(token.as_str(), opt);
 
-            self.client.send(notification_payload).await
-        } else if body.payload.is_encrypted() {
-            info!("Sending legacy `is_encrypted` message");
-            let mut notification_payload = a2::DefaultNotificationBuilder::new()
-                .set_content_available()
-                .set_mutable_content()
-                .set_title("You have new notifications. Open to view")
-                .build(token.as_str(), opt);
+                    notification_payload.add_custom_data("topic", &payload.topic)?;
+                    notification_payload.add_custom_data("blob", &payload.blob)?;
 
-            notification_payload.add_custom_data("topic", &body.payload.topic)?;
-            notification_payload.add_custom_data("blob", &body.payload.blob)?;
+                    self.client.send(notification_payload).await
+                } else {
+                    info!("Sending plain message");
+                    let blob = DecryptedPayloadBlob::from_base64_encoded(&payload.blob)?;
 
-            self.client.send(notification_payload).await
-        } else {
-            info!("Sending plain message");
-            let blob = DecryptedPayloadBlob::from_base64_encoded(body.payload.blob)?;
+                    let mut notification_payload = a2::DefaultNotificationBuilder::new()
+                        .set_content_available()
+                        .set_mutable_content()
+                        .set_title(&blob.title)
+                        .set_body(&blob.body)
+                        .build(token.as_str(), opt);
 
-            let mut notification_payload = a2::DefaultNotificationBuilder::new()
-                .set_content_available()
-                .set_mutable_content()
-                .set_title(&blob.title)
-                .set_body(&blob.body)
-                .build(token.as_str(), opt);
+                    notification_payload.add_custom_data("topic", &payload.topic)?;
 
-            notification_payload.add_custom_data("topic", &body.payload.topic)?;
-
-            self.client.send(notification_payload).await
+                    self.client.send(notification_payload).await
+                }
+            }
         };
 
         match result {

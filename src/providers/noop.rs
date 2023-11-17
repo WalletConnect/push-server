@@ -1,5 +1,6 @@
 use {
-    crate::{handlers::push_message::PushMessageBody, providers::PushProvider},
+    super::PushMessage,
+    crate::providers::PushProvider,
     async_trait::async_trait,
     reqwest::Url,
     std::collections::HashMap,
@@ -8,8 +9,7 @@ use {
 
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
 pub struct NoopProvider {
-    // token -> [MessagePayload{..}, MessagePayload{..}, MessagePayload{..}]
-    notifications: HashMap<String, Vec<PushMessageBody>>,
+    notifications: HashMap<String, Vec<PushMessage>>,
 }
 
 impl NoopProvider {
@@ -24,8 +24,7 @@ impl PushProvider for NoopProvider {
     async fn send_notification(
         &mut self,
         token: String,
-        body: PushMessageBody,
-        _always_raw: bool,
+        body: PushMessage,
     ) -> crate::error::Result<()> {
         self.bootstrap(token.clone());
 

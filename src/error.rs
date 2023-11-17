@@ -140,7 +140,7 @@ pub enum Error {
     InternalServerError,
 
     #[error(transparent)]
-    JwtError(#[from] relay_rpc::auth::JwtVerificationError),
+    JwtError(#[from] relay_rpc::jwt::JwtError),
 
     #[error("the provided authentication does not authenticate the request")]
     InvalidAuthentication,
@@ -180,9 +180,6 @@ pub enum Error {
 
     #[error("tenant suspended due to invalid configuration")]
     TenantSuspended,
-
-    #[error("Bad payload provided: {0}")]
-    BadPayload(String),
 }
 
 impl IntoResponse for Error {

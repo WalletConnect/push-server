@@ -26,7 +26,7 @@ async fn test_registration(ctx: &mut EchoServerContext) {
         always_raw: Some(false),
     };
 
-    let jwt = relay_rpc::auth::AuthToken::new(client_id.value().clone())
+    let jwt = relay_rpc::auth::AuthToken::new(client_id.value().to_string())
         .aud(format!(
             "http://127.0.0.1:{}",
             ctx.server.public_addr.port()
@@ -80,7 +80,7 @@ async fn test_deregistration(ctx: &mut EchoServerContext) {
     let random_client_id = DecodedClientId(*keypair.public_key().as_bytes());
     let client_id = ClientId::from(random_client_id);
 
-    let jwt = relay_rpc::auth::AuthToken::new(client_id.value().clone())
+    let jwt = relay_rpc::auth::AuthToken::new(client_id.value().to_string())
         .aud(format!(
             "http://127.0.0.1:{}",
             ctx.server.public_addr.port()

@@ -66,7 +66,7 @@ fcm = "0.9"
 ed25519-dalek = "2.0.0-rc.2"
 
 # JWT Authentication
-relay_rpc = { git = "https://github.com/WalletConnect/WalletConnectRust.git", rev = "ced99e7"}
+relay_rpc = { git = "https://github.com/WalletConnect/WalletConnectRust.git", rev = "4ee9007"}
 jsonwebtoken = "8.1"
 data-encoding = "2.3"
 

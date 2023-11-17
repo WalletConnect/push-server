@@ -3,7 +3,11 @@ use {
         context::StoreContext,
         functional::stores::{gen_id, TENANT_ID},
     },
-    echo_server::{providers::ProviderKind, stores::client::Client},
+    echo_server::{
+        handlers::push_message::PushMessageBody,
+        providers::ProviderKind,
+        stores::client::Client,
+    },
     test_context::test_context,
 };
 
@@ -83,19 +87,12 @@ async fn client_upsert_token(ctx: &mut StoreContext) {
     // Insert notification for the client to test the clients->notifications
     // constraint works properly
     let notification_id = format!("id-{}", gen_id());
-    let notification_payload = format!("payload-{}", gen_id());
 
     ctx.notifications
-        .create_or_update_notification(
-            &notification_id,
-            TENANT_ID,
-            &client_id,
-            &echo_server::handlers::push_message::MessagePayload {
-                topic: String::new(),
-                flags: 0,
-                blob: notification_payload,
-            },
-        )
+        .create_or_update_notification(&notification_id, TENANT_ID, &client_id, &PushMessageBody {
+            new: None,
+            old: None,
+        })
         .await
         .unwrap();
     let get_notification_result = ctx
@@ -149,19 +146,12 @@ async fn client_upsert_id(ctx: &mut StoreContext) {
     // Insert notification for the client to test the clients->notifications
     // constraint works properly
     let notification_id = format!("id-{}", gen_id());
-    let notification_payload = format!("payload-{}", gen_id());
 
     ctx.notifications
-        .create_or_update_notification(
-            &notification_id,
-            TENANT_ID,
-            &client_id,
-            &echo_server::handlers::push_message::MessagePayload {
-                topic: String::new(),
-                flags: 0,
-                blob: notification_payload,
-            },
-        )
+        .create_or_update_notification(&notification_id, TENANT_ID, &client_id, &PushMessageBody {
+            new: None,
+            old: None,
+        })
         .await
         .unwrap();
     let get_notification_result = ctx
@@ -218,19 +208,12 @@ async fn client_create_same_id_and_token(ctx: &mut StoreContext) {
     // Insert notification for the client to test the clients->notifications
     // constraint works properly
     let notification_id = format!("id-{}", gen_id());
-    let notification_payload = format!("payload-{}", gen_id());
 
     ctx.notifications
-        .create_or_update_notification(
-            &notification_id,
-            TENANT_ID,
-            &client_id,
-            &echo_server::handlers::push_message::MessagePayload {
-                topic: String::new(),
-                flags: 0,
-                blob: notification_payload,
-            },
-        )
+        .create_or_update_notification(&notification_id, TENANT_ID, &client_id, &PushMessageBody {
+            new: None,
+            old: None,
+        })
         .await
         .unwrap();
     let get_notification_result = ctx
