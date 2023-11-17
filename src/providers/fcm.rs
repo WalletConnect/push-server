@@ -1,10 +1,6 @@
 use {
-    crate::{
-        blob::DecryptedPayloadBlob,
-        error::Error,
-        handlers::push_message::{PushMessageBody, RawMessagePayload},
-        providers::PushProvider,
-    },
+    super::{OldPushMessage, PushMessage},
+    crate::{blob::DecryptedPayloadBlob, error::Error, providers::PushProvider},
     async_trait::async_trait,
     fcm::{ErrorReason, FcmError, FcmResponse, MessageBuilder, NotificationBuilder, Priority},
     std::fmt::{Debug, Formatter},
@@ -31,51 +27,41 @@ impl PushProvider for FcmProvider {
     async fn send_notification(
         &mut self,
         token: String,
-        body: PushMessageBody,
-        always_raw: bool,
+        body: PushMessage,
     ) -> crate::error::Result<()> {
         let mut message_builder = MessageBuilder::new(self.api_key.as_str(), token.as_str());
 
-        // Sending `always_raw` encrypted message
-        let result = if always_raw {
-            info!("Sending raw encrypted message");
-            if let (Some(topic), Some(tag), Some(message)) = (body.topic, body.tag, body.message) {
-                message_builder.data(&RawMessagePayload {
-                    topic,
-                    tag,
-                    message,
-                })?;
-            } else {
-                return Err(Error::BadPayload(
-                    "Missing required arguments for `always_raw`: topic, tag or message".into(),
-                ));
-            };
-            set_message_priority_high(&mut message_builder);
-            let fcm_message = message_builder.finalize();
+        let result = match body {
+            PushMessage::NewPushMessage(message) => {
+                // Sending `always_raw` encrypted message
+                info!("Sending raw encrypted message");
+                message_builder.data(&message)?;
+                set_message_priority_high(&mut message_builder);
+                let fcm_message = message_builder.finalize();
+                self.client.send(fcm_message).await
+            }
+            PushMessage::OldPushMessage(OldPushMessage { id: _, payload }) => {
+                if payload.is_encrypted() {
+                    info!("Sending legacy `is_encrypted` message");
+                    message_builder.data(&payload)?;
+                    set_message_priority_high(&mut message_builder);
+                    let fcm_message = message_builder.finalize();
+                    self.client.send(fcm_message).await
+                } else {
+                    info!("Sending plain message");
+                    let blob = DecryptedPayloadBlob::from_base64_encoded(&payload.blob)?;
 
-            self.client.send(fcm_message).await
-        } else if body.payload.is_encrypted() {
-            info!("Sending legacy `is_encrypted` message");
-            message_builder.data(&body.payload)?;
-            set_message_priority_high(&mut message_builder);
-            let fcm_message = message_builder.finalize();
+                    let mut notification_builder = NotificationBuilder::new();
+                    notification_builder.title(blob.title.as_str());
+                    notification_builder.body(blob.body.as_str());
+                    let notification = notification_builder.finalize();
 
-            self.client.send(fcm_message).await
-        } else {
-            info!("Sending plain message");
-            let blob = DecryptedPayloadBlob::from_base64_encoded(body.payload.clone().blob)?;
-
-            let mut notification_builder = NotificationBuilder::new();
-            notification_builder.title(blob.title.as_str());
-            notification_builder.body(blob.body.as_str());
-            let notification = notification_builder.finalize();
-
-            message_builder.notification(notification);
-            message_builder.data(&body.payload.to_owned())?;
-
-            let fcm_message = message_builder.finalize();
-
-            self.client.send(fcm_message).await
+                    message_builder.notification(notification);
+                    message_builder.data(&payload.to_owned())?;
+                    let fcm_message = message_builder.finalize();
+                    self.client.send(fcm_message).await
+                }
+            }
         };
 
         match result {

@@ -1,10 +1,11 @@
 use {
     crate::{
-        handlers::push_message::MessagePayload,
+        handlers::push_message::PushMessageBody,
         stores::{self, StoreError::NotFound},
     },
     async_trait::async_trait,
     chrono::{DateTime, Utc},
+    serde_json::Value,
     sqlx::{types::Json, Executor},
 };
 
@@ -13,8 +14,8 @@ pub struct Notification {
     pub id: String,
     pub client_id: String,
 
-    pub last_payload: Json<MessagePayload>,
-    pub previous_payloads: Vec<Json<MessagePayload>>,
+    pub last_payload: Json<Value>,
+    pub previous_payloads: Vec<Json<Value>>,
 
     pub last_received_at: DateTime<Utc>,
     pub created_at: DateTime<Utc>,
@@ -27,7 +28,7 @@ pub trait NotificationStore {
         id: &str,
         tenant_id: &str,
         client_id: &str,
-        payload: &MessagePayload,
+        payload: &PushMessageBody,
     ) -> stores::Result<Notification>;
     async fn get_notification(
         &self,
@@ -45,7 +46,7 @@ impl NotificationStore for sqlx::PgPool {
         id: &str,
         tenant_id: &str,
         client_id: &str,
-        payload: &MessagePayload,
+        payload: &PushMessageBody,
     ) -> stores::Result<Notification> {
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Notification>(
             "
