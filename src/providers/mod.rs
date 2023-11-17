@@ -24,28 +24,28 @@ use crate::providers::noop::NoopProvider;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum PushMessage {
-    OldPushMessage(OldPushMessage),
-    NewPushMessage(NewPushMessage),
+    LegacyPushMessage(LegacyPushMessage),
+    RawPushMessage(RawPushMessage),
 }
 
 impl PushMessage {
     pub fn message_id(&self) -> Arc<str> {
         match self {
-            Self::NewPushMessage(msg) => get_message_id(&msg.message).into(),
-            Self::OldPushMessage(msg) => msg.id.clone(),
+            Self::RawPushMessage(msg) => get_message_id(&msg.message).into(),
+            Self::LegacyPushMessage(msg) => msg.id.clone(),
         }
     }
 
     pub fn topic(&self) -> Arc<str> {
         match self {
-            Self::NewPushMessage(msg) => msg.topic.clone(),
-            Self::OldPushMessage(msg) => msg.payload.topic.clone(),
+            Self::RawPushMessage(msg) => msg.topic.clone(),
+            Self::LegacyPushMessage(msg) => msg.payload.topic.clone(),
         }
     }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct OldPushMessage {
+pub struct LegacyPushMessage {
     pub id: Arc<str>,
     pub payload: MessagePayload,
 }
@@ -64,7 +64,7 @@ impl MessagePayload {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct NewPushMessage {
+pub struct RawPushMessage {
     /// Topic is used by the SDKs to decrypt
     /// encrypted payloads on the client side
     pub topic: Arc<str>,

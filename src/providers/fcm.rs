@@ -1,5 +1,5 @@
 use {
-    super::{OldPushMessage, PushMessage},
+    super::{LegacyPushMessage, PushMessage},
     crate::{blob::DecryptedPayloadBlob, error::Error, providers::PushProvider},
     async_trait::async_trait,
     fcm::{ErrorReason, FcmError, FcmResponse, MessageBuilder, NotificationBuilder, Priority},
@@ -32,7 +32,7 @@ impl PushProvider for FcmProvider {
         let mut message_builder = MessageBuilder::new(self.api_key.as_str(), token.as_str());
 
         let result = match body {
-            PushMessage::NewPushMessage(message) => {
+            PushMessage::RawPushMessage(message) => {
                 // Sending `always_raw` encrypted message
                 info!("Sending raw encrypted message");
                 message_builder.data(&message)?;
@@ -40,7 +40,7 @@ impl PushProvider for FcmProvider {
                 let fcm_message = message_builder.finalize();
                 self.client.send(fcm_message).await
             }
-            PushMessage::OldPushMessage(OldPushMessage { id: _, payload }) => {
+            PushMessage::LegacyPushMessage(LegacyPushMessage { id: _, payload }) => {
                 if payload.is_encrypted() {
                     info!("Sending legacy `is_encrypted` message");
                     message_builder.data(&payload)?;

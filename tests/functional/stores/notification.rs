@@ -37,8 +37,8 @@ async fn notification(ctx: &mut StoreContext) {
     let res = ctx
         .notifications
         .create_or_update_notification(&gen_id(), TENANT_ID, &client_id, &PushMessageBody {
-            new: None,
-            old: None,
+            raw: None,
+            legacy: None,
         })
         .await;
 
@@ -50,8 +50,8 @@ async fn notification(ctx: &mut StoreContext) {
 async fn notification_multiple_clients_same_payload(ctx: &mut StoreContext) {
     let message_id = gen_id();
     let payload = PushMessageBody {
-        new: None,
-        old: None,
+        raw: None,
+        legacy: None,
     };
 
     let client_id1 = create_client(&ctx.clients).await;
