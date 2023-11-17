@@ -91,16 +91,12 @@ pub async fn handler(
     let always_raw = body.always_raw.unwrap_or(false);
     state
         .client_store
-        .create_client(
-            &tenant_id,
-            &client_id,
-            Client {
-                tenant_id: tenant_id.clone(),
-                push_type,
-                token: body.token,
-                always_raw,
-            },
-        )
+        .create_client(&tenant_id, &client_id, Client {
+            tenant_id: tenant_id.clone(),
+            push_type,
+            token: body.token,
+            always_raw,
+        })
         .await?;
 
     info!(

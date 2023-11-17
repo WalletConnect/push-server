@@ -211,7 +211,10 @@ pub async fn handler_internal(
         push_provider: client.push_type.as_str().into(),
         always_raw: Some(client.always_raw),
         tag: cloned_body.raw.as_ref().map(|m| m.tag),
-        encrypted: cloned_body.legacy.as_ref().map(|m| m.payload.is_encrypted()),
+        encrypted: cloned_body
+            .legacy
+            .as_ref()
+            .map(|m| m.payload.is_encrypted()),
         flags: cloned_body.legacy.as_ref().map(|m| m.payload.flags),
         status: 0,
         response_message: None,
