@@ -90,8 +90,8 @@ async fn client_upsert_token(ctx: &mut StoreContext) {
 
     ctx.notifications
         .create_or_update_notification(&notification_id, TENANT_ID, &client_id, &PushMessageBody {
-            new: None,
-            old: None,
+            raw: None,
+            legacy: None,
         })
         .await
         .unwrap();
@@ -149,8 +149,8 @@ async fn client_upsert_id(ctx: &mut StoreContext) {
 
     ctx.notifications
         .create_or_update_notification(&notification_id, TENANT_ID, &client_id, &PushMessageBody {
-            new: None,
-            old: None,
+            raw: None,
+            legacy: None,
         })
         .await
         .unwrap();
@@ -211,8 +211,8 @@ async fn client_create_same_id_and_token(ctx: &mut StoreContext) {
 
     ctx.notifications
         .create_or_update_notification(&notification_id, TENANT_ID, &client_id, &PushMessageBody {
-            new: None,
-            old: None,
+            raw: None,
+            legacy: None,
         })
         .await
         .unwrap();

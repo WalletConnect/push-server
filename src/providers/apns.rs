@@ -1,5 +1,5 @@
 use {
-    super::{NewPushMessage, OldPushMessage, PushMessage},
+    super::{LegacyPushMessage, PushMessage, RawPushMessage},
     crate::{blob::DecryptedPayloadBlob, error::Error, providers::PushProvider},
     a2::{ErrorReason, NotificationBuilder, NotificationOptions},
     async_trait::async_trait,
@@ -63,7 +63,7 @@ impl PushProvider for ApnsProvider {
         };
 
         let result = match body {
-            PushMessage::NewPushMessage(NewPushMessage {
+            PushMessage::RawPushMessage(RawPushMessage {
                 topic,
                 tag,
                 message,
@@ -82,7 +82,7 @@ impl PushProvider for ApnsProvider {
 
                 self.client.send(notification_payload).await
             }
-            PushMessage::OldPushMessage(OldPushMessage { id: _, payload }) => {
+            PushMessage::LegacyPushMessage(LegacyPushMessage { id: _, payload }) => {
                 // TODO tidy after https://github.com/WalletConnect/a2/issues/67 is closed
                 if payload.is_encrypted() {
                     info!("Sending legacy `is_encrypted` message");
