@@ -9,5 +9,6 @@ pub struct ClientInfo {
     pub project_id: Arc<str>,
     pub client_id: Arc<str>,
     pub push_provider: Arc<str>,
+    pub always_raw: bool,
     pub registered_at: chrono::NaiveDateTime,
 }

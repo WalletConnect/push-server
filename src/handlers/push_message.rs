@@ -162,13 +162,10 @@ pub async fn handler_internal(
                         .unwrap_or("error: no topic".to_owned().into()),
                 ),
                 push_provider: "unknown".into(),
-                always_encrypted: body.raw.is_some(),
-                encrypted: body
-                    .legacy
-                    .as_ref()
-                    .map(|m| m.payload.is_encrypted())
-                    .unwrap_or(false),
-                flags: body.legacy.as_ref().map(|m| m.payload.flags).unwrap_or(0),
+                always_raw: None,
+                tag: body.raw.as_ref().map(|m| m.tag),
+                encrypted: body.legacy.as_ref().map(|m| m.payload.is_encrypted()),
+                flags: body.legacy.as_ref().map(|m| m.payload.flags),
                 status: 0,
                 response_message: None,
                 received_at: wc::analytics::time::now(),
@@ -212,18 +209,13 @@ pub async fn handler_internal(
         client_id: client_id.clone().into(),
         topic: push_message.topic(),
         push_provider: client.push_type.as_str().into(),
-        always_encrypted: match push_message {
-            PushMessage::RawPushMessage(_) => true,
-            PushMessage::LegacyPushMessage(_) => false,
-        },
-        encrypted: match push_message {
-            PushMessage::RawPushMessage(_) => false,
-            PushMessage::LegacyPushMessage(ref msg) => msg.payload.is_encrypted(),
-        },
-        flags: match push_message {
-            PushMessage::RawPushMessage(_) => 0,
-            PushMessage::LegacyPushMessage(ref msg) => msg.payload.flags,
-        },
+        always_raw: Some(client.always_raw),
+        tag: cloned_body.raw.as_ref().map(|m| m.tag),
+        encrypted: cloned_body
+            .legacy
+            .as_ref()
+            .map(|m| m.payload.is_encrypted()),
+        flags: cloned_body.legacy.as_ref().map(|m| m.payload.flags),
         status: 0,
         response_message: None,
         received_at: wc::analytics::time::now(),
