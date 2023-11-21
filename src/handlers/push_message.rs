@@ -3,7 +3,6 @@ use axum_client_ip::SecureClientIp;
 use {
     crate::{
         analytics::message_info::MessageInfo,
-        blob::ENCRYPTED_FLAG,
         error::{
             Error,
             Error::{ClientNotFound, Store},
@@ -12,7 +11,7 @@ use {
         increment_counter,
         log::prelude::*,
         middleware::validate_signature::RequireValidSignature,
-        providers::{Provider, PushProvider},
+        providers::{LegacyPushMessage, Provider, PushMessage, PushProvider, RawPushMessage},
         request_id::get_req_id,
         state::AppState,
         stores::StoreError,
@@ -28,23 +27,14 @@ use {
     tracing::instrument,
 };
 
-#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
-pub struct MessagePayload {
-    pub topic: String,
-    pub flags: u32,
-    pub blob: String,
-}
-
-impl MessagePayload {
-    pub fn is_encrypted(&self) -> bool {
-        (self.flags & ENCRYPTED_FLAG) == ENCRYPTED_FLAG
-    }
-}
-
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct PushMessageBody {
-    pub id: String,
-    pub payload: MessagePayload,
+    #[serde(flatten)]
+    pub raw: Option<RawPushMessage>,
+
+    // Legacy (deprecating) fields
+    #[serde(flatten)]
+    pub legacy: Option<LegacyPushMessage>,
 }
 
 pub async fn handler(
@@ -133,19 +123,13 @@ pub async fn handler(
     Ok(response)
 }
 
-#[instrument(name = "push_message_internal", skip_all, fields(tenant_id = tenant_id, client_id = client_id, id = body.id))]
+#[instrument(name = "push_message_internal", skip_all, fields(tenant_id = tenant_id, client_id = client_id))]
 pub async fn handler_internal(
     Path((tenant_id, client_id)): Path<(String, String)>,
     StateExtractor(state): StateExtractor<Arc<AppState>>,
     headers: HeaderMap,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<(axum::response::Response, Option<MessageInfo>), (Error, Option<MessageInfo>)> {
-    #[cfg(feature = "analytics")]
-    let topic: Arc<str> = body.payload.clone().topic.into();
-
-    #[cfg(feature = "analytics")]
-    let (flags, encrypted) = (body.payload.clone().flags, body.payload.is_encrypted());
-
     let client = match state.client_store.get_client(&tenant_id, &client_id).await {
         Ok(c) => Ok(c),
         Err(StoreError::NotFound(_, _)) => Err(ClientNotFound),
@@ -156,16 +140,32 @@ pub async fn handler_internal(
             e,
             #[cfg(feature = "analytics")]
             Some(MessageInfo {
-                msg_id: body.id.clone().into(),
+                msg_id: body
+                    .raw
+                    .as_ref()
+                    .map(|msg| relay_rpc::rpc::msg_id::get_message_id(&msg.message).into())
+                    .unwrap_or(
+                        body.legacy
+                            .as_ref()
+                            .map(|msg| msg.id.clone())
+                            .unwrap_or("error: no message id".to_owned().into()),
+                    ),
                 region: None,
                 country: None,
                 continent: None,
                 project_id: tenant_id.clone().into(),
                 client_id: client_id.clone().into(),
-                topic: topic.clone(),
+                topic: body.raw.as_ref().map(|m| m.topic.clone()).unwrap_or(
+                    body.legacy
+                        .as_ref()
+                        .map(|m| m.payload.topic.clone())
+                        .unwrap_or("error: no topic".to_owned().into()),
+                ),
                 push_provider: "unknown".into(),
-                encrypted,
-                flags,
+                always_raw: None,
+                tag: body.raw.as_ref().map(|m| m.tag),
+                encrypted: body.legacy.as_ref().map(|m| m.payload.is_encrypted()),
+                flags: body.legacy.as_ref().map(|m| m.payload.flags),
                 status: 0,
                 response_message: None,
                 received_at: wc::analytics::time::now(),
@@ -175,18 +175,47 @@ pub async fn handler_internal(
         )
     })?;
 
+    let cloned_body = body.clone();
+    let push_message = if client.always_raw {
+        if let Some(body) = body.raw {
+            PushMessage::RawPushMessage(body)
+        } else {
+            return Err((
+                Error::EmptyField("missing topic, tag, or message field".to_string()),
+                None,
+            ));
+        }
+    } else {
+        #[allow(clippy::collapsible_else_if)]
+        if let Some(body) = body.legacy {
+            PushMessage::LegacyPushMessage(body)
+        } else {
+            return Err((
+                Error::EmptyField("missing id or payload field".to_string()),
+                None,
+            ));
+        }
+    };
+
+    let message_id = push_message.message_id();
+
     #[cfg(feature = "analytics")]
     let mut analytics = Some(MessageInfo {
-        msg_id: body.id.clone().into(),
+        msg_id: message_id.clone(),
         region: None,
         country: None,
         continent: None,
         project_id: tenant_id.clone().into(),
         client_id: client_id.clone().into(),
-        topic,
+        topic: push_message.topic(),
         push_provider: client.push_type.as_str().into(),
-        encrypted,
-        flags,
+        always_raw: Some(client.always_raw),
+        tag: cloned_body.raw.as_ref().map(|m| m.tag),
+        encrypted: cloned_body
+            .legacy
+            .as_ref()
+            .map(|m| m.payload.is_encrypted()),
+        flags: cloned_body.legacy.as_ref().map(|m| m.payload.flags),
         status: 0,
         response_message: None,
         received_at: wc::analytics::time::now(),
@@ -266,7 +295,7 @@ pub async fn handler_internal(
 
     if let Ok(notification) = state
         .notification_store
-        .get_notification(&body.id, &client_id, &tenant_id)
+        .get_notification(&message_id, &client_id, &tenant_id)
         .await
     {
         warn!(
@@ -294,7 +323,7 @@ pub async fn handler_internal(
 
     let notification = state
         .notification_store
-        .create_or_update_notification(&body.id, &tenant_id, &client_id, &body.payload)
+        .create_or_update_notification(&message_id, &tenant_id, &client_id, &cloned_body)
         .await
         .tap_err(|e| warn!("error create_or_update_notification: {e:?}"))
         .map_err(|e| (Error::Store(e), analytics.clone()))?;
@@ -365,7 +394,7 @@ pub async fn handler_internal(
         "fetched provider"
     );
 
-    match provider.send_notification(client.token, body.payload).await {
+    match provider.send_notification(client.token, push_message).await {
         Ok(()) => Ok(()),
         Err(error) => {
             warn!("error sending notification: {error:?}");

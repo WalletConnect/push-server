@@ -140,7 +140,7 @@ pub enum Error {
     InternalServerError,
 
     #[error(transparent)]
-    JwtError(#[from] relay_rpc::auth::JwtVerificationError),
+    JwtError(#[from] relay_rpc::jwt::JwtError),
 
     #[error("the provided authentication does not authenticate the request")]
     InvalidAuthentication,

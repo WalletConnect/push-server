@@ -88,13 +88,14 @@ pub async fn handler(
         .trim_start_matches(DECENTRALIZED_IDENTIFIER_PREFIX)
         .to_owned();
 
+    let always_raw = body.always_raw.unwrap_or(false);
     state
         .client_store
         .create_client(&tenant_id, &client_id, Client {
             tenant_id: tenant_id.clone(),
             push_type,
             token: body.token,
-            always_raw: body.always_raw.unwrap_or(false),
+            always_raw,
         })
         .await?;
 
@@ -130,6 +131,7 @@ pub async fn handler(
                 project_id: tenant_id.into(),
                 client_id: client_id.into(),
                 push_provider: body.push_type.as_str().into(),
+                always_raw,
                 registered_at: wc::analytics::time::now(),
             };
 

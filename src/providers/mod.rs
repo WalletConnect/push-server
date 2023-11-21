@@ -5,25 +5,78 @@ pub mod noop;
 
 use {
     crate::{
+        blob::ENCRYPTED_FLAG,
         error::{self},
-        handlers::push_message::MessagePayload,
         providers::{apns::ApnsProvider, fcm::FcmProvider},
     },
     async_trait::async_trait,
-    std::fmt::{Display, Formatter},
-    tracing::span,
+    relay_rpc::rpc::msg_id::get_message_id,
+    serde::{Deserialize, Serialize},
+    std::{
+        fmt::{Display, Formatter},
+        sync::Arc,
+    },
+    tracing::instrument,
 };
 
 #[cfg(any(debug_assertions, test))]
 use crate::providers::noop::NoopProvider;
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum PushMessage {
+    LegacyPushMessage(LegacyPushMessage),
+    RawPushMessage(RawPushMessage),
+}
+
+impl PushMessage {
+    pub fn message_id(&self) -> Arc<str> {
+        match self {
+            Self::RawPushMessage(msg) => get_message_id(&msg.message).into(),
+            Self::LegacyPushMessage(msg) => msg.id.clone(),
+        }
+    }
+
+    pub fn topic(&self) -> Arc<str> {
+        match self {
+            Self::RawPushMessage(msg) => msg.topic.clone(),
+            Self::LegacyPushMessage(msg) => msg.payload.topic.clone(),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct LegacyPushMessage {
+    pub id: Arc<str>,
+    pub payload: MessagePayload,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
+pub struct MessagePayload {
+    pub topic: Arc<str>,
+    pub flags: u32,
+    pub blob: Arc<str>,
+}
+
+impl MessagePayload {
+    pub fn is_encrypted(&self) -> bool {
+        (self.flags & ENCRYPTED_FLAG) == ENCRYPTED_FLAG
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct RawPushMessage {
+    /// Topic is used by the SDKs to decrypt
+    /// encrypted payloads on the client side
+    pub topic: Arc<str>,
+    /// Filtering tag
+    pub tag: u32,
+    /// The payload message
+    pub message: Arc<str>,
+}
+
 #[async_trait]
 pub trait PushProvider {
-    async fn send_notification(
-        &mut self,
-        token: String,
-        payload: MessagePayload,
-    ) -> error::Result<()>;
+    async fn send_notification(&mut self, token: String, body: PushMessage) -> error::Result<()>;
 }
 
 const PROVIDER_APNS: &str = "apns";
@@ -95,6 +148,7 @@ impl TryFrom<&str> for ProviderKind {
 }
 
 #[allow(clippy::large_enum_variant)]
+#[derive(Debug)]
 pub enum Provider {
     Fcm(FcmProvider),
     Apns(ApnsProvider),
@@ -104,19 +158,13 @@ pub enum Provider {
 
 #[async_trait]
 impl PushProvider for Provider {
-    async fn send_notification(
-        &mut self,
-        token: String,
-        payload: MessagePayload,
-    ) -> error::Result<()> {
-        let s = span!(tracing::Level::INFO, "send_notification");
-        let _ = s.enter();
-
+    #[instrument(name = "send_notification")]
+    async fn send_notification(&mut self, token: String, body: PushMessage) -> error::Result<()> {
         match self {
-            Provider::Fcm(p) => p.send_notification(token, payload).await,
-            Provider::Apns(p) => p.send_notification(token, payload).await,
+            Provider::Fcm(p) => p.send_notification(token, body).await,
+            Provider::Apns(p) => p.send_notification(token, body).await,
             #[cfg(any(debug_assertions, test))]
-            Provider::Noop(p) => p.send_notification(token, payload).await,
+            Provider::Noop(p) => p.send_notification(token, body).await,
         }
     }
 }

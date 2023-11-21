@@ -1,15 +1,15 @@
 use {
-    crate::{handlers::push_message::MessagePayload, providers::PushProvider},
+    super::PushMessage,
+    crate::providers::PushProvider,
     async_trait::async_trait,
     reqwest::Url,
     std::collections::HashMap,
-    tracing::span,
+    tracing::instrument,
 };
 
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
 pub struct NoopProvider {
-    // token -> [MessagePayload{..}, MessagePayload{..}, MessagePayload{..}]
-    notifications: HashMap<String, Vec<MessagePayload>>,
+    notifications: HashMap<String, Vec<PushMessage>>,
 }
 
 impl NoopProvider {
@@ -20,18 +20,16 @@ impl NoopProvider {
 
 #[async_trait]
 impl PushProvider for NoopProvider {
+    #[instrument(name = "send_noop_notification")]
     async fn send_notification(
         &mut self,
         token: String,
-        payload: MessagePayload,
+        body: PushMessage,
     ) -> crate::error::Result<()> {
-        let s = span!(tracing::Level::DEBUG, "send_noop_notification");
-        let _ = s.enter();
-
         self.bootstrap(token.clone());
 
         let notifications = self.notifications.get_mut(&token).unwrap();
-        notifications.append(&mut vec![payload]);
+        notifications.append(&mut vec![body]);
 
         if let Ok(url) = token.parse::<Url>() {
             assert!(reqwest::get(url).await?.status().is_success());
