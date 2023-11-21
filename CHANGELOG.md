@@ -2,6 +2,21 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.36.0 - 2023-11-21
+#### Bug Fixes
+- **(o11y)** registered client metric is wrong (#285) - (c442c03) - Derek
+- alarm immediately (#280) - (4b34fa8) - Chris Smith
+- idempotency is per-client (#275) - (1905c8b) - Chris Smith
+#### Features
+- **(decrypted_notify)** update message payload and pass raw message (#281) - (3990b70) - Max Kalashnikoff
+- **(decrypted_notify)** adding `always_raw` for the client registration (#279) - (16a377a) - Max Kalashnikoff
+#### Miscellaneous Chores
+- Revert "chore: style sql (#277)" - (ea1401e) - Chris Smith
+- style sql (#277) - (70dad11) - Chris Smith
+- fix all warnings (#276) - (f3c5dd6) - Chris Smith
+
+- - -
+
 ## v0.35.2 - 2023-11-08
 #### Bug Fixes
 - idempotency per client (#274) - (2002cba) - Chris Smith
