@@ -28,6 +28,7 @@ pub struct RegisterBody {
     #[serde(rename = "type")]
     pub push_type: String,
     pub token: String,
+    pub always_raw: Option<bool>,
 }
 
 pub async fn handler(
@@ -93,6 +94,7 @@ pub async fn handler(
             tenant_id: tenant_id.clone(),
             push_type,
             token: body.token,
+            always_raw: body.always_raw.unwrap_or(false),
         })
         .await?;
 

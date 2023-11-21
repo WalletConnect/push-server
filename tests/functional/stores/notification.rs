@@ -21,6 +21,7 @@ pub async fn create_client(client_store: &ClientStoreArc) -> String {
             tenant_id: TENANT_ID.to_string(),
             push_type: ProviderKind::Noop,
             token,
+            always_raw: false,
         })
         .await
         .expect("failed to create client for notification test");
