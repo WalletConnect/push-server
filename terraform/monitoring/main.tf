@@ -417,13 +417,13 @@ resource "grafana_dashboard" "at_a_glance" {
               "uid" : grafana_data_source.prometheus.uid
             },
             "exemplar" : true,
-            "expr" : "sum(registered_clients{})",
+            "expr" : "sum(increase(registered_clients{}[1h]))",
             "interval" : "",
             "legendFormat" : "",
             "refId" : "Clients"
           }
         ],
-        "title" : "Registered Clients",
+        "title" : "Registered Clients past 1h",
         "type" : "timeseries"
       },
       {
