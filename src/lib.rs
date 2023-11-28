@@ -8,18 +8,17 @@ use {
     wc::geoip::MaxMindResolver,
 };
 use {
-    crate::{
-        log::prelude::*,
-        request_id::{GenericRequestId, X_REQUEST_ID},
-        state::TenantStoreArc,
-    },
+    crate::{log::prelude::*, state::TenantStoreArc},
     axum::{
         routing::{delete, get, post},
         Router,
     },
     axum_client_ip::SecureClientIpSource,
     config::Config,
-    hyper::http::Method,
+    hyper::{
+        http::{Method, Request},
+        Body,
+    },
     opentelemetry::{sdk::Resource, KeyValue},
     sqlx::{
         postgres::{PgConnectOptions, PgPoolOptions},
@@ -31,10 +30,11 @@ use {
     tower_http::{
         catch_panic::CatchPanicLayer,
         cors::{AllowOrigin, CorsLayer},
-        request_id::{PropagateRequestIdLayer, SetRequestIdLayer},
-        trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
+        request_id::MakeRequestUuid,
+        trace::TraceLayer,
+        ServiceBuilderExt,
     },
-    tracing::{info, log::LevelFilter, Level},
+    tracing::{info, log::LevelFilter},
 };
 
 #[cfg(not(feature = "multitenant"))]
@@ -62,7 +62,6 @@ pub mod middleware;
 pub mod networking;
 pub mod providers;
 pub mod relay;
-pub mod request_id;
 pub mod state;
 pub mod stores;
 pub mod supabase;
@@ -180,22 +179,22 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
     let state_arc = Arc::new(state);
 
     let global_middleware = ServiceBuilder::new()
-        // set `x-request-id` header on all requests
-        .layer(SetRequestIdLayer::new(
-            X_REQUEST_ID.clone(),
-            GenericRequestId,
-        ))
+        .set_x_request_id(MakeRequestUuid)
         .layer(
             TraceLayer::new_for_http()
-                .make_span_with(DefaultMakeSpan::new().include_headers(true))
-                .on_request(DefaultOnRequest::new().level(Level::DEBUG))
-                .on_response(
-                    DefaultOnResponse::new()
-                        .level(Level::DEBUG)
-                        .include_headers(true),
-                ),
+            .make_span_with(|request: &Request<Body>| {
+                let request_id = match request.headers().get("x-request-id") {
+                    Some(value) => value.to_str().unwrap_or_default().to_string(),
+                    None => {
+                        // If this warning is triggered, it means that the `x-request-id` was not
+                        // propagated to headers properly. This is a bug in the middleware chain.
+                        warn!("Missing x-request-id header in a middleware");
+                        String::new()
+                    }
+                };
+                tracing::info_span!("http-request", "method" = ?request.method(), "request_id" = ?request_id, "uri" = ?request.uri())
+            })
         )
-        .layer(PropagateRequestIdLayer::new(X_REQUEST_ID.clone()))
         .layer(CatchPanicLayer::new())
         .layer(
             CorsLayer::new()
@@ -206,7 +205,8 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
                     hyper::http::header::AUTHORIZATION,
                 ]),
         )
-        .layer(SecureClientIpSource::RightmostXForwardedFor.into_extension());
+        .layer(SecureClientIpSource::RightmostXForwardedFor.into_extension())
+        .propagate_x_request_id();
 
     #[cfg(feature = "multitenant")]
     let app = {

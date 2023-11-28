@@ -1,14 +1,6 @@
 use {
-    crate::{
-        request_id::get_req_id,
-        state::{AppState, State},
-    },
-    axum::{
-        extract::State as ExtractState,
-        http::{HeaderMap, StatusCode},
-        response::IntoResponse,
-        Json,
-    },
+    crate::state::{AppState, State},
+    axum::{extract::State as ExtractState, http::StatusCode, response::IntoResponse, Json},
     serde::Serialize,
     std::sync::Arc,
 };
@@ -25,13 +17,9 @@ struct HealthResponse {
     pub version: String,
     pub flags: HealthResponseFlags,
     pub features_enabled: Vec<String>,
-    pub request_id: String,
 }
 
-pub async fn handler(
-    ExtractState(state): ExtractState<Arc<AppState>>,
-    headers: HeaderMap,
-) -> impl IntoResponse {
+pub async fn handler(ExtractState(state): ExtractState<Arc<AppState>>) -> impl IntoResponse {
     (
         StatusCode::OK,
         Json(HealthResponse {
@@ -42,7 +30,6 @@ pub async fn handler(
                 metrics: state.metrics.is_some(),
             },
             features_enabled: state.build_info.crate_info.enabled_features.clone(),
-            request_id: get_req_id(&headers),
         }),
     )
 }

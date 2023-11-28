@@ -12,7 +12,7 @@ use {
     async_trait::async_trait,
     axum::{body, extract::FromRequest, http::Request},
     ed25519_dalek::{Signature, VerifyingKey},
-    tracing::span,
+    tracing::instrument,
 };
 
 pub const SIGNATURE_HEADER_NAME: &str = "X-Ed25519-Signature";
@@ -32,6 +32,7 @@ where
 {
     type Rejection = crate::error::Error;
 
+    #[instrument(skip_all)]
     async fn from_request(req: Request<B>, state: &S) -> Result<Self, Self::Rejection> {
         if !state.validate_signatures() {
             // Skip signature validation
@@ -40,9 +41,6 @@ where
                 .map(Self)
                 .map_err(|_| FromRequestError);
         }
-
-        let s = span!(tracing::Level::DEBUG, "validate_signature");
-        let _ = s.enter();
 
         let state_binding = state.relay_client();
         let public_key = state_binding.get_verifying_key();

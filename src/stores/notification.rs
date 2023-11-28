@@ -7,6 +7,7 @@ use {
     chrono::{DateTime, Utc},
     serde_json::Value,
     sqlx::{types::Json, Executor},
+    tracing::instrument,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, sqlx::FromRow)]
@@ -41,6 +42,7 @@ pub trait NotificationStore {
 
 #[async_trait]
 impl NotificationStore for sqlx::PgPool {
+    #[instrument(skip(self, payload))]
     async fn create_or_update_notification(
         &self,
         id: &str,
@@ -69,6 +71,7 @@ impl NotificationStore for sqlx::PgPool {
         }
     }
 
+    #[instrument(skip(self))]
     async fn get_notification(
         &self,
         id: &str,
@@ -96,6 +99,7 @@ impl NotificationStore for sqlx::PgPool {
         }
     }
 
+    #[instrument(skip(self))]
     async fn delete_notification(&self, id: &str, tenant_id: &str) -> stores::Result<()> {
         let mut query_builder =
             sqlx::QueryBuilder::new("DELETE FROM public.notifications WHERE id = ");

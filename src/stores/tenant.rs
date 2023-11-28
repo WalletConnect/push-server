@@ -272,6 +272,7 @@ pub trait TenantStore {
 
 #[async_trait]
 impl TenantStore for PgPool {
+    #[instrument(skip(self))]
     async fn get_tenant(&self, id: &str) -> Result<Tenant> {
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
             "SELECT * FROM public.tenants WHERE id = $1",
@@ -287,6 +288,7 @@ impl TenantStore for PgPool {
         }
     }
 
+    #[instrument(skip(self))]
     async fn delete_tenant(&self, id: &str) -> Result<()> {
         let mut query_builder = sqlx::QueryBuilder::new("DELETE FROM public.tenants WHERE id = ");
         query_builder.push_bind(id);
@@ -297,6 +299,7 @@ impl TenantStore for PgPool {
         Ok(())
     }
 
+    #[instrument(skip(self))]
     async fn create_tenant(&self, params: TenantUpdateParams) -> Result<Tenant> {
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
             "INSERT INTO public.tenants (id) VALUES ($1) RETURNING *;",
@@ -308,6 +311,7 @@ impl TenantStore for PgPool {
         Ok(res)
     }
 
+    #[instrument(skip(self))]
     async fn update_tenant(&self, id: &str, params: TenantUpdateParams) -> Result<Tenant> {
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
             "UPDATE public.tenants SET id = $2 WHERE id = $1 RETURNING *;",
@@ -320,6 +324,7 @@ impl TenantStore for PgPool {
         Ok(res)
     }
 
+    #[instrument(skip(self))]
     async fn update_tenant_fcm(&self, id: &str, params: TenantFcmUpdateParams) -> Result<Tenant> {
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
             "UPDATE public.tenants SET fcm_api_key = $2 WHERE id = $1 RETURNING *;",
@@ -332,6 +337,7 @@ impl TenantStore for PgPool {
         Ok(res)
     }
 
+    #[instrument(skip(self))]
     async fn update_tenant_apns(&self, id: &str, params: TenantApnsUpdateParams) -> Result<Tenant> {
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
             "UPDATE public.tenants SET apns_topic = $2 WHERE id = $1 RETURNING *;",
@@ -344,6 +350,7 @@ impl TenantStore for PgPool {
         Ok(res)
     }
 
+    #[instrument(skip(self))]
     async fn update_tenant_apns_auth(
         &self,
         id: &str,
@@ -381,6 +388,7 @@ impl TenantStore for PgPool {
         Ok(res)
     }
 
+    #[instrument(skip(self))]
     async fn suspend_tenant(&self, id: &str, reason: &str) -> Result<()> {
         let mut query_builder = sqlx::QueryBuilder::new(
             "UPDATE public.tenants SET suspended = true, suspended_reason =",
@@ -395,6 +403,7 @@ impl TenantStore for PgPool {
         Ok(())
     }
 
+    #[instrument(skip(self))]
     async fn unsuspend_tenant(&self, id: &str) -> Result<()> {
         let mut query_builder = sqlx::QueryBuilder::new(
             "UPDATE public.tenants SET suspended = false, suspended_reason = null WHERE id = ",

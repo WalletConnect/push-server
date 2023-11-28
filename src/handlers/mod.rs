@@ -24,7 +24,7 @@ use {
     },
     serde_json::{json, Value},
     std::{collections::HashSet, string::ToString},
-    tracing::info,
+    tracing::{info, instrument},
 };
 
 // Push
@@ -50,6 +50,7 @@ pub mod update_fcm;
 
 pub const DECENTRALIZED_IDENTIFIER_PREFIX: &str = "did:key:";
 
+#[instrument(skip_all)]
 pub fn authenticate_client<F>(headers: HeaderMap, aud: &str, check: F) -> Result<bool>
 where
     F: FnOnce(Option<ClientId>) -> bool,
@@ -164,6 +165,7 @@ impl Default for Response {
 
 #[async_recursion]
 #[cfg(feature = "cloud")]
+#[instrument(skip_all, fields(project_id = %project_id, project = ?project))]
 pub async fn validate_tenant_request(
     registry_client: &RegistryHttpClient,
     gotrue_client: &GoTrueClient,
@@ -209,6 +211,7 @@ pub async fn validate_tenant_request(
 }
 
 #[cfg(not(feature = "cloud"))]
+#[instrument(skip_all)]
 pub fn validate_tenant_request(gotrue_client: &GoTrueClient, headers: &HeaderMap) -> Result<bool> {
     if let Some(token_data) = headers.get(AUTHORIZATION) {
         if gotrue_client

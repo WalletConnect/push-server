@@ -3,7 +3,6 @@ use {
         error::{Error, Error::InvalidMultipartBody},
         handlers::validate_tenant_request,
         increment_counter,
-        request_id::get_req_id,
         state::AppState,
         stores::tenant::{TenantApnsUpdateAuth, TenantApnsUpdateParams},
     },
@@ -15,7 +14,7 @@ use {
     base64::Engine,
     serde::{Deserialize, Serialize},
     std::sync::Arc,
-    tracing::{error, warn},
+    tracing::{error, instrument, warn},
 };
 
 #[derive(Deserialize)]
@@ -117,6 +116,7 @@ pub struct UpdateTenantApnsResponse {
     success: bool,
 }
 
+#[instrument(skip_all, name = "update_apns_handler")]
 pub async fn handler(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
@@ -127,7 +127,6 @@ pub async fn handler(
     let _existing_tenant = state.tenant_store.get_tenant(&id).await?;
 
     // JWT verification
-    let req_id = get_req_id(&headers);
     #[cfg(feature = "cloud")]
     let jwt_verification_result = validate_tenant_request(
         &state.registry_client,
@@ -143,7 +142,6 @@ pub async fn handler(
 
     if let Err(e) = jwt_verification_result {
         error!(
-            request_id = %req_id,
             tenant_id = %id,
             err = ?e,
             "JWT verification failed"

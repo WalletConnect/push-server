@@ -6,7 +6,6 @@ use {
         },
         handlers::validate_tenant_request,
         increment_counter,
-        request_id::get_req_id,
         state::AppState,
         stores::tenant::TenantFcmUpdateParams,
     },
@@ -18,7 +17,7 @@ use {
     fcm::FcmError,
     serde::Serialize,
     std::sync::Arc,
-    tracing::error,
+    tracing::{error, instrument},
 };
 
 pub struct FcmUpdateBody {
@@ -32,6 +31,7 @@ pub struct UpdateTenantFcmResponse {
     success: bool,
 }
 
+#[instrument(skip_all, name = "update_fcm_handler")]
 pub async fn handler(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
@@ -42,7 +42,6 @@ pub async fn handler(
     let _existing_tenant = state.tenant_store.get_tenant(&id).await?;
 
     // JWT token verification
-    let req_id = get_req_id(&headers);
     #[cfg(feature = "cloud")]
     let jwt_verification_result = validate_tenant_request(
         &state.registry_client,
@@ -58,7 +57,6 @@ pub async fn handler(
 
     if let Err(e) = jwt_verification_result {
         error!(
-            request_id = %req_id,
             tenant_id = %id,
             err = ?e,
             "JWT verification failed"

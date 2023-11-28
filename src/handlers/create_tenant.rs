@@ -6,14 +6,13 @@ use {
         handlers::validate_tenant_request,
         increment_counter,
         log::prelude::*,
-        request_id::get_req_id,
         state::AppState,
         stores::tenant::TenantUpdateParams,
     },
     axum::{extract::State, http::HeaderMap, Json},
     serde::{Deserialize, Serialize},
     std::sync::Arc,
-    tracing::info,
+    tracing::{info, instrument},
 };
 
 #[derive(Serialize, Deserialize)]
@@ -28,13 +27,12 @@ pub struct TenantRegisterResponse {
     pub url: String,
 }
 
+#[instrument(skip_all, name = "create_tenant_handler")]
 pub async fn handler(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
     Json(body): Json<TenantRegisterBody>,
 ) -> Result<Json<TenantRegisterResponse>, Error> {
-    let req_id = get_req_id(&headers);
-
     #[cfg(feature = "cloud")]
     let (valid_id, project) = {
         let project_id = body.id.clone();
@@ -70,7 +68,6 @@ pub async fn handler(
         .await
         {
             error!(
-                request_id = %req_id,
                 tenant_id = %body.id,
                 err = ?e,
                 "JWT verification failed"
@@ -84,7 +81,6 @@ pub async fn handler(
     #[cfg(not(feature = "cloud"))]
     if let Err(e) = validate_tenant_request(&state.gotrue_client, &headers) {
         error!(
-            request_id = %req_id,
             tenant_id = %body.id,
             err = ?e,
             "JWT verification failed"
@@ -99,7 +95,6 @@ pub async fn handler(
     increment_counter!(state.metrics, registered_tenants);
 
     info!(
-        request_id = %req_id,
         tenant_id = %tenant.id,
         "new tenant"
     );

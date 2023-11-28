@@ -5,7 +5,7 @@ use {
     },
     async_trait::async_trait,
     sqlx::Executor,
-    tracing::info,
+    tracing::{info, instrument},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, sqlx::FromRow)]
@@ -26,6 +26,7 @@ pub trait ClientStore {
 
 #[async_trait]
 impl ClientStore for sqlx::PgPool {
+    #[instrument(skip(self, client))]
     async fn create_client(&self, tenant_id: &str, id: &str, client: Client) -> stores::Result<()> {
         info!(
             "ClientStore::create_client tenant_id={tenant_id} id={id} token={} with locking",
@@ -71,6 +72,7 @@ impl ClientStore for sqlx::PgPool {
         Ok(())
     }
 
+    #[instrument(skip(self))]
     async fn get_client(&self, tenant_id: &str, id: &str) -> stores::Result<Client> {
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Client>(
             "SELECT tenant_id, push_type, device_token, always_raw FROM public.clients WHERE id = \
@@ -88,6 +90,7 @@ impl ClientStore for sqlx::PgPool {
         }
     }
 
+    #[instrument(skip(self))]
     async fn delete_client(&self, tenant_id: &str, id: &str) -> stores::Result<()> {
         info!("ClientStore::delete_client tenant_id={tenant_id} id={id}");
 
