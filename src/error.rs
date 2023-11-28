@@ -184,7 +184,7 @@ pub enum Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        warn!("responding with error: {self:?}");
+        info!("responding with error: {self:?}");
         let response = match &self {
             Error::BadDeviceToken(e) => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
                 ResponseError {
@@ -568,8 +568,12 @@ impl IntoResponse for Error {
             }
         }.into_response();
 
+        if response.status().is_client_error() {
+            warn!("HTTP Client Error: {self:?}");
+        }
+
         if response.status().is_server_error() {
-            error!("Internal Server Error: {self:?}");
+            error!("HTTP Server Error: {self:?}");
         }
 
         response
