@@ -29,7 +29,6 @@ use {
 
 // Push
 pub mod delete_client;
-pub mod info;
 pub mod metrics;
 pub mod push_message;
 pub mod register_client;
