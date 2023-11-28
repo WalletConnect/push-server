@@ -4,7 +4,6 @@ use {
         error::Error,
         handlers::validate_tenant_request,
         log::prelude::*,
-        request_id::get_req_id,
         state::AppState,
     },
     axum::{
@@ -26,8 +25,6 @@ pub async fn handler(
     Path(id): Path<String>,
     headers: HeaderMap,
 ) -> Result<Json<DeleteTenantResponse>, Error> {
-    let req_id = get_req_id(&headers);
-
     #[cfg(feature = "cloud")]
     let verification_res = validate_tenant_request(
         &state.registry_client,
@@ -43,7 +40,6 @@ pub async fn handler(
 
     if let Err(e) = verification_res {
         error!(
-            request_id = %req_id,
             tenant_id = %id,
             err = ?e,
             "JWT verification failed"
@@ -56,7 +52,6 @@ pub async fn handler(
     decrement_counter!(state.metrics, registered_tenants);
 
     info!(
-        request_id = %req_id,
         tenant_id = %id,
         "deleted tenant"
     );

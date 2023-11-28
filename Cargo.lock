@@ -4029,6 +4029,7 @@ dependencies = [
  "http-body",
  "http-range-header",
  "pin-project-lite",
+ "tower",
  "tower-layer",
  "tower-service",
  "tracing",

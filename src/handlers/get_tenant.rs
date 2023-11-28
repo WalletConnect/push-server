@@ -4,7 +4,6 @@ use {
         handlers::validate_tenant_request,
         log::prelude::*,
         providers::ProviderKind,
-        request_id::get_req_id,
         state::AppState,
         stores::tenant::ApnsType,
     },
@@ -32,8 +31,6 @@ pub async fn handler(
     Path(id): Path<String>,
     headers: HeaderMap,
 ) -> Result<Json<GetTenantResponse>, Error> {
-    let request_id = get_req_id(&headers);
-
     #[cfg(feature = "cloud")]
     let verification_res = validate_tenant_request(
         &state.registry_client,
@@ -49,7 +46,6 @@ pub async fn handler(
 
     if let Err(e) = verification_res {
         error!(
-            request_id = %request_id,
             tenant_id = %id,
             err = ?e,
             "JWT verification failed"
@@ -76,7 +72,6 @@ pub async fn handler(
     }
 
     info!(
-        %request_id,
         tenant_id = %id,
         "requested tenant"
     );

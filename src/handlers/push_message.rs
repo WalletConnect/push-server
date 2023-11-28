@@ -12,13 +12,12 @@ use {
         log::prelude::*,
         middleware::validate_signature::RequireValidSignature,
         providers::{LegacyPushMessage, Provider, PushMessage, PushProvider, RawPushMessage},
-        request_id::get_req_id,
         state::AppState,
         stores::StoreError,
     },
     axum::{
         extract::{Json, Path, State as StateExtractor},
-        http::{HeaderMap, StatusCode},
+        http::StatusCode,
         response::IntoResponse,
     },
     serde::{Deserialize, Serialize},
@@ -41,19 +40,14 @@ pub async fn handler(
     #[cfg(feature = "analytics")] SecureClientIp(client_ip): SecureClientIp,
     Path((tenant_id, client_id)): Path<(String, String)>,
     StateExtractor(state): StateExtractor<Arc<AppState>>,
-    headers: HeaderMap,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<axum::response::Response, Error> {
     let res = handler_internal(
         Path((tenant_id.clone(), client_id.clone())),
         StateExtractor(state.clone()),
-        headers.clone(),
         RequireValidSignature(Json(body.clone())),
     )
     .await;
-
-    #[cfg(feature = "analytics")]
-    let request_id = get_req_id(&headers);
 
     let inner_packed = match res {
         Ok((res, analytics_options_inner)) => (res.status().as_u16(), res, analytics_options_inner),
@@ -104,7 +98,6 @@ pub async fn handler(
                     });
 
                 debug!(
-                    %request_id,
                     %tenant_id,
                     client_id = %client_id,
                     ip = %client_ip,
@@ -127,7 +120,6 @@ pub async fn handler(
 pub async fn handler_internal(
     Path((tenant_id, client_id)): Path<(String, String)>,
     StateExtractor(state): StateExtractor<Arc<AppState>>,
-    headers: HeaderMap,
     RequireValidSignature(Json(body)): RequireValidSignature<Json<PushMessageBody>>,
 ) -> Result<(axum::response::Response, Option<MessageInfo>), (Error, Option<MessageInfo>)> {
     let client = match state.client_store.get_client(&tenant_id, &client_id).await {
@@ -223,9 +215,6 @@ pub async fn handler_internal(
 
     #[cfg(not(feature = "analytics"))]
     let analytics = None;
-
-    let request_id = get_req_id(&headers);
-
     increment_counter!(state.metrics, received_notifications);
 
     let client_id = client_id
@@ -233,7 +222,6 @@ pub async fn handler_internal(
         .to_string();
 
     debug!(
-        %request_id,
         %tenant_id,
         client_id = %client_id,
         "fetched client to send notification"
@@ -241,7 +229,6 @@ pub async fn handler_internal(
 
     if tenant_id != client.tenant_id {
         warn!(
-            %request_id,
             %tenant_id,
             client_id = %client_id,
             "client tenant id does not match request tenant id"
@@ -251,7 +238,6 @@ pub async fn handler_internal(
         {
             if client.tenant_id == "0000-0000-0000-0000" {
                 warn!(
-                    %request_id,
                     %tenant_id,
                     client_id = %client_id,
                     "client tenant id has not been set, allowing request to continue"
@@ -299,7 +285,6 @@ pub async fn handler_internal(
         .await
     {
         warn!(
-            %request_id,
             %tenant_id,
             client_id = %client_id,
             notification_id = %notification.id,
@@ -329,7 +314,6 @@ pub async fn handler_internal(
         .map_err(|e| (Error::Store(e), analytics.clone()))?;
 
     info!(
-        %request_id,
         %tenant_id,
         client_id = %client_id,
         notification_id = %notification.id,
@@ -340,7 +324,6 @@ pub async fn handler_internal(
     // If notification received more than once then discard
     if notification.previous_payloads.len() > 1 {
         warn!(
-            %request_id,
             %tenant_id,
             client_id = %client_id,
             notification_id = %notification.id,
@@ -369,7 +352,6 @@ pub async fn handler_internal(
         .tap_err(|e| warn!("error fetching tenant: {e:?}"))
         .map_err(|e| (e, analytics.clone()))?;
     debug!(
-        %request_id,
         %tenant_id,
         client_id = %client_id,
         notification_id = %notification.id,
@@ -386,7 +368,6 @@ pub async fn handler_internal(
         .tap_err(|e| warn!("error fetching provider: {e:?}"))
         .map_err(|e| (e, analytics.clone()))?;
     debug!(
-        %request_id,
         %tenant_id,
         client_id = %client_id,
         notification_id = %notification.id,
@@ -407,7 +388,6 @@ pub async fn handler_internal(
                         .map_err(|e| (Error::Store(e), analytics.clone()))?;
                     increment_counter!(state.metrics, client_suspensions);
                     warn!(
-                        %request_id,
                         %tenant_id,
                         client_id = %client_id,
                         notification_id = %notification.id,
@@ -424,7 +404,6 @@ pub async fn handler_internal(
                         .map_err(|e| (e, analytics.clone()))?;
                     increment_counter!(state.metrics, tenant_suspensions);
                     warn!(
-                        %request_id,
                         %tenant_id,
                         client_id = %client_id,
                         notification_id = %notification.id,
@@ -441,7 +420,6 @@ pub async fn handler_internal(
                         .map_err(|e| (e, analytics.clone()))?;
                     increment_counter!(state.metrics, tenant_suspensions);
                     warn!(
-                        %request_id,
                         %tenant_id,
                         client_id = %client_id,
                         notification_id = %notification.id,
@@ -457,7 +435,6 @@ pub async fn handler_internal(
     .map_err(|e| (e, analytics.clone()))?;
 
     info!(
-        %request_id,
         %tenant_id,
         client_id = %client_id,
         notification_id = %notification.id,

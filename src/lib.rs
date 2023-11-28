@@ -8,11 +8,7 @@ use {
     wc::geoip::MaxMindResolver,
 };
 use {
-    crate::{
-        log::prelude::*,
-        request_id::{GenericRequestId, X_REQUEST_ID},
-        state::TenantStoreArc,
-    },
+    crate::{log::prelude::*, state::TenantStoreArc},
     axum::{
         routing::{delete, get, post},
         Router,
@@ -31,7 +27,6 @@ use {
     tower_http::{
         catch_panic::CatchPanicLayer,
         cors::{AllowOrigin, CorsLayer},
-        request_id::{PropagateRequestIdLayer, SetRequestIdLayer},
         trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
     },
     tracing::{info, log::LevelFilter, Level},
@@ -62,7 +57,6 @@ pub mod middleware;
 pub mod networking;
 pub mod providers;
 pub mod relay;
-pub mod request_id;
 pub mod state;
 pub mod stores;
 pub mod supabase;
@@ -180,11 +174,6 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
     let state_arc = Arc::new(state);
 
     let global_middleware = ServiceBuilder::new()
-        // set `x-request-id` header on all requests
-        .layer(SetRequestIdLayer::new(
-            X_REQUEST_ID.clone(),
-            GenericRequestId,
-        ))
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(DefaultMakeSpan::new().include_headers(true))
@@ -195,7 +184,6 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
                         .include_headers(true),
                 ),
         )
-        .layer(PropagateRequestIdLayer::new(X_REQUEST_ID.clone()))
         .layer(CatchPanicLayer::new())
         .layer(
             CorsLayer::new()
