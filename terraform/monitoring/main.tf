@@ -547,7 +547,7 @@ resource "grafana_dashboard" "at_a_glance" {
             {
               "evaluator" : {
                 "params" : [
-                  0
+                  5
                 ],
                 "type" : "gt"
               },
@@ -570,7 +570,7 @@ resource "grafana_dashboard" "at_a_glance" {
             {
               "evaluator" : {
                 "params" : [
-                  0
+                  5
                 ],
                 "type" : "gt"
               },
