@@ -36,6 +36,7 @@ pub struct PushMessageBody {
     pub legacy: Option<LegacyPushMessage>,
 }
 
+#[instrument(skip_all, name = "push_message_handler")]
 pub async fn handler(
     #[cfg(feature = "analytics")] SecureClientIp(client_ip): SecureClientIp,
     Path((tenant_id, client_id)): Path<(String, String)>,

@@ -12,8 +12,10 @@ use {
     },
     relay_rpc::domain::ClientId,
     std::sync::Arc,
+    tracing::instrument,
 };
 
+#[instrument(skip_all, name = "delete_client_handler")]
 pub async fn handler(
     Path((tenant_id, id)): Path<(String, String)>,
     StateExtractor(state): StateExtractor<Arc<AppState>>,

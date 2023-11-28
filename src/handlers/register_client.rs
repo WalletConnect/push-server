@@ -19,6 +19,7 @@ use {
     relay_rpc::domain::ClientId,
     serde::{Deserialize, Serialize},
     std::sync::Arc,
+    tracing::instrument,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -30,6 +31,7 @@ pub struct RegisterBody {
     pub always_raw: Option<bool>,
 }
 
+#[instrument(skip_all, name = "register_client_handler")]
 pub async fn handler(
     #[cfg(feature = "analytics")] SecureClientIp(client_ip): SecureClientIp,
     Path(tenant_id): Path<String>,

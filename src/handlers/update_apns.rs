@@ -14,7 +14,7 @@ use {
     base64::Engine,
     serde::{Deserialize, Serialize},
     std::sync::Arc,
-    tracing::{error, warn},
+    tracing::{error, instrument, warn},
 };
 
 #[derive(Deserialize)]
@@ -116,6 +116,7 @@ pub struct UpdateTenantApnsResponse {
     success: bool,
 }
 
+#[instrument(skip_all, name = "update_apns_handler")]
 pub async fn handler(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,

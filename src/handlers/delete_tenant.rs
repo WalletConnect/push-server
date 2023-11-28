@@ -13,6 +13,7 @@ use {
     },
     serde::Serialize,
     std::sync::Arc,
+    tracing::instrument,
 };
 
 #[derive(Serialize)]
@@ -20,6 +21,7 @@ pub struct DeleteTenantResponse {
     success: bool,
 }
 
+#[instrument(skip_all, name = "delete_tenant_handler")]
 pub async fn handler(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,

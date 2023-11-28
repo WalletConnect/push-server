@@ -17,7 +17,7 @@ use {
     fcm::FcmError,
     serde::Serialize,
     std::sync::Arc,
-    tracing::error,
+    tracing::{error, instrument},
 };
 
 pub struct FcmUpdateBody {
@@ -31,6 +31,7 @@ pub struct UpdateTenantFcmResponse {
     success: bool,
 }
 
+#[instrument(skip_all, name = "update_fcm_handler")]
 pub async fn handler(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,

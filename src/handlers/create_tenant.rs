@@ -12,7 +12,7 @@ use {
     axum::{extract::State, http::HeaderMap, Json},
     serde::{Deserialize, Serialize},
     std::sync::Arc,
-    tracing::info,
+    tracing::{info, instrument},
 };
 
 #[derive(Serialize, Deserialize)]
@@ -27,6 +27,7 @@ pub struct TenantRegisterResponse {
     pub url: String,
 }
 
+#[instrument(skip_all, name = "create_tenant_handler")]
 pub async fn handler(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
