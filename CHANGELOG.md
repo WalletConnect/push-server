@@ -2,6 +2,17 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.37.0 - 2023-11-29
+#### Bug Fixes
+- log client errors (#289) - (b2acd19) - Chris Smith
+#### Features
+- **(o11y)** makes the alarm less noisy (#287) - (ccb9a2e) - Derek
+#### Miscellaneous Chores
+- **(logging)** improve logging with instrument and request-id span (#290) - (21ec1ed) - Max Kalashnikoff
+- removing `/info` endpoint in a favor of `/health` (#291) - (b0d2e78) - Max Kalashnikoff
+
+- - -
+
 ## v0.36.0 - 2023-11-21
 #### Bug Fixes
 - **(o11y)** registered client metric is wrong (#285) - (c442c03) - Derek
