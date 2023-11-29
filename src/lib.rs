@@ -235,7 +235,6 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
 
         let app = Router::new()
             .route("/health", get(handlers::health::handler))
-            .route("/info", get(handlers::info::handler))
             .nest("/tenants", tenancy_routes)
             .route(
                 "/:tenant_id/clients",
@@ -263,7 +262,6 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
     #[cfg(not(feature = "multitenant"))]
     let app = Router::new()
         .route("/health", get(handlers::health::handler))
-        .route("/info", get(handlers::info::handler))
         .route(
             "/clients",
             post(handlers::single_tenant_wrappers::register_handler),

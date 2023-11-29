@@ -53,6 +53,10 @@ pub struct AppState {
     pub public_ip: Option<IpAddr>,
     is_multitenant: bool,
     pub geoblock: Option<GeoBlockLayer<Arc<MaxMindResolver>>>,
+    /// Service instance identifier
+    pub instance_id: uuid::Uuid,
+    /// Service instance uptime measurement
+    pub uptime: std::time::Instant,
 }
 
 build_info::build_info!(fn build_info);
@@ -100,6 +104,8 @@ pub fn new_state(
         public_ip,
         is_multitenant,
         geoblock: None,
+        instance_id: uuid::Uuid::new_v4(),
+        uptime: std::time::Instant::now(),
     })
 }
 
