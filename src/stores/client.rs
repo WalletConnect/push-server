@@ -35,11 +35,17 @@ impl ClientStore for sqlx::PgPool {
 
         let mut transaction = self.begin().await?;
 
-        // Statement for locking to prevent an issue #230
-        sqlx::query("SELECT pg_advisory_xact_lock(abs(hashtext($1::text)))")
-            .bind(id)
-            .execute(&mut transaction)
-            .await?;
+        // Statement for locking based on the client id to prevent an issue #230
+        // and locking based on the token to prevent an issue #292
+        sqlx::query(
+            "SELECT 
+                pg_advisory_xact_lock(abs(hashtext($1::text))),
+                pg_advisory_xact_lock(abs(hashtext($2::text)))",
+        )
+        .bind(id)
+        .bind(client.token.clone())
+        .execute(&mut transaction)
+        .await?;
 
         sqlx::query("DELETE FROM public.clients WHERE id = $1 OR device_token = $2")
             .bind(id)
