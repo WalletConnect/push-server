@@ -35,9 +35,15 @@ impl ClientStore for sqlx::PgPool {
 
         let mut transaction = self.begin().await?;
 
-        // Statement for locking to prevent an issue #230
+        // Statement for locking based on the client id to prevent an issue #230
         sqlx::query("SELECT pg_advisory_xact_lock(abs(hashtext($1::text)))")
             .bind(id)
+            .execute(&mut transaction)
+            .await?;
+
+        // Statement for locking based on the token to prevent an issue #292
+        sqlx::query("SELECT pg_advisory_xact_lock(abs(hashtext($1::text)))")
+            .bind(client.token.clone())
             .execute(&mut transaction)
             .await?;
 
