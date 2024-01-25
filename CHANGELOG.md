@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.37.1 - 2024-01-25
+#### Bug Fixes
+- using client id `pg_advisory_xact_lock` lock when inserting notification (#296) - (a0793d0) - Max Kalashnikoff
+- adding the pg_lock for the token (#293) - (d77fa50) - Max Kalashnikoff
+
+- - -
+
 ## v0.37.0 - 2023-11-29
 #### Bug Fixes
 - log client errors (#289) - (b2acd19) - Chris Smith
