@@ -50,6 +50,13 @@ impl NotificationStore for sqlx::PgPool {
         client_id: &str,
         payload: &PushMessageBody,
     ) -> stores::Result<Notification> {
+        let mut transaction = self.begin().await?;
+
+        sqlx::query("SELECT pg_advisory_xact_lock(abs(hashtext($1::text)))")
+            .bind(client_id)
+            .execute(&mut transaction)
+            .await?;
+
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Notification>(
             "
             INSERT INTO public.notifications (id, tenant_id, client_id, last_payload)
@@ -62,8 +69,10 @@ impl NotificationStore for sqlx::PgPool {
         .bind(tenant_id)
         .bind(client_id)
         .bind(Json(payload))
-        .fetch_one(self)
+        .fetch_one(&mut transaction)
         .await;
+
+        transaction.commit().await?;
 
         match res {
             Err(e) => Err(e.into()),
