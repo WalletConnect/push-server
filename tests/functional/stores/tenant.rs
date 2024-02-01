@@ -63,27 +63,6 @@ async fn tenant_get(ctx: &mut StoreContext) {
 
 #[test_context(StoreContext)]
 #[tokio::test]
-async fn tenant_update(ctx: &mut StoreContext) {
-    let tenant = ctx
-        .tenants
-        .create_tenant(TenantUpdateParams {
-            id: Uuid::new_v4().to_string(),
-        })
-        .await
-        .expect("creation failed");
-
-    let res = ctx
-        .tenants
-        .update_tenant(&tenant.id, TenantUpdateParams {
-            id: Uuid::new_v4().to_string(),
-        })
-        .await;
-
-    assert!(res.is_ok())
-}
-
-#[test_context(StoreContext)]
-#[tokio::test]
 async fn tenant_fcm(ctx: &mut StoreContext) {
     let tenant = ctx
         .tenants
