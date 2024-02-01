@@ -302,7 +302,11 @@ impl TenantStore for PgPool {
     #[instrument(skip(self))]
     async fn create_tenant(&self, params: TenantUpdateParams) -> Result<Tenant> {
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
-            "INSERT INTO public.tenants (id) VALUES ($1) RETURNING *;",
+            "INSERT INTO public.tenants (id)
+            VALUES ($1)
+            ON CONFLICT (id)
+            DO UPDATE SET updated_at = NOW()
+            RETURNING *",
         )
         .bind(params.id)
         .fetch_one(self)
@@ -314,7 +318,7 @@ impl TenantStore for PgPool {
     #[instrument(skip(self))]
     async fn update_tenant(&self, id: &str, params: TenantUpdateParams) -> Result<Tenant> {
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
-            "UPDATE public.tenants SET id = $2 WHERE id = $1 RETURNING *;",
+            "UPDATE public.tenants SET id = $2, updated_at = NOW() WHERE id = $1 RETURNING *;",
         )
         .bind(id)
         .bind(params.id)
@@ -327,7 +331,8 @@ impl TenantStore for PgPool {
     #[instrument(skip(self))]
     async fn update_tenant_fcm(&self, id: &str, params: TenantFcmUpdateParams) -> Result<Tenant> {
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
-            "UPDATE public.tenants SET fcm_api_key = $2 WHERE id = $1 RETURNING *;",
+            "UPDATE public.tenants SET fcm_api_key = $2, updated_at = NOW() WHERE id = $1 \
+             RETURNING *;",
         )
         .bind(id)
         .bind(params.fcm_api_key)
@@ -340,7 +345,8 @@ impl TenantStore for PgPool {
     #[instrument(skip(self))]
     async fn update_tenant_apns(&self, id: &str, params: TenantApnsUpdateParams) -> Result<Tenant> {
         let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
-            "UPDATE public.tenants SET apns_topic = $2 WHERE id = $1 RETURNING *;",
+            "UPDATE public.tenants SET apns_topic = $2, updated_at = NOW() WHERE id = $1 \
+             RETURNING *;",
         )
         .bind(id)
         .bind(params.apns_topic)
@@ -363,7 +369,7 @@ impl TenantStore for PgPool {
             } => sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
                 "UPDATE public.tenants SET apns_type = 'certificate'::apns_type, apns_certificate \
                  = $2, apns_certificate_password = $3, apns_pkcs8_pem = null, apns_team_id = \
-                 null, apns_key_id = null WHERE id = $1 RETURNING *;",
+                 null, apns_key_id = null, updated_at = NOW() WHERE id = $1 RETURNING *;",
             )
             .bind(id)
             .bind(apns_certificate)
@@ -375,7 +381,7 @@ impl TenantStore for PgPool {
             } => sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
                 "UPDATE public.tenants SET apns_type = 'token'::apns_type, apns_pkcs8_pem = $2, \
                  apns_team_id = $3, apns_key_id = $4, apns_certificate = null, \
-                 apns_certificate_password = null WHERE id = $1 RETURNING *;",
+                 apns_certificate_password = null, updated_at = NOW() WHERE id = $1 RETURNING *;",
             )
             .bind(id)
             .bind(apns_pkcs8_pem)
@@ -391,7 +397,7 @@ impl TenantStore for PgPool {
     #[instrument(skip(self))]
     async fn suspend_tenant(&self, id: &str, reason: &str) -> Result<()> {
         let mut query_builder = sqlx::QueryBuilder::new(
-            "UPDATE public.tenants SET suspended = true, suspended_reason =",
+            "UPDATE public.tenants SET suspended = true, updated_at = NOW(), suspended_reason =",
         );
         query_builder.push_bind(reason);
         query_builder.push(" WHERE id = ");
@@ -406,7 +412,8 @@ impl TenantStore for PgPool {
     #[instrument(skip(self))]
     async fn unsuspend_tenant(&self, id: &str) -> Result<()> {
         let mut query_builder = sqlx::QueryBuilder::new(
-            "UPDATE public.tenants SET suspended = false, suspended_reason = null WHERE id = ",
+            "UPDATE public.tenants SET suspended = false, updated_at = NOW(), suspended_reason = \
+             null WHERE id = ",
         );
         query_builder.push_bind(id);
         let query = query_builder.build();
