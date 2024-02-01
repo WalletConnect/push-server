@@ -258,7 +258,6 @@ pub trait TenantStore {
     async fn get_tenant(&self, id: &str) -> Result<Tenant>;
     async fn delete_tenant(&self, id: &str) -> Result<()>;
     async fn create_tenant(&self, params: TenantUpdateParams) -> Result<Tenant>;
-    async fn update_tenant(&self, id: &str, params: TenantUpdateParams) -> Result<Tenant>;
     async fn update_tenant_fcm(&self, id: &str, params: TenantFcmUpdateParams) -> Result<Tenant>;
     async fn update_tenant_apns(&self, id: &str, params: TenantApnsUpdateParams) -> Result<Tenant>;
     async fn update_tenant_apns_auth(
@@ -308,19 +307,6 @@ impl TenantStore for PgPool {
             DO UPDATE SET updated_at = NOW()
             RETURNING *",
         )
-        .bind(params.id)
-        .fetch_one(self)
-        .await?;
-
-        Ok(res)
-    }
-
-    #[instrument(skip(self))]
-    async fn update_tenant(&self, id: &str, params: TenantUpdateParams) -> Result<Tenant> {
-        let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
-            "UPDATE public.tenants SET id = $2, updated_at = NOW() WHERE id = $1 RETURNING *;",
-        )
-        .bind(id)
         .bind(params.id)
         .fetch_one(self)
         .await?;
@@ -460,10 +446,6 @@ impl TenantStore for DefaultTenantStore {
     }
 
     async fn create_tenant(&self, _params: TenantUpdateParams) -> Result<Tenant> {
-        panic!("Shouldn't have run in single tenant mode")
-    }
-
-    async fn update_tenant(&self, _id: &str, _params: TenantUpdateParams) -> Result<Tenant> {
         panic!("Shouldn't have run in single tenant mode")
     }
 
