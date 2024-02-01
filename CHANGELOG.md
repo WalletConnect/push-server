@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.37.2 - 2024-02-01
+#### Bug Fixes
+- removing `update_tenant` function (#299) - (bb76d86) - Max Kalashnikoff
+- tenants update on conflict handling (#298) - (994ec79) - Max Kalashnikoff
+
+- - -
+
 ## v0.37.1 - 2024-01-25
 #### Bug Fixes
 - using client id `pg_advisory_xact_lock` lock when inserting notification (#296) - (a0793d0) - Max Kalashnikoff
