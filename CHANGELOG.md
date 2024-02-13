@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.37.3 - 2024-02-13
+#### Bug Fixes
+- **(alarms)** increasing 5xx alarm threshold from 5 to 15 (#303) - (8b25665) - Max Kalashnikoff
+
+- - -
+
 ## v0.37.2 - 2024-02-01
 #### Bug Fixes
 - removing `update_tenant` function (#299) - (bb76d86) - Max Kalashnikoff
