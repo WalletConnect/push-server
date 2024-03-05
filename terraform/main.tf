@@ -103,7 +103,7 @@ module "database_cluster" {
   enabled_cloudwatch_logs_exports = ["postgresql"]
 
   serverlessv2_scaling_configuration = {
-    min_capacity = 2
+    min_capacity = local.environment == "prod" ? 1 : 0.5
     max_capacity = 10
   }
 }
@@ -137,8 +137,8 @@ module "tenant_database_cluster" {
   enabled_cloudwatch_logs_exports = ["postgresql"]
 
   serverlessv2_scaling_configuration = {
-    min_capacity = 2
-    max_capacity = 10
+    min_capacity = local.environment == "prod" ? 1 : 0.5
+    max_capacity = 20
   }
 }
 
@@ -153,9 +153,9 @@ module "ecs" {
   image                      = "${data.aws_ecr_repository.repository.repository_url}:${local.version}"
   image_version              = local.version
   acm_certificate_arn        = module.dns.certificate_arn
-  cpu                        = 512
+  cpu                        = local.environment == "prod" ? 512 : 256
   fqdn                       = local.fqdn
-  memory                     = 1024
+  memory                     = local.environment == "prod" ? 1024 : 512
   private_subnets            = module.vpc.private_subnets
   public_subnets             = module.vpc.public_subnets
   region                     = var.region
@@ -181,7 +181,7 @@ module "ecs" {
   jwt_secret       = var.jwt_secret
   relay_public_key = var.relay_public_key
 
-  autoscaling_max_capacity = local.environment == "prod" ? 4 : 1
+  autoscaling_max_capacity = local.environment == "prod" ? 10 : 1
   autoscaling_min_capacity = local.environment == "prod" ? 2 : 1
   desired_count            = local.environment == "prod" ? 2 : 1
 }
