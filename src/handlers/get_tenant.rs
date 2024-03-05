@@ -1,11 +1,7 @@
 use {
     crate::{
-        error::Error,
-        handlers::validate_tenant_request,
-        log::prelude::*,
-        providers::ProviderKind,
-        state::AppState,
-        stores::tenant::ApnsType,
+        error::Error, handlers::validate_tenant_request, log::prelude::*, providers::ProviderKind,
+        state::AppState, stores::tenant::ApnsType,
     },
     axum::{
         extract::{Path, State},
@@ -73,7 +69,7 @@ pub async fn handler(
         res.apns_type = tenant.apns_type;
     }
 
-    info!(
+    debug!(
         tenant_id = %id,
         "requested tenant"
     );

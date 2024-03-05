@@ -1,9 +1,6 @@
 use {
     crate::{
-        decrement_counter,
-        error::Error,
-        handlers::validate_tenant_request,
-        log::prelude::*,
+        decrement_counter, error::Error, handlers::validate_tenant_request, log::prelude::*,
         state::AppState,
     },
     axum::{
@@ -53,7 +50,7 @@ pub async fn handler(
 
     decrement_counter!(state.metrics, registered_tenants);
 
-    info!(
+    debug!(
         tenant_id = %id,
         "deleted tenant"
     );

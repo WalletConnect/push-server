@@ -5,7 +5,7 @@ use {
     },
     async_trait::async_trait,
     sqlx::Executor,
-    tracing::{info, instrument},
+    tracing::{debug, instrument},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, sqlx::FromRow)]
@@ -28,7 +28,7 @@ pub trait ClientStore {
 impl ClientStore for sqlx::PgPool {
     #[instrument(skip(self, client))]
     async fn create_client(&self, tenant_id: &str, id: &str, client: Client) -> stores::Result<()> {
-        info!(
+        debug!(
             "ClientStore::create_client tenant_id={tenant_id} id={id} token={} with locking",
             client.token
         );
@@ -38,7 +38,7 @@ impl ClientStore for sqlx::PgPool {
         // Statement for locking based on the client id to prevent an issue #230
         // and locking based on the token to prevent an issue #292
         sqlx::query(
-            "SELECT 
+            "SELECT
                 pg_advisory_xact_lock(abs(hashtext($1::text))),
                 pg_advisory_xact_lock(abs(hashtext($2::text)))",
         )
@@ -98,7 +98,7 @@ impl ClientStore for sqlx::PgPool {
 
     #[instrument(skip(self))]
     async fn delete_client(&self, tenant_id: &str, id: &str) -> stores::Result<()> {
-        info!("ClientStore::delete_client tenant_id={tenant_id} id={id}");
+        debug!("ClientStore::delete_client tenant_id={tenant_id} id={id}");
 
         let mut notification_query_builder =
             sqlx::QueryBuilder::new("DELETE FROM public.notifications WHERE client_id = ");

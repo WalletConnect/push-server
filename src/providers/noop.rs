@@ -1,10 +1,6 @@
 use {
-    super::PushMessage,
-    crate::providers::PushProvider,
-    async_trait::async_trait,
-    reqwest::Url,
-    std::collections::HashMap,
-    tracing::instrument,
+    super::PushMessage, crate::providers::PushProvider, async_trait::async_trait, reqwest::Url,
+    std::collections::HashMap, tracing::instrument,
 };
 
 #[derive(Debug, Default, PartialEq, Eq, Clone)]

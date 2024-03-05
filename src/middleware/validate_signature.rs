@@ -1,11 +1,8 @@
 use {
     crate::{
         error::Error::{
-            FromRequestError,
-            MissingAllSignatureHeader,
-            MissingSignatureHeader,
-            MissingTimestampHeader,
-            ToBytesError,
+            FromRequestError, MissingAllSignatureHeader, MissingSignatureHeader,
+            MissingTimestampHeader, ToBytesError,
         },
         state::State,
     },

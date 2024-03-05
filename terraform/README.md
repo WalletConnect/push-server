@@ -57,3 +57,51 @@
 
 No outputs.
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+
+<!-- BEGIN_TF_DOCS -->
+
+## Requirements
+
+| Name | Version |
+|------|---------|
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 4.31 |
+| <a name="requirement_github"></a> [github](#requirement\_github) | 5.7.0 |
+| <a name="requirement_grafana"></a> [grafana](#requirement\_grafana) | ~> 1.28 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | 3.4.3 |
+## Providers
+
+| Name | Version |
+|------|---------|
+| <a name="provider_assert"></a> [assert](#provider\_assert) | 0.0.1 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 4.67.0 |
+| <a name="provider_github"></a> [github](#provider\_github) | 5.7.0 |
+## Modules
+
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_backup_dns"></a> [backup\_dns](#module\_backup\_dns) | github.com/WalletConnect/terraform-modules.git | 52a74ee5bcaf5cacb5664c6f88d9dbce28500581//modules/dns |
+| <a name="module_database_cluster"></a> [database\_cluster](#module\_database\_cluster) | terraform-aws-modules/rds-aurora/aws | 7.7.0 |
+| <a name="module_dns"></a> [dns](#module\_dns) | github.com/WalletConnect/terraform-modules.git | 52a74ee5bcaf5cacb5664c6f88d9dbce28500581//modules/dns |
+| <a name="module_ecs"></a> [ecs](#module\_ecs) | ./ecs | n/a |
+| <a name="module_monitoring"></a> [monitoring](#module\_monitoring) | ./monitoring | n/a |
+| <a name="module_tags"></a> [tags](#module\_tags) | github.com/WalletConnect/terraform-modules.git | 52a74ee5bcaf5cacb5664c6f88d9dbce28500581//modules/tags |
+| <a name="module_tenant_database_cluster"></a> [tenant\_database\_cluster](#module\_tenant\_database\_cluster) | terraform-aws-modules/rds-aurora/aws | 7.7.0 |
+| <a name="module_vpc"></a> [vpc](#module\_vpc) | terraform-aws-modules/vpc/aws | 3.19.0 |
+
+## Inputs
+  | Name | Description | Type | Default | Required |
+  |------|-------------|------|---------|:--------:|
+      | <a name="input_azs"></a> [azs](#input\_azs) | n/a |  <pre lang="json">list(string)</pre> |  <pre lang="json">[<br>  "eu-central-1a",<br>  "eu-central-1b",<br>  "eu-central-1c"<br>]</pre> |  no |
+      | <a name="input_cloud_api_key"></a> [cloud\_api\_key](#input\_cloud\_api\_key) | n/a |  <pre lang="json">string</pre> |  <pre lang="json">n/a</pre> |  yes |
+      | <a name="input_geoip_db_key"></a> [geoip\_db\_key](#input\_geoip\_db\_key) | The key to the GeoIP database |  <pre lang="json">string</pre> |  <pre lang="json">"GeoLite2-City.mmdb"</pre> |  no |
+      | <a name="input_grafana_endpoint"></a> [grafana\_endpoint](#input\_grafana\_endpoint) | n/a |  <pre lang="json">string</pre> |  <pre lang="json">n/a</pre> |  yes |
+      | <a name="input_image_version"></a> [image\_version](#input\_image\_version) | n/a |  <pre lang="json">string</pre> |  <pre lang="json">""</pre> |  no |
+      | <a name="input_jwt_secret"></a> [jwt\_secret](#input\_jwt\_secret) | n/a |  <pre lang="json">string</pre> |  <pre lang="json">n/a</pre> |  yes |
+      | <a name="input_public_url"></a> [public\_url](#input\_public\_url) | n/a |  <pre lang="json">string</pre> |  <pre lang="json">"echo.walletconnect.com"</pre> |  no |
+      | <a name="input_relay_public_key"></a> [relay\_public\_key](#input\_relay\_public\_key) | n/a |  <pre lang="json">string</pre> |  <pre lang="json">n/a</pre> |  yes |
+## Outputs
+
+No outputs.
+
+<!-- END_TF_DOCS -->

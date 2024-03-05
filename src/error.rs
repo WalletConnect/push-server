@@ -184,7 +184,6 @@ pub enum Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        info!("responding with error: {self:?}");
         let response = match &self {
             Error::BadDeviceToken(e) => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
                 ResponseError {

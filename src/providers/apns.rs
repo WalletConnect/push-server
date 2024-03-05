@@ -4,7 +4,7 @@ use {
     a2::{ErrorReason, NotificationBuilder, NotificationOptions},
     async_trait::async_trait,
     std::io::Read,
-    tracing::{info, instrument, warn},
+    tracing::{debug, instrument, warn},
 };
 
 #[derive(Debug, Clone)]
@@ -69,7 +69,7 @@ impl PushProvider for ApnsProvider {
                 message,
             }) => {
                 // Sending `always_raw` encrypted message
-                info!("Sending raw encrypted message");
+                debug!("Sending raw encrypted message");
                 let mut notification_payload = a2::DefaultNotificationBuilder::new()
                     .set_content_available()
                     .set_mutable_content()
@@ -85,7 +85,7 @@ impl PushProvider for ApnsProvider {
             PushMessage::LegacyPushMessage(LegacyPushMessage { id: _, payload }) => {
                 // TODO tidy after https://github.com/WalletConnect/a2/issues/67 is closed
                 if payload.is_encrypted() {
-                    info!("Sending legacy `is_encrypted` message");
+                    debug!("Sending legacy `is_encrypted` message");
                     let mut notification_payload = a2::DefaultNotificationBuilder::new()
                         .set_content_available()
                         .set_mutable_content()
@@ -97,7 +97,7 @@ impl PushProvider for ApnsProvider {
 
                     self.client.send(notification_payload).await
                 } else {
-                    info!("Sending plain message");
+                    debug!("Sending plain message");
                     let blob = DecryptedPayloadBlob::from_base64_encoded(&payload.blob)?;
 
                     let mut notification_payload = a2::DefaultNotificationBuilder::new()

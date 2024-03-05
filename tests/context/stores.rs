@@ -1,9 +1,7 @@
 use {
     sqlx::{
         postgres::{PgConnectOptions, PgPoolOptions},
-        ConnectOptions,
-        Pool,
-        Postgres,
+        ConnectOptions, Pool, Postgres,
     },
     std::{str::FromStr, time::Duration},
     tracing::log::LevelFilter,

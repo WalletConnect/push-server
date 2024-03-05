@@ -55,9 +55,9 @@ pub async fn handler(
     }
 
     state.client_store.delete_client(&tenant_id, &id).await?;
-    info!("client ({}) deleted for tenant ({})", id, tenant_id);
+    debug!("client ({}) deleted for tenant ({})", id, tenant_id);
 
-    info!(
+    debug!(
         %tenant_id,
         client_id = %client_to_be_deleted,
         "deleted client"
