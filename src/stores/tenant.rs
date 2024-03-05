@@ -19,7 +19,7 @@ use {
     chrono::{DateTime, Utc},
     serde::{Deserialize, Serialize},
     sqlx::{Executor, PgPool},
-    tracing::{info, instrument},
+    tracing::{debug, instrument},
 };
 
 #[cfg(any(debug_assertions, test))]
@@ -197,7 +197,7 @@ impl Tenant {
                         &self.apns_topic,
                     ) {
                         (Some(certificate), Some(password), Some(topic)) => {
-                            info!("apns certificate (p12) provider is matched");
+                            debug!("apns certificate (p12) provider is matched");
                             let decoded =
                                 base64::engine::general_purpose::STANDARD.decode(certificate)?;
                             let apns_client = ApnsProvider::new_cert(
@@ -218,7 +218,7 @@ impl Tenant {
                         &self.apns_team_id,
                     ) {
                         (Some(topic), Some(pkcs8_pem), Some(key_id), Some(team_id)) => {
-                            info!("apns token (p8) provider is matched");
+                            debug!("apns token (p8) provider is matched");
                             let p8_token =
                                 base64::engine::general_purpose::STANDARD.decode(pkcs8_pem)?;
                             let apns_client = ApnsProvider::new_token(
@@ -238,7 +238,7 @@ impl Tenant {
             }
             ProviderKind::Fcm => match self.fcm_api_key.clone() {
                 Some(api_key) => {
-                    info!("fcm provider is matched");
+                    debug!("fcm provider is matched");
                     let fcm = FcmProvider::new(api_key);
                     Ok(Fcm(fcm))
                 }
@@ -246,7 +246,7 @@ impl Tenant {
             },
             #[cfg(any(debug_assertions, test))]
             ProviderKind::Noop => {
-                info!("noop provider is matched");
+                debug!("noop provider is matched");
                 Ok(Noop(NoopProvider::new()))
             }
         }

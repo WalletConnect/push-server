@@ -51,12 +51,15 @@ pub fn parse_blob_from_payload() {
     let blob = DecryptedPayloadBlob::from_base64_encoded(&payload.blob)
         .expect("Failed to parse payload's blob");
 
-    assert_eq!(blob, DecryptedPayloadBlob {
-        title: EXAMPLE_CLEARTEXT_BLOB_TITLE.to_string(),
-        body: EXAMPLE_CLEARTEXT_BLOB_BODY.to_string(),
-        image: None,
-        url: None
-    })
+    assert_eq!(
+        blob,
+        DecryptedPayloadBlob {
+            title: EXAMPLE_CLEARTEXT_BLOB_TITLE.to_string(),
+            body: EXAMPLE_CLEARTEXT_BLOB_BODY.to_string(),
+            image: None,
+            url: None
+        }
+    )
 }
 
 #[test]
@@ -64,12 +67,15 @@ pub fn parse_encoded_blob() {
     let blob = DecryptedPayloadBlob::from_base64_encoded(EXAMPLE_CLEARTEXT_ENCODED_BLOB)
         .expect("Failed to parse encoded blob");
 
-    assert_eq!(blob, DecryptedPayloadBlob {
-        title: EXAMPLE_CLEARTEXT_BLOB_TITLE.to_string(),
-        body: EXAMPLE_CLEARTEXT_BLOB_BODY.to_string(),
-        image: None,
-        url: None
-    })
+    assert_eq!(
+        blob,
+        DecryptedPayloadBlob {
+            title: EXAMPLE_CLEARTEXT_BLOB_TITLE.to_string(),
+            body: EXAMPLE_CLEARTEXT_BLOB_BODY.to_string(),
+            image: None,
+            url: None
+        }
+    )
 }
 
 #[test]
@@ -77,10 +83,13 @@ pub fn parse_blob() {
     let blob = DecryptedPayloadBlob::from_json_string(EXAMPLE_CLEARTEXT_BLOB.to_string())
         .expect("Failed to parse blob");
 
-    assert_eq!(blob, DecryptedPayloadBlob {
-        title: EXAMPLE_CLEARTEXT_BLOB_TITLE.to_string(),
-        body: EXAMPLE_CLEARTEXT_BLOB_BODY.to_string(),
-        image: None,
-        url: None
-    })
+    assert_eq!(
+        blob,
+        DecryptedPayloadBlob {
+            title: EXAMPLE_CLEARTEXT_BLOB_TITLE.to_string(),
+            body: EXAMPLE_CLEARTEXT_BLOB_BODY.to_string(),
+            image: None,
+            url: None
+        }
+    )
 }

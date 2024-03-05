@@ -12,7 +12,7 @@ use {
     axum::{extract::State, http::HeaderMap, Json},
     serde::{Deserialize, Serialize},
     std::sync::Arc,
-    tracing::{info, instrument},
+    tracing::instrument,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -94,7 +94,7 @@ pub async fn handler(
 
     increment_counter!(state.metrics, registered_tenants);
 
-    info!(
+    debug!(
         tenant_id = %tenant.id,
         "new tenant"
     );

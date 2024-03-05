@@ -4,9 +4,7 @@ use {
         functional::stores::{gen_id, TENANT_ID},
     },
     echo_server::{
-        handlers::push_message::PushMessageBody,
-        providers::ProviderKind,
-        state::ClientStoreArc,
+        handlers::push_message::PushMessageBody, providers::ProviderKind, state::ClientStoreArc,
         stores::client::Client,
     },
     test_context::test_context,
@@ -17,12 +15,16 @@ pub async fn create_client(client_store: &ClientStoreArc) -> String {
     let token = format!("token-{}", gen_id());
 
     client_store
-        .create_client(TENANT_ID, &id, Client {
-            tenant_id: TENANT_ID.to_string(),
-            push_type: ProviderKind::Noop,
-            token,
-            always_raw: false,
-        })
+        .create_client(
+            TENANT_ID,
+            &id,
+            Client {
+                tenant_id: TENANT_ID.to_string(),
+                push_type: ProviderKind::Noop,
+                token,
+                always_raw: false,
+            },
+        )
         .await
         .expect("failed to create client for notification test");
 
@@ -36,10 +38,15 @@ async fn notification(ctx: &mut StoreContext) {
 
     let res = ctx
         .notifications
-        .create_or_update_notification(&gen_id(), TENANT_ID, &client_id, &PushMessageBody {
-            raw: None,
-            legacy: None,
-        })
+        .create_or_update_notification(
+            &gen_id(),
+            TENANT_ID,
+            &client_id,
+            &PushMessageBody {
+                raw: None,
+                legacy: None,
+            },
+        )
         .await;
 
     assert!(res.is_ok());

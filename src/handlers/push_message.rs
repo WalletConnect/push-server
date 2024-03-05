@@ -314,7 +314,7 @@ pub async fn handler_internal(
         .tap_err(|e| warn!("error create_or_update_notification: {e:?}"))
         .map_err(|e| (Error::Store(e), analytics.clone()))?;
 
-    info!(
+    debug!(
         %tenant_id,
         client_id = %client_id,
         notification_id = %notification.id,
@@ -435,7 +435,7 @@ pub async fn handler_internal(
     }
     .map_err(|e| (e, analytics.clone()))?;
 
-    info!(
+    debug!(
         %tenant_id,
         client_id = %client_id,
         notification_id = %notification.id,

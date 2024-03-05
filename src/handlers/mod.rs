@@ -24,7 +24,7 @@ use {
     },
     serde_json::{json, Value},
     std::{collections::HashSet, string::ToString},
-    tracing::{info, instrument},
+    tracing::{debug, instrument},
 };
 
 // Push
@@ -58,13 +58,13 @@ where
         let header_str = auth_header.to_str()?;
 
         let claims = JwtBasicClaims::try_from_str(header_str).map_err(|e| {
-            info!("Invalid claims: {:?}", e);
+            debug!("Invalid claims: {:?}", e);
             e
         })?;
         claims
             .verify_basic(&HashSet::from([aud.to_string()]), None)
             .map_err(|e| {
-                info!("Failed to verify_basic: {:?}", e);
+                debug!("Failed to verify_basic: {:?}", e);
                 e
             })?;
         let client_id: ClientId = claims.iss.into();
