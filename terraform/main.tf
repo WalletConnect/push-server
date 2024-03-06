@@ -104,7 +104,7 @@ module "database_cluster" {
 
   serverlessv2_scaling_configuration = {
     min_capacity = local.environment == "prod" ? 1 : 0.5
-    max_capacity = 10
+    max_capacity = 20
   }
 }
 
