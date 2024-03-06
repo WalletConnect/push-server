@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.37.4 - 2024-03-06
+#### Bug Fixes
+- scale down (#307) - (05662e3) - Chris Smith
+- reduce info logs (#306) - (124098a) - Chris Smith
+
+- - -
+
 ## v0.37.3 - 2024-02-13
 #### Bug Fixes
 - **(alarms)** increasing 5xx alarm threshold from 5 to 15 (#303) - (8b25665) - Max Kalashnikoff
