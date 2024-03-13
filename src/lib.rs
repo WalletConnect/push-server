@@ -66,6 +66,8 @@ pub mod state;
 pub mod stores;
 pub mod supabase;
 
+const PG_CONNECTION_POOL_SIZE: u32 = 30;
+
 pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> error::Result<()> {
     // Check config is valid and then throw the error if its not
     config.is_valid()?;
@@ -76,7 +78,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         .clone();
 
     let store = PgPoolOptions::new()
-        .max_connections(5)
+        .max_connections(PG_CONNECTION_POOL_SIZE)
         .connect_with(pg_options)
         .await?;
 
@@ -95,7 +97,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             .clone();
 
         let tenant_database = PgPoolOptions::new()
-            .max_connections(5)
+            .max_connections(PG_CONNECTION_POOL_SIZE)
             .connect_with(tenant_pg_options)
             .await?;
 

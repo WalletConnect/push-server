@@ -7,6 +7,8 @@ use {
     tracing::log::LevelFilter,
 };
 
+const PG_CONNECTION_POOL_SIZE: u32 = 30;
+
 pub async fn open_pg_connections(
     database_uri: &str,
     tenant_database_uri: &str,
@@ -18,7 +20,7 @@ pub async fn open_pg_connections(
         .clone();
 
     let pool = PgPoolOptions::new()
-        .max_connections(5)
+        .max_connections(PG_CONNECTION_POOL_SIZE)
         .connect_with(pg_options)
         .await
         .expect("failed to connect to postgres");
@@ -35,7 +37,7 @@ pub async fn open_pg_connections(
         .clone();
 
     let tenant_pool = PgPoolOptions::new()
-        .max_connections(5)
+        .max_connections(PG_CONNECTION_POOL_SIZE)
         .connect_with(tenant_pg_options)
         .await
         .expect("failed to connect to postgres");
