@@ -66,7 +66,7 @@ pub mod state;
 pub mod stores;
 pub mod supabase;
 
-const PG_CONNECTION_POOL_SIZE: u32 = 30;
+const PG_CONNECTION_POOL_SIZE: u32 = 100;
 
 pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> error::Result<()> {
     // Check config is valid and then throw the error if its not
