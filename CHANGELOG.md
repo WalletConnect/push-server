@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.37.5 - 2024-03-13
+#### Bug Fixes
+- increasing Postgres connection pool size (#309) - (3429e23) - Max Kalashnikoff
+
+- - -
+
 ## v0.37.4 - 2024-03-06
 #### Bug Fixes
 - scale down (#307) - (05662e3) - Chris Smith
