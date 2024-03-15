@@ -33,8 +33,7 @@ concurrency:
 jobs:
   tasks:
     name: "[${{ matrix.os }}/rust-${{matrix.cargo.rustc}}] ${{ matrix.cargo.name }}"
-    runs-on:
-      group: ubuntu-runners
+    runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres

@@ -20,8 +20,7 @@ permissions:
 
 jobs:
   release:
-    runs-on:
-      group: ubuntu-runners
+    runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.release.outputs.version }}
     steps:
@@ -46,8 +45,7 @@ jobs:
           token: ${{ secrets.RELEASE_PAT }}
 
   build-container:
-    runs-on:
-      group: ubuntu-runners
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         file: [Dockerfile, slim.Dockerfile]

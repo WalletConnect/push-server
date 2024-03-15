@@ -7,8 +7,7 @@ on:
 
 jobs:
   build-container:
-    runs-on:
-      group: ubuntu-runners
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         file: [Dockerfile, slim.Dockerfile]
