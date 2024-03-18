@@ -4,7 +4,7 @@ use {
     async_trait::async_trait,
     fcm::{ErrorReason, FcmError, FcmResponse, MessageBuilder, NotificationBuilder, Priority},
     std::fmt::{Debug, Formatter},
-    tracing::{info, instrument},
+    tracing::{debug, instrument},
 };
 
 pub struct FcmProvider {
@@ -34,7 +34,7 @@ impl PushProvider for FcmProvider {
         let result = match body {
             PushMessage::RawPushMessage(message) => {
                 // Sending `always_raw` encrypted message
-                info!("Sending raw encrypted message");
+                debug!("Sending raw encrypted message");
                 message_builder.data(&message)?;
                 set_message_priority_high(&mut message_builder);
                 let fcm_message = message_builder.finalize();
@@ -42,13 +42,13 @@ impl PushProvider for FcmProvider {
             }
             PushMessage::LegacyPushMessage(LegacyPushMessage { id: _, payload }) => {
                 if payload.is_encrypted() {
-                    info!("Sending legacy `is_encrypted` message");
+                    debug!("Sending legacy `is_encrypted` message");
                     message_builder.data(&payload)?;
                     set_message_priority_high(&mut message_builder);
                     let fcm_message = message_builder.finalize();
                     self.client.send(fcm_message).await
                 } else {
-                    info!("Sending plain message");
+                    debug!("Sending plain message");
                     let blob = DecryptedPayloadBlob::from_base64_encoded(&payload.blob)?;
 
                     let mut notification_builder = NotificationBuilder::new();
