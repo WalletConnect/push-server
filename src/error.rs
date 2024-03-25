@@ -169,11 +169,14 @@ pub enum Error {
     #[error("tenant id and client's registered tenant didn't match")]
     MissmatchedTenantId,
 
-    #[error("invalid fcm api key")]
+    #[error("Invalid FCM API key")]
     BadFcmApiKey,
 
-    #[error("invalid apns creds")]
+    #[error("Invalid APNs creds")]
     BadApnsCredentials,
+
+    #[error("Expired APNs certificate")]
+    ApnsCertificateExpired,
 
     #[error("client deleted due to invalid device token")]
     ClientDeleted,
@@ -568,11 +571,11 @@ impl IntoResponse for Error {
         }.into_response();
 
         if response.status().is_client_error() {
-            warn!("HTTP Client Error: {self:?}");
+            warn!("HTTP client error: {self:?}");
         }
 
         if response.status().is_server_error() {
-            error!("HTTP Server Error: {self:?}");
+            error!("HTTP server error: {self:?}");
         }
 
         response
