@@ -4,7 +4,7 @@ use {
     a2::{ErrorReason, NotificationBuilder, NotificationOptions},
     async_trait::async_trait,
     std::io::Read,
-    tracing::{debug, instrument, warn},
+    tracing::{debug, info, instrument, warn},
 };
 
 #[derive(Debug, Clone)]
@@ -145,6 +145,21 @@ impl PushProvider for ApnsProvider {
                         reason => Err(Error::ApnsResponse(reason)),
                     },
                 },
+                a2::Error::ConnectionError(ref hyper_error) => {
+                    let dbg = format!("{hyper_error:?}");
+                    // e.g. Apns(ConnectionError(hyper::Error(Io, Custom { kind: InvalidData, error: "received fatal alert: CertificateExpired" })))
+                    if dbg.contains("received fatal alert: CertificateExpired") {
+                        // Checking if debug fmt contains something is strange.
+                        // Logging stuff here temporarily so we can determine better
+                        // ways to detect this error (e.g. display). Ideally we can extract
+                        // the error field directly and check if exactly equal to the above
+                        // rather than using contains()
+                        info!("APNs certificate expired: debug:{dbg}, display: {hyper_error}");
+                        Err(Error::ApnsCertificateExpired)
+                    } else {
+                        Err(Error::Apns(e))
+                    }
+                }
                 e => Err(Error::Apns(e)),
             },
         }
