@@ -2,6 +2,17 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.37.6 - 2024-03-25
+#### Bug Fixes
+- APNs certificate expired error (#314) - (d5347fa) - Chris Smith
+- cannot downgrade RDS version - (168ec33) - Chris Smith
+- increasing PgPool connections to `100` (#310) - (044b51d) - Max Kalashnikoff
+- downgrade log level (#312) - (c0fb3a5) - Chris Smith
+#### Miscellaneous Chores
+- downgrade runner (#311) - (969252a) - Chris Smith
+
+- - -
+
 ## v0.37.5 - 2024-03-13
 #### Bug Fixes
 - increasing Postgres connection pool size (#309) - (3429e23) - Max Kalashnikoff
