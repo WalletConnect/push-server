@@ -99,7 +99,7 @@ test-context = "0.1"
 futures-util = "0.3"
 random-string = "1.0"
 rand = "0.8"
-ed25519-dalek = { version = "2.0.0-rc.2", features = ["rand_core"] }
+ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
 
 [build-dependencies]
 build-info-build = "0.0"

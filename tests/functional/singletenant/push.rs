@@ -4,11 +4,9 @@ use {
         handlers::{push_message::PushMessageBody, register_client::RegisterBody},
         providers::{LegacyPushMessage, MessagePayload, RawPushMessage},
     },
+    ed25519_dalek::SigningKey,
     hyper::StatusCode,
-    relay_rpc::{
-        auth::ed25519_dalek::Keypair,
-        domain::{ClientId, DecodedClientId},
-    },
+    relay_rpc::domain::{ClientId, DecodedClientId},
     std::sync::Arc,
     test_context::test_context,
     uuid::Uuid,
@@ -16,10 +14,9 @@ use {
 };
 
 async fn create_client(ctx: &mut EchoServerContext, always_raw: bool) -> (ClientId, MockServer) {
-    let mut rng = StdRng::from_entropy();
-    let keypair = Keypair::generate(&mut rng);
+    let keypair = SigningKey::generate(&mut rand::thread_rng());
 
-    let random_client_id = DecodedClientId(*keypair.public_key().as_bytes());
+    let random_client_id = DecodedClientId::from_key(&keypair.verifying_key());
     let client_id = ClientId::from(random_client_id);
 
     let jwt = relay_rpc::auth::AuthToken::new(client_id.value().to_string())
@@ -33,7 +30,7 @@ async fn create_client(ctx: &mut EchoServerContext, always_raw: bool) -> (Client
 
     let mock_server = {
         let mock_server = MockServer::start().await;
-        Mock::given(method(Method::Get))
+        Mock::given(method(Method::GET))
             .respond_with(ResponseTemplate::new(StatusCode::OK))
             .expect(1)
             .mount(&mock_server)

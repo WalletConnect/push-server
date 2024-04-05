@@ -1,6 +1,6 @@
 lint: clippy fmt
 
-unit: lint test test-all lint-tf
+unit: lint test test-all test-single-tenant lint-tf
 
 devloop: unit fmt-imports
 
@@ -11,6 +11,9 @@ test:
 
 test-all:
   RUST_BACKTRACE=1 cargo test --all-features --lib --bins -- {{test}}
+
+test-single-tenant:
+  RUST_BACKTRACE=1 cargo test --features=functional_tests -- {{test}}
 
 clippy:
   #!/bin/bash
