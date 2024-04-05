@@ -6,10 +6,7 @@ use {
     },
     hyper::StatusCode,
     relay_rpc::{
-        auth::{
-            ed25519_dalek::Keypair,
-            rand::{rngs::StdRng, SeedableRng},
-        },
+        auth::ed25519_dalek::Keypair,
         domain::{ClientId, DecodedClientId},
     },
     std::sync::Arc,
