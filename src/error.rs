@@ -160,9 +160,6 @@ pub enum Error {
     #[error(transparent)]
     JWT(#[from] jsonwebtoken::errors::Error),
 
-    #[error(transparent)]
-    Parquet(#[from] wc::analytics::collectors::batch::BatchError<parquet::errors::ParquetError>),
-
     #[error("failed to load geoip database from s3")]
     GeoIpS3Failed,
 

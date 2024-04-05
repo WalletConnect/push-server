@@ -9,7 +9,7 @@ build = "build.rs"
 resolver = "2"
 
 [features]
-full= ["functional_tests", "multitenant", "analytics", "geoblock", "cloud"]
+full = ["functional_tests", "multitenant", "analytics", "geoblock", "cloud"]
 # Used to enable functional tests
 functional_tests = []
 # Multi-tenancy mode
@@ -22,14 +22,14 @@ geoblock = []
 cloud = []
 
 [dependencies]
-wc = { git = "https://github.com/WalletConnect/utils-rs.git", tag = "v0.7.0", features = ["analytics", "geoip", "geoblock"] }
+wc = { git = "https://github.com/WalletConnect/utils-rs.git", branch = "feat/axum-0.7", features = ["full"] }
 
 tokio = { version = "1", features = ["full"] }
-axum = { version = "0.6", features = ["json", "multipart", "tokio"] }
-axum-client-ip = "0.4"
-tower = "0.4"
-tower-http = { version = "0.4", features = ["trace", "cors", "request-id", "propagate-header", "catch-panic", "util"] }
-hyper = "0.14"
+axum = { version = "0.7.5", features = ["json", "multipart", "tokio"] }
+axum-client-ip = "0.5.1"
+tower = "0.4.13"
+tower-http = { version = "0.5.2", features = ["trace", "cors", "request-id", "propagate-header", "catch-panic", "util"] }
+hyper = "1.2.0"
 
 # Database
 sqlx = { version = "0.6", features = ["runtime-tokio-native-tls", "postgres", "json", "chrono", "macros"] }
@@ -63,21 +63,21 @@ a2 = { git = "https://github.com/WalletConnect/a2", rev = "d0236c3", features = 
 fcm = "0.9"
 
 # Signature validation
-ed25519-dalek = "2.0.0-rc.2"
+ed25519-dalek = "2.1.1"
 
 # JWT Authentication
-relay_rpc = { git = "https://github.com/WalletConnect/WalletConnectRust.git", rev = "v0.23.0"}
+relay_rpc = { git = "https://github.com/WalletConnect/WalletConnectRust.git", branch = "fix/bump-http-deps" }
 jsonwebtoken = "8.1"
 data-encoding = "2.3"
 
 # Analytics
-aws-config = "0.56"
-aws-sdk-s3 = "0.31"
+aws-config = "1.1.9"
+aws-sdk-s3 = "1.21.0"
 parquet = { git = "https://github.com/WalletConnect/arrow-rs.git", rev = "99a1cc3", default-features = false, features = ["flate2"] }
 parquet_derive = { git = "https://github.com/WalletConnect/arrow-rs.git", rev = "99a1cc3" }
 
 # Misc
-reqwest = { version = "0.11", features = ["multipart"] }
+reqwest = { version = "0.12.2", features = ["multipart", "json"] }
 async-trait = "0.1"
 thiserror = "1.0"
 hex = "0.4"

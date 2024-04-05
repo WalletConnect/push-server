@@ -2,29 +2,141 @@ use {
     crate::{
         analytics::{client_info::ClientInfo, message_info::MessageInfo},
         config::Config,
-        error::Result,
         log::prelude::*,
     },
     aws_sdk_s3::Client as S3Client,
-    std::{net::IpAddr, sync::Arc},
+    std::{net::IpAddr, sync::Arc, time::Duration},
     wc::{
         analytics::{
-            collectors::{batch::BatchOpts, noop::NoopCollector},
-            exporters::aws::{AwsExporter, AwsOpts},
-            writers::parquet::ParquetWriter,
-            Analytics,
+            self, AnalyticsExt, ArcCollector, AwsConfig, AwsExporter, BatchCollector,
+            BatchObserver, CollectionObserver, Collector, CollectorConfig, ExportObserver,
+            ParquetBatchFactory,
         },
         geoip::{self, MaxMindResolver, Resolver},
+        metrics::otel,
     },
 };
 
 pub mod client_info;
 pub mod message_info;
 
+const ANALYTICS_EXPORT_TIMEOUT: Duration = Duration::from_secs(30);
+const DATA_QUEUE_CAPACITY: usize = 8192;
+
+#[derive(Clone, Copy)]
+enum DataKind {
+    Messages,
+    Clients,
+}
+
+impl DataKind {
+    #[inline]
+    fn as_str(&self) -> &'static str {
+        match self {
+            Self::Messages => "messages",
+            Self::Clients => "clients",
+        }
+    }
+
+    #[inline]
+    fn as_kv(&self) -> otel::KeyValue {
+        otel::KeyValue::new("data_kind", self.as_str())
+    }
+}
+
+fn success_kv(success: bool) -> otel::KeyValue {
+    otel::KeyValue::new("success", success)
+}
+
+#[derive(Clone, Copy)]
+struct Observer(DataKind);
+
+impl<T, E> BatchObserver<T, E> for Observer
+where
+    E: std::error::Error,
+{
+    fn observe_batch_serialization(&self, elapsed: Duration, res: &Result<Vec<u8>, E>) {
+        let size = res.as_deref().map(|data| data.len()).unwrap_or(0);
+        let elapsed = elapsed.as_millis() as u64;
+
+        wc::metrics::counter!(
+            "analytics_batches_finished",
+            1,
+            &[self.0.as_kv(), success_kv(res.is_ok())]
+        );
+
+        if let Err(err) = res {
+            tracing::warn!(
+                ?err,
+                data_kind = self.0.as_str(),
+                "failed to serialize analytics batch"
+            );
+        } else {
+            tracing::info!(
+                size,
+                elapsed,
+                data_kind = self.0.as_str(),
+                "analytics data batch serialized"
+            );
+        }
+    }
+}
+
+impl<T, E> CollectionObserver<T, E> for Observer
+where
+    E: std::error::Error,
+{
+    fn observe_collection(&self, res: &Result<(), E>) {
+        wc::metrics::counter!(
+            "analytics_records_collected",
+            1,
+            &[self.0.as_kv(), success_kv(res.is_ok())]
+        );
+
+        if let Err(err) = res {
+            tracing::warn!(
+                ?err,
+                data_kind = self.0.as_str(),
+                "failed to collect analytics data"
+            );
+        }
+    }
+}
+
+impl<E> ExportObserver<E> for Observer
+where
+    E: std::error::Error,
+{
+    fn observe_export(&self, elapsed: Duration, res: &Result<(), E>) {
+        wc::metrics::counter!(
+            "analytics_batches_exported",
+            1,
+            &[self.0.as_kv(), success_kv(res.is_ok())]
+        );
+
+        let elapsed = elapsed.as_millis() as u64;
+
+        if let Err(err) = res {
+            tracing::warn!(
+                ?err,
+                elapsed,
+                data_kind = self.0.as_str(),
+                "analytics export failed"
+            );
+        } else {
+            tracing::info!(
+                elapsed,
+                data_kind = self.0.as_str(),
+                "analytics export failed"
+            );
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct PushAnalytics {
-    pub messages: Analytics<MessageInfo>,
-    pub clients: Analytics<ClientInfo>,
+    pub messages: ArcCollector<MessageInfo>,
+    pub clients: ArcCollector<ClientInfo>,
     pub geoip_resolver: Option<Arc<MaxMindResolver>>,
 }
 
@@ -33,8 +145,8 @@ impl PushAnalytics {
         info!("initializing analytics with noop export");
 
         Self {
-            messages: Analytics::new(NoopCollector),
-            clients: Analytics::new(NoopCollector),
+            messages: analytics::noop_collector().boxed_shared(),
+            clients: analytics::noop_collector().boxed_shared(),
             geoip_resolver: None,
         }
     }
@@ -42,55 +154,82 @@ impl PushAnalytics {
     pub fn with_aws_export(
         s3_client: S3Client,
         export_bucket: &str,
-        node_ip: IpAddr,
+        node_addr: IpAddr,
         geoip_resolver: Option<Arc<MaxMindResolver>>,
-    ) -> Result<Self> {
-        info!(%export_bucket, "initializing analytics with aws export");
-
-        let opts = BatchOpts::default();
-        let bucket_name: Arc<str> = export_bucket.into();
-        let node_ip: Arc<str> = node_ip.to_string().into();
-
+    ) -> Self {
         let messages = {
-            let exporter = AwsExporter::new(AwsOpts {
-                export_prefix: "echo/messages",
-                export_name: "push_messages",
-                file_extension: "parquet",
-                bucket_name: bucket_name.clone(),
-                s3_client: s3_client.clone(),
-                node_ip: node_ip.clone(),
-            });
-
-            let collector = ParquetWriter::<MessageInfo>::new(opts.clone(), exporter)?;
-            Analytics::new(collector)
+            let data_kind = DataKind::Messages;
+            let observer = Observer(data_kind);
+            BatchCollector::new(
+                CollectorConfig {
+                    data_queue_capacity: DATA_QUEUE_CAPACITY,
+                    ..Default::default()
+                },
+                ParquetBatchFactory::new(Default::default()).with_observer(observer),
+                AwsExporter::new(AwsConfig {
+                    export_prefix: "echo/messages".to_string(),
+                    export_name: "push_messages".to_string(),
+                    node_addr,
+                    file_extension: "parquet".to_owned(),
+                    bucket_name: export_bucket.to_owned(),
+                    s3_client: s3_client.clone(),
+                    upload_timeout: ANALYTICS_EXPORT_TIMEOUT,
+                })
+                .with_observer(observer),
+            )
+            .with_observer(observer)
+            .boxed_shared()
         };
 
         let clients = {
-            let exporter = AwsExporter::new(AwsOpts {
-                export_prefix: "echo/clients",
-                export_name: "push_clients",
-                file_extension: "parquet",
-                bucket_name,
-                s3_client,
-                node_ip,
-            });
-
-            Analytics::new(ParquetWriter::new(opts, exporter)?)
+            let data_kind = DataKind::Clients;
+            let observer = Observer(data_kind);
+            BatchCollector::new(
+                CollectorConfig {
+                    data_queue_capacity: DATA_QUEUE_CAPACITY,
+                    ..Default::default()
+                },
+                ParquetBatchFactory::new(Default::default()).with_observer(observer),
+                AwsExporter::new(AwsConfig {
+                    export_prefix: "echo/clients".to_string(),
+                    export_name: "push_clients".to_string(),
+                    node_addr,
+                    file_extension: "parquet".to_owned(),
+                    bucket_name: export_bucket.to_owned(),
+                    s3_client: s3_client.clone(),
+                    upload_timeout: ANALYTICS_EXPORT_TIMEOUT,
+                })
+                .with_observer(observer),
+            )
+            .with_observer(observer)
+            .boxed_shared()
         };
 
-        Ok(Self {
+        Self {
             messages,
             clients,
             geoip_resolver,
-        })
+        }
     }
 
     pub fn message(&self, data: MessageInfo) {
-        self.messages.collect(data);
+        if let Err(err) = self.messages.collect(data) {
+            tracing::warn!(
+                ?err,
+                data_kind = DataKind::Messages.as_str(),
+                "failed to collect analytics"
+            );
+        }
     }
 
     pub fn client(&self, data: ClientInfo) {
-        self.clients.collect(data);
+        if let Err(err) = self.clients.collect(data) {
+            tracing::warn!(
+                ?err,
+                data_kind = DataKind::Clients.as_str(),
+                "failed to collect analytics"
+            );
+        }
     }
 
     pub fn lookup_geo_data(&self, addr: IpAddr) -> Option<geoip::Data> {
@@ -110,7 +249,7 @@ pub async fn initialize(
     s3_client: S3Client,
     echo_ip: IpAddr,
     geoip_resolver: Option<Arc<MaxMindResolver>>,
-) -> Result<PushAnalytics> {
+) -> PushAnalytics {
     PushAnalytics::with_aws_export(
         s3_client,
         &config.analytics_export_bucket,

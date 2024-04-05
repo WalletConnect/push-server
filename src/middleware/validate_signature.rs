@@ -7,7 +7,10 @@ use {
         state::State,
     },
     async_trait::async_trait,
-    axum::{body, extract::FromRequest, http::Request},
+    axum::{
+        body::to_bytes,
+        extract::{FromRequest, Request},
+    },
     ed25519_dalek::{Signature, VerifyingKey},
     tracing::instrument,
 };
@@ -18,19 +21,15 @@ pub const TIMESTAMP_HEADER_NAME: &str = "X-Ed25519-Timestamp";
 pub struct RequireValidSignature<T>(pub T);
 
 #[async_trait]
-impl<S, B, T> FromRequest<S, B> for RequireValidSignature<T>
+impl<S, T> FromRequest<S> for RequireValidSignature<T>
 where
-    // these bounds are required by
-    // `async_trait`
-    B: Send + 'static + body::HttpBody + From<hyper::body::Bytes>,
-    B::Data: Send,
     S: Send + Sync + State,
-    T: FromRequest<S, B>,
+    T: FromRequest<S>,
 {
     type Rejection = crate::error::Error;
 
     #[instrument(skip_all)]
-    async fn from_request(req: Request<B>, state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
         if !state.validate_signatures() {
             // Skip signature validation
             return T::from_request(req, state)
@@ -43,7 +42,8 @@ where
         let public_key = state_binding.get_verifying_key();
 
         let (parts, body_raw) = req.into_parts();
-        let bytes = hyper::body::to_bytes(body_raw)
+        const MAX_BODY: usize = 1024 * 1024 * 100; // prolly too big but better than usize::MAX
+        let bytes = to_bytes(body_raw, MAX_BODY)
             .await
             .map_err(|_| ToBytesError)?;
         let body = String::from_utf8_lossy(&bytes);
@@ -62,7 +62,7 @@ where
             (Some(signature), Some(timestamp))
                 if signature_is_valid(signature, timestamp, &body, public_key).await? =>
             {
-                let req = Request::<B>::from_parts(parts, bytes.into());
+                let req = Request::from_parts(parts, bytes.into());
                 Ok(T::from_request(req, state)
                     .await
                     .map(Self)
