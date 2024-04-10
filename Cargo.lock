@@ -8,7 +8,7 @@ version = "0.7.0"
 source = "git+https://github.com/WalletConnect/a2?rev=d0236c3#d0236c317751f45305d96433e816e6d9272a32b1"
 dependencies = [
  "base64 0.20.0",
- "erased-serde",
+ "erased-serde 0.3.31",
  "http",
  "hyper",
  "hyper-alpn",
@@ -1208,7 +1208,16 @@ version = "4.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca3aa72a6f96ea37bbc5aa912f6788242832f75369bdfdadcb0e38423f100059"
 dependencies = [
- "dirs-sys",
+ "dirs-sys 0.3.7",
+]
+
+[[package]]
+name = "dirs"
+version = "5.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "44c45a9d03d6676652bcb5e724c7e988de1acad23a711b5217ab9cbecbec2225"
+dependencies = [
+ "dirs-sys 0.4.1",
 ]
 
 [[package]]
@@ -1220,6 +1229,18 @@ dependencies = [
  "libc",
  "redox_users",
  "winapi",
+]
+
+[[package]]
+name = "dirs-sys"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "520f05a5cbd335fae5a99ff7a6ab8627577660ee5cfd6a94a6a929b52ff0321c"
+dependencies = [
+ "libc",
+ "option-ext",
+ "redox_users",
+ "windows-sys",
 ]
 
 [[package]]
@@ -1255,7 +1276,8 @@ dependencies = [
  "dotenv",
  "ed25519-dalek 2.0.0",
  "envy",
- "fcm",
+ "fcm 0.9.2",
+ "fcm 1.0.0",
  "futures-util",
  "hex",
  "hyper",
@@ -1379,6 +1401,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "erased-serde"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4adbf0983fe06bd3a5c19c8477a637c2389feb0994eca7a59e3b961054aa7c0a"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "errno"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1427,7 +1458,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5d8d0da8a6bd63bdec888b6d7a87c5698230005c1800823d28ddd5adb6f2550f"
 dependencies = [
  "chrono",
- "erased-serde",
+ "erased-serde 0.3.31",
+ "log",
+ "reqwest",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "fcm"
+version = "1.0.0"
+source = "git+https://github.com/rj76/fcm-rust.git#4f9dedb6423c84f62f5f759593a9ebf774097527"
+dependencies = [
+ "chrono",
+ "dotenv",
+ "erased-serde 0.4.1",
+ "gauth",
  "log",
  "reqwest",
  "serde",
@@ -1621,6 +1667,25 @@ dependencies = [
  "pin-project-lite",
  "pin-utils",
  "slab",
+]
+
+[[package]]
+name = "gauth"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5b32329a7788126e9388c64f261174d2e2161d0c7cd28b55935ccc0da96920d8"
+dependencies = [
+ "anyhow",
+ "base64 0.21.4",
+ "chrono",
+ "dirs 5.0.1",
+ "reqwest",
+ "ring",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "thiserror",
+ "url",
 ]
 
 [[package]]
@@ -2573,6 +2638,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "option-ext"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
+
+[[package]]
 name = "ordered-float"
 version = "2.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3369,6 +3440,7 @@ version = "1.0.107"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6b420ce6e3d8bd882e9b243c6eed35dbc9a6110c9769e74b584e0d68d1f20c65"
 dependencies = [
+ "indexmap 2.0.1",
  "itoa",
  "ryu",
  "serde",
@@ -3602,7 +3674,7 @@ dependencies = [
  "chrono",
  "crc",
  "crossbeam-queue",
- "dirs",
+ "dirs 4.0.0",
  "dotenvy",
  "either",
  "event-listener",

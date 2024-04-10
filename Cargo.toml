@@ -61,6 +61,7 @@ atty = "0.2"
 # Push
 a2 = { git = "https://github.com/WalletConnect/a2", rev = "d0236c3", features = ["tracing", "openssl"] }
 fcm = "0.9"
+fcm_v1 = { git = "https://github.com/rj76/fcm-rust.git", package = "fcm" }
 
 # Signature validation
 ed25519-dalek = "2.0.0-rc.2"
