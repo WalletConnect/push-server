@@ -49,7 +49,7 @@ async fn tenant_update_fcm_valid(ctx: &mut EchoServerContext) {
 
     let response_fcm_update = client
         .post(format!(
-            "http://{}/tenants/{}/fcm",
+            "http://{}/tenants/{}/fcm_v1",
             ctx.server.public_addr, &random_tenant_id
         ))
         .header("AUTHORIZATION", jwt_token.clone())
@@ -83,7 +83,7 @@ async fn tenant_update_fcm_bad(ctx: &mut EchoServerContext) {
 
     let response = client
         .post(format!(
-            "http://{}/tenants/{}/fcm",
+            "http://{}/tenants/{}/fcm_v1",
             ctx.server.public_addr, &random_tenant_id
         ))
         .multipart(form)
