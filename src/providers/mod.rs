@@ -144,7 +144,8 @@ impl TryFrom<&str> for ProviderKind {
         match value.to_lowercase().as_str() {
             PROVIDER_APNS => Ok(Self::Apns),
             PROVIDER_APNS_SANDBOX => Ok(Self::ApnsSandbox),
-            PROVIDER_FCM => Ok(Self::FcmV1),
+            PROVIDER_FCM => Ok(Self::Fcm),
+            PROVIDER_FCM_V1 => Ok(Self::FcmV1),
             #[cfg(any(debug_assertions, test))]
             PROVIDER_NOOP => Ok(Self::Noop),
             _ => Err(error::Error::ProviderNotFound(value.to_owned())),
