@@ -463,6 +463,7 @@ pub async fn handler_internal(
     // Provider specific metrics
     match provider {
         Provider::Fcm(_) => increment_counter!(state.metrics, sent_fcm_notifications),
+        Provider::FcmV1(_) => increment_counter!(state.metrics, sent_fcm_v1_notifications),
         Provider::Apns(_) => increment_counter!(state.metrics, sent_apns_notifications),
         #[cfg(any(debug_assertions, test))]
         Provider::Noop(_) => {}

@@ -46,6 +46,8 @@ pub mod health;
 pub mod update_apns;
 #[cfg(feature = "multitenant")]
 pub mod update_fcm;
+#[cfg(feature = "multitenant")]
+pub mod update_fcm_v1;
 
 pub const DECENTRALIZED_IDENTIFIER_PREFIX: &str = "did:key:";
 

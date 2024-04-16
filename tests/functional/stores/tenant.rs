@@ -1,7 +1,8 @@
 use {
     crate::context::StoreContext,
     echo_server::stores::tenant::{
-        TenantApnsUpdateAuth, TenantApnsUpdateParams, TenantFcmUpdateParams, TenantUpdateParams,
+        TenantApnsUpdateAuth, TenantApnsUpdateParams, TenantFcmUpdateParams,
+        TenantFcmV1UpdateParams, TenantUpdateParams,
     },
     test_context::test_context,
     uuid::Uuid,
@@ -75,6 +76,30 @@ async fn tenant_fcm(ctx: &mut StoreContext) {
             &tenant.id,
             TenantFcmUpdateParams {
                 fcm_api_key: "test-api-key".to_string(),
+            },
+        )
+        .await;
+
+    assert!(res.is_ok())
+}
+
+#[test_context(StoreContext)]
+#[tokio::test]
+async fn tenant_fcm_v1(ctx: &mut StoreContext) {
+    let tenant = ctx
+        .tenants
+        .create_tenant(TenantUpdateParams {
+            id: Uuid::new_v4().to_string(),
+        })
+        .await
+        .expect("creation failed");
+
+    let res = ctx
+        .tenants
+        .update_tenant_fcm_v1(
+            &tenant.id,
+            TenantFcmV1UpdateParams {
+                fcm_v1_credentials: "test-credentials".to_string(),
             },
         )
         .await;

@@ -9,7 +9,7 @@ build = "build.rs"
 resolver = "2"
 
 [features]
-full= ["functional_tests", "multitenant", "analytics", "geoblock", "cloud"]
+full = ["functional_tests", "multitenant", "analytics", "geoblock", "cloud"]
 # Used to enable functional tests
 functional_tests = []
 # Multi-tenancy mode

@@ -17,6 +17,10 @@ variable "grafana_endpoint" {
   type = string
 }
 
+variable "grafana_auth" {
+  type = string
+}
+
 variable "image_version" {
   type    = string
   default = ""

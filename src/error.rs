@@ -37,6 +37,9 @@ pub enum Error {
     #[error(transparent)]
     Fcm(#[from] fcm::FcmError),
 
+    #[error(transparent)]
+    FcmV1(#[from] fcm_v1::Error),
+
     #[error("FCM Responded with an error")]
     FcmResponse(fcm::ErrorReason),
 

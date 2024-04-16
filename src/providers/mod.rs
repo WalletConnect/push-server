@@ -1,12 +1,14 @@
 pub mod apns;
 pub mod fcm;
+pub mod fcm_v1;
 #[cfg(any(debug_assertions, test))]
 pub mod noop;
 
 use {
+    self::fcm_v1::FcmV1Provider,
     crate::{
         blob::ENCRYPTED_FLAG,
-        error::{self},
+        error,
         providers::{apns::ApnsProvider, fcm::FcmProvider},
     },
     async_trait::async_trait,
@@ -82,6 +84,7 @@ pub trait PushProvider {
 const PROVIDER_APNS: &str = "apns";
 const PROVIDER_APNS_SANDBOX: &str = "apns-sandbox";
 const PROVIDER_FCM: &str = "fcm";
+const PROVIDER_FCM_V1: &str = "fcm_v1";
 #[cfg(any(debug_assertions, test))]
 const PROVIDER_NOOP: &str = "noop";
 
@@ -92,6 +95,7 @@ pub enum ProviderKind {
     Apns,
     ApnsSandbox,
     Fcm,
+    FcmV1,
     #[cfg(any(debug_assertions, test))]
     Noop,
 }
@@ -102,6 +106,7 @@ impl ProviderKind {
             Self::Apns => PROVIDER_APNS,
             Self::ApnsSandbox => PROVIDER_APNS_SANDBOX,
             Self::Fcm => PROVIDER_FCM,
+            Self::FcmV1 => PROVIDER_FCM_V1,
             #[cfg(any(debug_assertions, test))]
             Self::Noop => PROVIDER_NOOP,
         }
@@ -139,7 +144,7 @@ impl TryFrom<&str> for ProviderKind {
         match value.to_lowercase().as_str() {
             PROVIDER_APNS => Ok(Self::Apns),
             PROVIDER_APNS_SANDBOX => Ok(Self::ApnsSandbox),
-            PROVIDER_FCM => Ok(Self::Fcm),
+            PROVIDER_FCM => Ok(Self::FcmV1),
             #[cfg(any(debug_assertions, test))]
             PROVIDER_NOOP => Ok(Self::Noop),
             _ => Err(error::Error::ProviderNotFound(value.to_owned())),
@@ -151,6 +156,7 @@ impl TryFrom<&str> for ProviderKind {
 #[derive(Debug)]
 pub enum Provider {
     Fcm(FcmProvider),
+    FcmV1(FcmV1Provider),
     Apns(ApnsProvider),
     #[cfg(any(debug_assertions, test))]
     Noop(NoopProvider),
@@ -162,6 +168,7 @@ impl PushProvider for Provider {
     async fn send_notification(&mut self, token: String, body: PushMessage) -> error::Result<()> {
         match self {
             Provider::Fcm(p) => p.send_notification(token, body).await,
+            Provider::FcmV1(p) => p.send_notification(token, body).await,
             Provider::Apns(p) => p.send_notification(token, body).await,
             #[cfg(any(debug_assertions, test))]
             Provider::Noop(p) => p.send_notification(token, body).await,

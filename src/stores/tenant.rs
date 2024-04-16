@@ -10,7 +10,8 @@ use {
         providers::{
             apns::ApnsProvider,
             fcm::FcmProvider,
-            Provider::{self, Apns, Fcm},
+            fcm_v1::FcmV1Provider,
+            Provider::{self, Apns, Fcm, FcmV1},
             ProviderKind,
         },
     },
@@ -82,6 +83,7 @@ pub struct Tenant {
     pub id: String,
 
     pub fcm_api_key: Option<String>,
+    pub fcm_v1_credentials: Option<String>,
 
     pub apns_type: Option<ApnsType>,
     pub apns_topic: Option<String>,
@@ -113,6 +115,11 @@ pub struct TenantFcmUpdateParams {
     pub fcm_api_key: String,
 }
 
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub struct TenantFcmV1UpdateParams {
+    pub fcm_v1_credentials: String,
+}
+
 #[derive(Deserialize, Clone, Debug)]
 pub enum TenantApnsUpdateAuth {
     Certificate {
@@ -142,6 +149,10 @@ impl Tenant {
 
         if self.fcm_api_key.is_some() {
             supported.push(ProviderKind::Fcm);
+        }
+
+        if self.fcm_v1_credentials.is_some() {
+            supported.push(ProviderKind::FcmV1);
         }
 
         // Only available in debug/testing
@@ -244,6 +255,14 @@ impl Tenant {
                 }
                 None => Err(ProviderNotAvailable(provider.into())),
             },
+            ProviderKind::FcmV1 => match self.fcm_v1_credentials.clone() {
+                Some(fcm_v1_credentials) => {
+                    debug!("fcm v1 provider is matched");
+                    let fcm = FcmV1Provider::new(fcm_v1_credentials);
+                    Ok(FcmV1(fcm))
+                }
+                None => Err(ProviderNotAvailable(provider.into())),
+            },
             #[cfg(any(debug_assertions, test))]
             ProviderKind::Noop => {
                 debug!("noop provider is matched");
@@ -259,6 +278,11 @@ pub trait TenantStore {
     async fn delete_tenant(&self, id: &str) -> Result<()>;
     async fn create_tenant(&self, params: TenantUpdateParams) -> Result<Tenant>;
     async fn update_tenant_fcm(&self, id: &str, params: TenantFcmUpdateParams) -> Result<Tenant>;
+    async fn update_tenant_fcm_v1(
+        &self,
+        id: &str,
+        params: TenantFcmV1UpdateParams,
+    ) -> Result<Tenant>;
     async fn update_tenant_apns(&self, id: &str, params: TenantApnsUpdateParams) -> Result<Tenant>;
     async fn update_tenant_apns_auth(
         &self,
@@ -322,6 +346,24 @@ impl TenantStore for PgPool {
         )
         .bind(id)
         .bind(params.fcm_api_key)
+        .fetch_one(self)
+        .await?;
+
+        Ok(res)
+    }
+
+    #[instrument(skip(self))]
+    async fn update_tenant_fcm_v1(
+        &self,
+        id: &str,
+        params: TenantFcmV1UpdateParams,
+    ) -> Result<Tenant> {
+        let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
+            "UPDATE public.tenants SET fcm_v1_credentials = $2, updated_at = NOW() WHERE id = $1 \
+             RETURNING *;",
+        )
+        .bind(id)
+        .bind(params.fcm_v1_credentials)
         .fetch_one(self)
         .await?;
 
@@ -419,6 +461,7 @@ impl DefaultTenantStore {
         Ok(DefaultTenantStore(Tenant {
             id: DEFAULT_TENANT_ID.to_string(),
             fcm_api_key: config.fcm_api_key.clone(),
+            fcm_v1_credentials: config.fcm_v1_credentials.clone(),
             apns_type: config.apns_type,
             apns_topic: config.apns_topic.clone(),
             apns_certificate: config.apns_certificate.clone(),
@@ -450,6 +493,14 @@ impl TenantStore for DefaultTenantStore {
     }
 
     async fn update_tenant_fcm(&self, _id: &str, _params: TenantFcmUpdateParams) -> Result<Tenant> {
+        panic!("Shouldn't have run in single tenant mode")
+    }
+
+    async fn update_tenant_fcm_v1(
+        &self,
+        _id: &str,
+        _params: TenantFcmV1UpdateParams,
+    ) -> Result<Tenant> {
         panic!("Shouldn't have run in single tenant mode")
     }
 

@@ -170,6 +170,7 @@ jobs:
           args: ${{ matrix.cargo.args }}
         env:
           ECHO_TEST_FCM_KEY: ${{ secrets.ECHO_TEST_FCM_KEY }}
+          ECHO_TEST_FCM_V1_CREDENTIALS: ${{ secrets.ECHO_TEST_FCM_V1_CREDENTIALS }}
           ECHO_TEST_APNS_P8_KEY_ID: ${{ secrets.ECHO_TEST_APNS_P8_KEY_ID }}
           ECHO_TEST_APNS_P8_TEAM_ID: ${{ secrets.ECHO_TEST_APNS_P8_TEAM_ID }}
           ECHO_TEST_APNS_P8_PEM: ${{ secrets.ECHO_TEST_APNS_P8_PEM }}

@@ -61,6 +61,8 @@ pub struct Config {
     // FCM
     #[cfg(not(feature = "multitenant"))]
     pub fcm_api_key: Option<String>,
+    #[cfg(not(feature = "multitenant"))]
+    pub fcm_v1_credentials: Option<String>,
 
     // Multi-tenancy
     pub tenant_database_url: String,
@@ -130,6 +132,10 @@ impl Config {
 
         if self.fcm_api_key.is_some() {
             supported.push(ProviderKind::Fcm);
+        }
+
+        if self.fcm_v1_credentials.is_some() {
+            supported.push(ProviderKind::FcmV1);
         }
 
         // Only available in debug/testing
