@@ -3,6 +3,7 @@ use {crate::context::EchoServerContext, serde::Serialize, test_context::test_con
 
 mod apns;
 mod fcm;
+mod fcm_v1;
 mod tenancy;
 
 /// Struct to hold claims for JWT validation

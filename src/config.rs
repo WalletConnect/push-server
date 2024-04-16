@@ -130,12 +130,8 @@ impl Config {
             supported.push(ProviderKind::ApnsSandbox);
         }
 
-        if self.fcm_api_key.is_some() {
+        if self.fcm_api_key.is_some() || self.fcm_v1_credentials.is_some() {
             supported.push(ProviderKind::Fcm);
-        }
-
-        if self.fcm_v1_credentials.is_some() {
-            supported.push(ProviderKind::FcmV1);
         }
 
         // Only available in debug/testing

@@ -7,10 +7,10 @@ devloop: unit fmt-imports
 test := ""
 
 test:
-  RUST_BACKTRACE=1 cargo test --lib --bins -- {{test}}
+  RUST_BACKTRACE=1 cargo test --all-targets -- {{test}}
 
 test-all:
-  RUST_BACKTRACE=1 cargo test --all-features --lib --bins -- {{test}}
+  RUST_BACKTRACE=1 cargo test --all-features --all-targets -- {{test}}
 
 clippy:
   #!/bin/bash
