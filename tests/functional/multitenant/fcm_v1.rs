@@ -9,7 +9,7 @@ use {
 
 #[test_context(EchoServerContext)]
 #[tokio::test]
-async fn tenant_update_fcm_valid(ctx: &mut EchoServerContext) {
+async fn tenant_update_fcm_v1_valid(ctx: &mut EchoServerContext) {
     let charset = "1234567890";
     let random_tenant_id = generate(12, charset);
     let payload = TenantRegisterBody {
@@ -62,7 +62,7 @@ async fn tenant_update_fcm_valid(ctx: &mut EchoServerContext) {
 
 #[test_context(EchoServerContext)]
 #[tokio::test]
-async fn tenant_update_fcm_bad(ctx: &mut EchoServerContext) {
+async fn tenant_update_fcm_v1_bad(ctx: &mut EchoServerContext) {
     let charset = "1234567890";
     let random_tenant_id = generate(12, charset);
     let payload = TenantRegisterBody {
