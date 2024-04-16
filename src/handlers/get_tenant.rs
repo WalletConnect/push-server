@@ -57,7 +57,16 @@ pub async fn handler(
 
     let mut res = GetTenantResponse {
         url: format!("{}/{}", state.config.public_url, tenant.id),
-        enabled_providers: tenant.providers().iter().map(Into::into).collect(),
+        enabled_providers: tenant
+            .providers()
+            .iter()
+            .map(Into::into)
+            .chain(if tenant.fcm_v1_credentials.is_some() {
+                vec!["fcm_v1".to_string()]
+            } else {
+                vec![]
+            })
+            .collect(),
         apns_topic: None,
         apns_type: None,
         suspended: tenant.suspended,

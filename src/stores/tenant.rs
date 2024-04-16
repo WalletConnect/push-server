@@ -147,12 +147,8 @@ impl Tenant {
             supported.push(ProviderKind::ApnsSandbox);
         }
 
-        if self.fcm_api_key.is_some() {
+        if self.fcm_api_key.is_some() || self.fcm_v1_credentials.is_some() {
             supported.push(ProviderKind::Fcm);
-        }
-
-        if self.fcm_v1_credentials.is_some() {
-            supported.push(ProviderKind::FcmV1);
         }
 
         // Only available in debug/testing
@@ -247,21 +243,20 @@ impl Tenant {
                     None => Err(ProviderNotAvailable(provider.into())),
                 }
             }
-            ProviderKind::Fcm => match self.fcm_api_key.clone() {
-                Some(api_key) => {
-                    debug!("fcm provider is matched");
-                    let fcm = FcmProvider::new(api_key);
-                    Ok(Fcm(fcm))
-                }
-                None => Err(ProviderNotAvailable(provider.into())),
-            },
-            ProviderKind::FcmV1 => match self.fcm_v1_credentials.clone() {
+            ProviderKind::Fcm => match self.fcm_v1_credentials.clone() {
                 Some(fcm_v1_credentials) => {
                     debug!("fcm v1 provider is matched");
                     let fcm = FcmV1Provider::new(fcm_v1_credentials);
                     Ok(FcmV1(fcm))
                 }
-                None => Err(ProviderNotAvailable(provider.into())),
+                None => match self.fcm_api_key.clone() {
+                    Some(api_key) => {
+                        debug!("fcm provider is matched");
+                        let fcm = FcmProvider::new(api_key);
+                        Ok(Fcm(fcm))
+                    }
+                    None => Err(ProviderNotAvailable(provider.into())),
+                },
             },
             #[cfg(any(debug_assertions, test))]
             ProviderKind::Noop => {
