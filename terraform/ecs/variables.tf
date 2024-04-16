@@ -124,15 +124,6 @@ variable "autoscaling_min_capacity" {
   type = number
 }
 
-variable "cloud_api_key" {
-  type      = string
-  sensitive = true
-}
-
-variable "cloud_api_url" {
-  type = string
-}
-
 variable "jwt_secret" {
   type      = string
   sensitive = true

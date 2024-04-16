@@ -1,5 +1,3 @@
-#[cfg(feature = "cloud")]
-use cerberus::registry::RegistryHttpClient;
 use {
     crate::{
         config::Config,
@@ -16,7 +14,7 @@ use {
 #[cfg(feature = "analytics")]
 use crate::analytics::PushAnalytics;
 #[cfg(feature = "multitenant")]
-use crate::supabase::GoTrueClient;
+use crate::jwt_validation::JwtValidationClient;
 
 pub type ClientStoreArc = Arc<dyn ClientStore + Send + Sync + 'static>;
 pub type NotificationStoreArc = Arc<dyn NotificationStore + Send + Sync + 'static>;
@@ -29,8 +27,6 @@ pub trait State {
     fn notification_store(&self) -> NotificationStoreArc;
     fn tenant_store(&self) -> TenantStoreArc;
     fn relay_client(&self) -> RelayClient;
-    #[cfg(feature = "cloud")]
-    fn registry_client(&self) -> RegistryHttpClient;
     fn is_multitenant(&self) -> bool;
     fn validate_signatures(&self) -> bool;
 }
@@ -46,10 +42,8 @@ pub struct AppState {
     pub notification_store: NotificationStoreArc,
     pub tenant_store: TenantStoreArc,
     pub relay_client: RelayClient,
-    #[cfg(feature = "cloud")]
-    pub registry_client: RegistryHttpClient,
     #[cfg(feature = "multitenant")]
-    pub gotrue_client: GoTrueClient,
+    pub jwt_validation_client: JwtValidationClient,
     pub public_ip: Option<IpAddr>,
     is_multitenant: bool,
     pub geoblock: Option<GeoBlockLayer<Arc<MaxMindResolver>>>,
@@ -75,9 +69,6 @@ pub fn new_state(
     #[cfg(not(feature = "multitenant"))]
     let is_multitenant = false;
 
-    #[cfg(feature = "cloud")]
-    let (cloud_url, cloud_api_key) = (config.cloud_api_url.clone(), config.cloud_api_key.clone());
-
     #[cfg(feature = "multitenant")]
     let jwt_secret = config.jwt_secret.clone();
 
@@ -97,10 +88,8 @@ pub fn new_state(
         notification_store,
         tenant_store,
         relay_client: RelayClient::new(config.relay_public_key)?,
-        #[cfg(feature = "cloud")]
-        registry_client: RegistryHttpClient::new(cloud_url, cloud_api_key.as_str())?,
         #[cfg(feature = "multitenant")]
-        gotrue_client: GoTrueClient::new(jwt_secret),
+        jwt_validation_client: JwtValidationClient::new(jwt_secret),
         public_ip,
         is_multitenant,
         geoblock: None,
@@ -138,11 +127,6 @@ impl State for Arc<AppState> {
 
     fn relay_client(&self) -> RelayClient {
         self.relay_client.clone()
-    }
-
-    #[cfg(feature = "cloud")]
-    fn registry_client(&self) -> RegistryHttpClient {
-        self.registry_client.clone()
     }
 
     fn is_multitenant(&self) -> bool {

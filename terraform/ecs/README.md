@@ -31,8 +31,6 @@ No modules.
       | <a name="input_backup_acm_certificate_arn"></a> [backup\_acm\_certificate\_arn](#input\_backup\_acm\_certificate\_arn) | n/a |  <pre lang="json">string</pre> |  <pre lang="json">n/a</pre> |  yes |
       | <a name="input_backup_fqdn"></a> [backup\_fqdn](#input\_backup\_fqdn) | n/a |  <pre lang="json">string</pre> |  <pre lang="json">n/a</pre> |  yes |
       | <a name="input_backup_route53_zone_id"></a> [backup\_route53\_zone\_id](#input\_backup\_route53\_zone\_id) | n/a |  <pre lang="json">string</pre> |  <pre lang="json">n/a</pre> |  yes |
-      | <a name="input_cloud_api_key"></a> [cloud\_api\_key](#input\_cloud\_api\_key) | n/a |  <pre lang="json">string</pre> |  <pre lang="json">n/a</pre> |  yes |
-      | <a name="input_cloud_api_url"></a> [cloud\_api\_url](#input\_cloud\_api\_url) | n/a |  <pre lang="json">string</pre> |  <pre lang="json">n/a</pre> |  yes |
       | <a name="input_cpu"></a> [cpu](#input\_cpu) | n/a |  <pre lang="json">number</pre> |  <pre lang="json">n/a</pre> |  yes |
       | <a name="input_database_url"></a> [database\_url](#input\_database\_url) | n/a |  <pre lang="json">string</pre> |  <pre lang="json">n/a</pre> |  yes |
       | <a name="input_desired_count"></a> [desired\_count](#input\_desired\_count) | n/a |  <pre lang="json">number</pre> |  <pre lang="json">n/a</pre> |  yes |

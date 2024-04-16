@@ -92,9 +92,6 @@ resource "aws_ecs_task_definition" "app_task_definition" {
 
         { name = "BLOCKED_COUNTRIES", value = "KP,IR,CU,SY,RU" },
 
-        { name = "CLOUD_API_KEY", value = var.cloud_api_key },
-        { name = "CLOUD_API_URL", value = var.cloud_api_url },
-
         { name = "JWT_SECRET", value = var.jwt_secret },
         { name = "RELAY_PUBLIC_KEY", value = var.relay_public_key }
       ],

@@ -30,17 +30,11 @@ pub async fn handler(
     headers: HeaderMap,
 ) -> Result<Json<GetTenantResponse>, Error> {
     #[cfg(feature = "cloud")]
-    let verification_res = validate_tenant_request(
-        &state.registry_client,
-        &state.gotrue_client,
-        &headers,
-        id.clone(),
-        None,
-    )
-    .await;
+    let verification_res =
+        validate_tenant_request(&state.jwt_validation_client, &headers, id.clone()).await;
 
     #[cfg(not(feature = "cloud"))]
-    let verification_res = validate_tenant_request(&state.gotrue_client, &headers);
+    let verification_res = validate_tenant_request(&state.jwt_validation_client, &headers);
 
     if let Err(e) = verification_res {
         error!(
