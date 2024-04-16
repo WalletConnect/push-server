@@ -14,7 +14,7 @@ provider "aws" {
 
 provider "grafana" {
   url  = "https://${var.grafana_endpoint}"
-  auth = var.grafana_endpoint
+  auth = var.grafana_auth
 }
 
 provider "random" {}
