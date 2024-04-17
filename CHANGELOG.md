@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.38.0 - 2024-04-17
+#### Features
+- refactored cloud auth (#317) - (830ad97) - Chris Smith
+
+- - -
+
 ## v0.37.6 - 2024-03-25
 #### Bug Fixes
 - APNs certificate expired error (#314) - (d5347fa) - Chris Smith
