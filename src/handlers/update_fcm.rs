@@ -38,22 +38,13 @@ pub async fn handler(
     headers: HeaderMap,
     mut form_body: Multipart,
 ) -> Result<Json<UpdateTenantFcmResponse>, Error> {
-    // -- check if tenant is real
-    let _existing_tenant = state.tenant_store.get_tenant(&id).await?;
-
     // JWT token verification
     #[cfg(feature = "cloud")]
-    let jwt_verification_result = validate_tenant_request(
-        &state.registry_client,
-        &state.gotrue_client,
-        &headers,
-        id.clone(),
-        None,
-    )
-    .await;
+    let jwt_verification_result =
+        validate_tenant_request(&state.jwt_validation_client, &headers, id.clone()).await;
 
     #[cfg(not(feature = "cloud"))]
-    let jwt_verification_result = validate_tenant_request(&state.gotrue_client, &headers);
+    let jwt_verification_result = validate_tenant_request(&state.jwt_validation_client, &headers);
 
     if let Err(e) = jwt_verification_result {
         error!(
@@ -63,6 +54,9 @@ pub async fn handler(
         );
         return Err(e);
     }
+
+    // -- check if tenant is real
+    let _existing_tenant = state.tenant_store.get_tenant(&id).await?;
 
     // ---- retrieve body from form
     let mut body = FcmUpdateBody {

@@ -1,13 +1,7 @@
-#[cfg(feature = "cloud")]
-use cerberus::registry::RegistryClient;
 use {
     crate::{
-        error::{Error, Error::InvalidProjectId},
-        handlers::validate_tenant_request,
-        increment_counter,
-        log::prelude::*,
-        state::AppState,
-        stores::tenant::TenantUpdateParams,
+        error::Error, handlers::validate_tenant_request, increment_counter, log::prelude::*,
+        state::AppState, stores::tenant::TenantUpdateParams,
     },
     axum::{extract::State, http::HeaderMap, Json},
     serde::{Deserialize, Serialize},
@@ -34,52 +28,19 @@ pub async fn handler(
     Json(body): Json<TenantRegisterBody>,
 ) -> Result<Json<TenantRegisterResponse>, Error> {
     #[cfg(feature = "cloud")]
-    let (valid_id, project) = {
-        let project_id = body.id.clone();
-
-        let response = state.registry_client.project_data(&project_id).await?;
-
-        if let Some(project) = response {
-            // TODO potentially more validation in future
-            // Project passed forwards for JWT verification later
-            (project.is_enabled, Some(project))
-        } else {
-            (false, None)
-        }
-    };
-
-    // When not using the cloud app all Ids are valid
-    #[cfg(not(feature = "cloud"))]
-    let valid_id = true;
-
-    if !valid_id {
-        return Err(InvalidProjectId(body.id));
-    }
-
-    #[cfg(feature = "cloud")]
-    if let Some(project) = project {
-        if let Err(e) = validate_tenant_request(
-            &state.registry_client,
-            &state.gotrue_client,
-            &headers,
-            body.id.clone(),
-            Some(project),
-        )
-        .await
-        {
-            error!(
-                tenant_id = %body.id,
-                err = ?e,
-                "JWT verification failed"
-            );
-            return Err(e);
-        }
-    } else {
-        return Err(InvalidProjectId(body.id));
+    if let Err(e) =
+        validate_tenant_request(&state.jwt_validation_client, &headers, body.id.clone()).await
+    {
+        error!(
+            tenant_id = %body.id,
+            err = ?e,
+            "JWT verification failed"
+        );
+        return Err(e);
     }
 
     #[cfg(not(feature = "cloud"))]
-    if let Err(e) = validate_tenant_request(&state.gotrue_client, &headers) {
+    if let Err(e) = validate_tenant_request(&state.jwt_validation_client, &headers) {
         error!(
             tenant_id = %body.id,
             err = ?e,
