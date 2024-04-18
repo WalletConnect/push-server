@@ -1722,8 +1722,8 @@ dependencies = [
 
 [[package]]
 name = "gauth"
-version = "0.7.0"
-source = "git+https://github.com/WalletConnect/gauth-rs.git?branch=feat/key-not-from-file#d3ed7c956ae49bd53c1b347f4199c9fca219d9e8"
+version = "0.8.0"
+source = "git+https://github.com/WalletConnect/gauth-rs.git?branch=feat/key-not-from-file#b422162a1c07e276a7ebcd5def28f4c5ba20e1d0"
 dependencies = [
  "anyhow",
  "base64 0.21.4",
