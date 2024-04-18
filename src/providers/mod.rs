@@ -78,7 +78,7 @@ pub struct RawPushMessage {
 
 #[async_trait]
 pub trait PushProvider {
-    async fn send_notification(&mut self, token: String, body: PushMessage) -> error::Result<()>;
+    async fn send_notification(&self, token: String, body: PushMessage) -> error::Result<()>;
 }
 
 const PROVIDER_APNS: &str = "apns";
@@ -150,7 +150,7 @@ impl TryFrom<&str> for ProviderKind {
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Provider {
     Fcm(FcmProvider),
     FcmV1(FcmV1Provider),
@@ -162,7 +162,7 @@ pub enum Provider {
 #[async_trait]
 impl PushProvider for Provider {
     #[instrument(name = "send_notification")]
-    async fn send_notification(&mut self, token: String, body: PushMessage) -> error::Result<()> {
+    async fn send_notification(&self, token: String, body: PushMessage) -> error::Result<()> {
         match self {
             Provider::Fcm(p) => p.send_notification(token, body).await,
             Provider::FcmV1(p) => p.send_notification(token, body).await,

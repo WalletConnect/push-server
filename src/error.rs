@@ -43,6 +43,9 @@ pub enum Error {
     #[error("FCM Responded with an error")]
     FcmResponse(fcm::ErrorReason),
 
+    #[error("FCM v1 Responded with an error")]
+    FcmV1Response(fcm_v1::ErrorReason),
+
     #[error(transparent)]
     Io(#[from] std::io::Error),
 
@@ -61,8 +64,17 @@ pub enum Error {
     #[error(transparent)]
     Base64Decode(#[from] base64::DecodeError),
 
-    #[error(transparent)]
-    Json(#[from] serde_json::Error),
+    #[error("Failed to decode legacy decrypted message: {0}")]
+    DecryptedNotificationDecode(base64::DecodeError),
+
+    #[error("Failed to parse legacy decrypted message as JSON: {0}")]
+    DecryptedNotificationParse(serde_json::Error),
+
+    #[error("Invalid ServiceServiceAccount key: {0}")]
+    InvalidServiceAccountKey(serde_json::Error),
+
+    #[error("Failed to perform internal serialization: {0}")]
+    InternalSerializationError(serde_json::Error),
 
     #[error(transparent)]
     Store(#[from] StoreError),
@@ -431,10 +443,16 @@ impl IntoResponse for Error {
                     message: "failed to perform io task, this should not have occurred, please report at: https://github.com/walletconnect/echo-server".to_string(),
                 },
             ], vec![]),
-            Error::Json(_) => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
+            Error::DecryptedNotificationDecode(_) => crate::handlers::Response::new_failure(StatusCode::ACCEPTED, vec![
                 ResponseError {
                     name: "json".to_string(),
-                    message: "received invalid json payload, please ensure all fields that contain json are valid".to_string(),
+                    message: "Decrypted notification does not decode as base64".to_string(),
+                },
+            ], vec![]),
+            Error::DecryptedNotificationParse(_) => crate::handlers::Response::new_failure(StatusCode::ACCEPTED, vec![
+                ResponseError {
+                    name: "json".to_string(),
+                    message: "Decrypted notification does not parse as JSON".to_string(),
                 },
             ], vec![]),
             Error::ToStr(_) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![

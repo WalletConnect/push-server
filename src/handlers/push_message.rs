@@ -364,8 +364,13 @@ pub async fn handler_internal(
         return Err((Error::TenantSuspended, analytics.clone()));
     }
 
-    let mut provider = tenant
-        .provider(&client.push_type)
+    let provider = tenant
+        .provider(
+            &client.push_type,
+            state.http_client.clone(),
+            &state.provider_cache,
+        )
+        .await
         .tap_err(|e| warn!("error fetching provider: {e:?}"))
         .map_err(|e| (e, analytics.clone()))?;
     debug!(

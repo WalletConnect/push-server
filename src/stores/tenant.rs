@@ -4,7 +4,7 @@ use {
     crate::{
         error::{
             self,
-            Error::{InvalidTenantId, ProviderNotAvailable},
+            Error::{self, InvalidTenantId, ProviderNotAvailable},
             Result,
         },
         providers::{
@@ -18,6 +18,8 @@ use {
     async_trait::async_trait,
     base64::Engine as _,
     chrono::{DateTime, Utc},
+    moka::future::Cache,
+    reqwest::Client,
     serde::{Deserialize, Serialize},
     sqlx::{Executor, PgPool},
     tracing::{debug, instrument},
@@ -186,7 +188,12 @@ impl Tenant {
     }
 
     #[instrument(skip_all, fields(tenant_id = %self.id, provider = %provider.as_str()))]
-    pub fn provider(&self, provider: &ProviderKind) -> Result<Provider> {
+    pub async fn provider(
+        &self,
+        provider: &ProviderKind,
+        http_client: Client,
+        provider_cache: &Cache<String, Provider>,
+    ) -> Result<Provider> {
         if !self.providers().contains(provider) {
             return Err(ProviderNotAvailable(provider.into()));
         }
@@ -246,8 +253,18 @@ impl Tenant {
             ProviderKind::Fcm => match self.fcm_v1_credentials.clone() {
                 Some(fcm_v1_credentials) => {
                     debug!("fcm v1 provider is matched");
-                    let fcm = FcmV1Provider::new(fcm_v1_credentials);
-                    Ok(FcmV1(fcm))
+                    if let Some(provider) = provider_cache.get(&fcm_v1_credentials).await {
+                        return Ok(provider);
+                    }
+                    let fcm = FcmV1(FcmV1Provider::new(
+                        serde_json::from_str(&fcm_v1_credentials)
+                            .map_err(Error::InvalidServiceAccountKey)?,
+                        http_client,
+                    ));
+                    provider_cache
+                        .insert(fcm_v1_credentials.clone(), fcm.clone())
+                        .await;
+                    Ok(fcm)
                 }
                 None => match self.fcm_api_key.clone() {
                     Some(api_key) => {

@@ -5,10 +5,12 @@ use {
         config::Config,
         metrics::Metrics,
         networking,
+        providers::Provider,
         relay::RelayClient,
         stores::{client::ClientStore, notification::NotificationStore, tenant::TenantStore},
     },
     build_info::BuildInfo,
+    moka::future::Cache,
     std::{net::IpAddr, sync::Arc},
     wc::geoip::{block::middleware::GeoBlockLayer, MaxMindResolver},
 };
@@ -57,6 +59,8 @@ pub struct AppState {
     pub instance_id: uuid::Uuid,
     /// Service instance uptime measurement
     pub uptime: std::time::Instant,
+    pub http_client: reqwest::Client,
+    pub provider_cache: Cache<String, Provider>,
 }
 
 build_info::build_info!(fn build_info);
@@ -106,6 +110,8 @@ pub fn new_state(
         geoblock: None,
         instance_id: uuid::Uuid::new_v4(),
         uptime: std::time::Instant::now(),
+        http_client: reqwest::Client::new(),
+        provider_cache: Cache::new(100),
     })
 }
 

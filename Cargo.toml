@@ -61,7 +61,8 @@ atty = "0.2"
 # Push
 a2 = { git = "https://github.com/WalletConnect/a2", rev = "d0236c3", features = ["tracing", "openssl"] }
 fcm = "0.9"
-fcm_v1 = { git = "https://github.com/rj76/fcm-rust.git", package = "fcm" }
+# fcm_v1 = { git = "https://github.com/rj76/fcm-rust.git", package = "fcm" }
+fcm_v1 = { git = "https://github.com/WalletConnect/fcm-rust.git", package = "fcm", branch = "feat/key-not-from-file" } # TODO use above version once released
 
 # Signature validation
 ed25519-dalek = "2.0.0-rc.2"
@@ -93,6 +94,7 @@ cerberus = { git = "https://github.com/WalletConnect/cerberus.git", tag = "v0.5.
 async-recursion = "1.0.4"
 tap = "1.0.1"
 wiremock = "0.5.21"
+moka = { version = "0.12", features = ["future"] }
 
 [dev-dependencies]
 serial_test = "1.0"
