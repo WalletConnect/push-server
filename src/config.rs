@@ -83,12 +83,6 @@ pub struct Config {
 
     #[cfg(feature = "geoblock")]
     pub blocked_countries: Vec<String>,
-
-    // Cloud
-    #[cfg(feature = "cloud")]
-    pub cloud_api_url: String,
-    #[cfg(feature = "cloud")]
-    pub cloud_api_key: String,
 }
 
 impl Config {

@@ -78,10 +78,6 @@ impl TestContext for ConfigContext {
             analytics_export_bucket: "example-bucket".to_string(),
             is_test: true,
             cors_allowed_origins: vec!["*".to_string()],
-            #[cfg(feature = "cloud")]
-            cloud_api_url: "https://example.com".to_string(),
-            #[cfg(feature = "cloud")]
-            cloud_api_key: "n/a".to_string(),
             #[cfg(feature = "geoblock")]
             blocked_countries: vec![],
         };

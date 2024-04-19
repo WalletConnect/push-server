@@ -166,9 +166,6 @@ pub enum Error {
     #[error("BatchCollector Error: {0}")]
     BatchCollector(String),
 
-    #[error(transparent)]
-    Registry(#[from] cerberus::registry::RegistryError),
-
     #[error("Invalid Project ID: {0}")]
     InvalidProjectId(String),
 
@@ -532,12 +529,6 @@ impl IntoResponse for Error {
                 ResponseError {
                     name: "o11y".to_string(),
                     message: "Internal error monitoring the request".to_string(),
-                },
-            ], vec![]),
-            Error::Registry(_) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![
-                ResponseError {
-                    name: "internal_api_failed".to_string(),
-                    message: "Please check https://status.walletconnect.com as an internal API failed to resolve this request".to_string(),
                 },
             ], vec![]),
             Error::JWT(_) => crate::handlers::Response::new_failure(StatusCode::UNAUTHORIZED, vec![

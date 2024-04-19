@@ -175,9 +175,6 @@ module "ecs" {
   analytics_geoip_db_bucket_name = local.geoip_db_bucket_name
   analytics_geoip_db_key         = var.geoip_db_key
 
-  cloud_api_key = var.cloud_api_key
-  cloud_api_url = "https://registry.walletconnect.com/"
-
   jwt_secret       = var.jwt_secret
   relay_public_key = var.relay_public_key
 
