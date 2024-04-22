@@ -41,7 +41,7 @@ pub async fn handler(
     #[cfg(feature = "cloud")]
     let jwt_verification_result = validate_tenant_request(
         &state.registry_client,
-        &state.gotrue_client,
+        &state.jwt_validation_client,
         &headers,
         id.clone(),
         None,
@@ -49,7 +49,7 @@ pub async fn handler(
     .await;
 
     #[cfg(not(feature = "cloud"))]
-    let jwt_verification_result = validate_tenant_request(&state.gotrue_client, &headers);
+    let jwt_verification_result = validate_tenant_request(&state.jwt_validation_client, &headers);
 
     if let Err(e) = jwt_verification_result {
         error!(
