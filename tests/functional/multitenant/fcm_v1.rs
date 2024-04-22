@@ -21,8 +21,6 @@ async fn tenant_update_fcm_v1_valid(ctx: &mut EchoServerContext) {
         .as_secs() as usize;
     let token_claims = ClaimsForValidation {
         sub: random_tenant_id.clone(),
-        aud: "authenticated".to_string(),
-        role: "authenticated".to_string(),
         exp: unix_timestamp + 60 * 60, // Add an hour for expiration
     };
     let jwt_token = encode(
