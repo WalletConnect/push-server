@@ -10,32 +10,16 @@ use {
 #[test_context(EchoServerContext)]
 #[tokio::test]
 async fn tenant_update_fcm_valid(ctx: &mut EchoServerContext) {
-    let charset = "1234567890";
-    let random_tenant_id = generate(12, charset);
-    let payload = TenantRegisterBody {
-        id: random_tenant_id.clone(),
-    };
-    let unix_timestamp = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap()
-        .as_secs() as usize;
-    let token_claims = ClaimsForValidation {
-        sub: random_tenant_id.clone(),
-        exp: unix_timestamp + 60 * 60, // Add an hour for expiration
-    };
-    let jwt_token = encode(
-        &Header::default(),
-        &token_claims,
-        &EncodingKey::from_secret(ctx.config.jwt_secret.as_bytes()),
-    )
-    .expect("Failed to encode jwt token");
+    let (tenant_id, jwt_token) = generate_random_tenant_id();
 
     // Register tenant
     let client = reqwest::Client::new();
     let register_response = client
         .post(format!("http://{}/tenants", ctx.server.public_addr))
-        .json(&payload)
-        .header("AUTHORIZATION", jwt_token.clone())
+        .bearer_auth(jwt_token)
+        .json(&TenantRegisterBody {
+            id: tenant_id.clone(),
+        })
         .send()
         .await
         .expect("Call failed");
@@ -50,7 +34,7 @@ async fn tenant_update_fcm_valid(ctx: &mut EchoServerContext) {
             "http://{}/tenants/{}/fcm",
             ctx.server.public_addr, &random_tenant_id
         ))
-        .header("AUTHORIZATION", jwt_token.clone())
+        .bearer_auth(jwt_token)
         .multipart(form)
         .send()
         .await
@@ -61,17 +45,16 @@ async fn tenant_update_fcm_valid(ctx: &mut EchoServerContext) {
 #[test_context(EchoServerContext)]
 #[tokio::test]
 async fn tenant_update_fcm_bad(ctx: &mut EchoServerContext) {
-    let charset = "1234567890";
-    let random_tenant_id = generate(12, charset);
-    let payload = TenantRegisterBody {
-        id: random_tenant_id.clone(),
-    };
+    let (tenant_id, jwt_token) = generate_random_tenant_id();
 
     // Register tenant
     let client = reqwest::Client::new();
     client
         .post(format!("http://{}/tenants", ctx.server.public_addr))
-        .json(&payload)
+        .bearer_auth(jwt_token)
+        .json(&TenantRegisterBody {
+            id: tenant_id.clone(),
+        })
         .send()
         .await
         .expect("Call failed");
@@ -84,6 +67,7 @@ async fn tenant_update_fcm_bad(ctx: &mut EchoServerContext) {
             "http://{}/tenants/{}/fcm",
             ctx.server.public_addr, &random_tenant_id
         ))
+        .bearer_auth(jwt_token)
         .multipart(form)
         .send()
         .await

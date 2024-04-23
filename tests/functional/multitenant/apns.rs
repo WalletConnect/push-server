@@ -11,31 +11,16 @@ use {
 #[test_context(EchoServerContext)]
 #[tokio::test]
 async fn tenant_update_apns_valid_token(ctx: &mut EchoServerContext) {
-    let tenant_id = Uuid::new_v4().to_string();
-    let payload = TenantRegisterBody {
-        id: tenant_id.clone(),
-    };
-    let unix_timestamp = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap()
-        .as_secs() as usize;
-    let token_claims = ClaimsForValidation {
-        sub: tenant_id.clone(),
-        exp: unix_timestamp + 60 * 60, // Add an hour for expiration
-    };
-    let jwt_token = encode(
-        &Header::default(),
-        &token_claims,
-        &EncodingKey::from_secret(ctx.config.jwt_secret.as_bytes()),
-    )
-    .expect("Failed to encode jwt token");
+    let (tenant_id, jwt_token) = generate_random_tenant_id();
 
     // Register new tenant
     let client = reqwest::Client::new();
     let create_tenant_result = client
         .post(format!("http://{}/tenants", ctx.server.public_addr))
-        .header("AUTHORIZATION", jwt_token.clone())
-        .json(&payload)
+        .bearer_auth(jwt_token)
+        .json(&TenantRegisterBody {
+            id: tenant_id.clone(),
+        })
         .send()
         .await
         .expect("Failed to create a new tenant");
@@ -62,7 +47,7 @@ async fn tenant_update_apns_valid_token(ctx: &mut EchoServerContext) {
             "http://{}/tenants/{}/apns",
             ctx.server.public_addr, &tenant_id
         ))
-        .header("AUTHORIZATION", jwt_token.clone())
+        .bearer_auth(jwt_token)
         .multipart(form)
         .send()
         .await
@@ -73,17 +58,16 @@ async fn tenant_update_apns_valid_token(ctx: &mut EchoServerContext) {
 #[test_context(EchoServerContext)]
 #[tokio::test]
 async fn tenant_update_apns_bad_token(ctx: &mut EchoServerContext) {
-    let charset = "1234567890";
-    let random_tenant_id = generate(12, charset);
-    let payload = TenantRegisterBody {
-        id: random_tenant_id.clone(),
-    };
+    let (tenant_id, jwt_token) = generate_random_tenant_id();
 
     // Register tenant
     let client = reqwest::Client::new();
     client
         .post(format!("http://{}/tenants", ctx.server.public_addr))
-        .json(&payload)
+        .bearer_auth(jwt_token)
+        .json(&TenantRegisterBody {
+            id: tenant_id.clone(),
+        })
         .send()
         .await
         .expect("Call failed");
@@ -97,8 +81,9 @@ async fn tenant_update_apns_bad_token(ctx: &mut EchoServerContext) {
     let response = client
         .post(format!(
             "http://{}/tenants/{}/apns",
-            ctx.server.public_addr, &random_tenant_id
+            ctx.server.public_addr, tenant_id
         ))
+        .bearer_auth(jwt_token)
         .multipart(form)
         .send()
         .await
@@ -110,17 +95,16 @@ async fn tenant_update_apns_bad_token(ctx: &mut EchoServerContext) {
 #[test_context(EchoServerContext)]
 #[tokio::test]
 async fn tenant_update_apns_bad_certificate(ctx: &mut EchoServerContext) {
-    let charset = "1234567890";
-    let random_tenant_id = generate(12, charset);
-    let payload = TenantRegisterBody {
-        id: random_tenant_id.clone(),
-    };
+    let (tenant_id, jwt_token) = generate_random_tenant_id();
 
     // Register tenant
     let client = reqwest::Client::new();
     client
         .post(format!("http://{}/tenants", ctx.server.public_addr))
-        .json(&payload)
+        .bearer_auth(jwt_token)
+        .json(&TenantRegisterBody {
+            id: tenant_id.clone(),
+        })
         .send()
         .await
         .expect("Call failed");
@@ -135,6 +119,7 @@ async fn tenant_update_apns_bad_certificate(ctx: &mut EchoServerContext) {
             "http://{}/tenants/{}/apns",
             ctx.server.public_addr, &random_tenant_id
         ))
+        .bearer_auth(jwt_token)
         .multipart(form)
         .send()
         .await

@@ -1,4 +1,3 @@
-use crate::providers::fcm_v1::FcmV1Provider;
 use {
     crate::{
         error::{Error, Error::InvalidMultipartBody},
@@ -73,10 +72,9 @@ pub async fn handler(
         return Err(InvalidMultipartBody);
     }
 
-    // TODO consider using the provider cache here. Remove from cache if invalid.
-    let _fcm = FcmV1Provider::new(
+    // Client will validate the key on startup
+    let _fcm = fcm_v1::Client::from_key(
         serde_json::from_str(&body.credentials).map_err(Error::InvalidServiceAccountKey)?,
-        reqwest::Client::new(),
     );
 
     // ---- checks
