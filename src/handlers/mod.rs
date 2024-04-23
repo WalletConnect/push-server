@@ -160,7 +160,7 @@ impl Default for Response {
 pub async fn validate_tenant_request(
     jwt_validation_client: &JwtValidationClient,
     headers: &HeaderMap,
-    project_id: String,
+    project_id: &str,
 ) -> Result<bool> {
     if let Some(token_value) = headers.get(AUTHORIZATION) {
         Ok(match jwt_validation_client

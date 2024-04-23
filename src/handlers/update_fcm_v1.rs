@@ -1,3 +1,4 @@
+use crate::providers::fcm_v1::FcmV1Provider;
 use {
     crate::{
         error::{Error, Error::InvalidMultipartBody},
@@ -39,14 +40,8 @@ pub async fn handler(
 
     // JWT token verification
     #[cfg(feature = "cloud")]
-    let jwt_verification_result = validate_tenant_request(
-        &state.registry_client,
-        &state.jwt_validation_client,
-        &headers,
-        id.clone(),
-        None,
-    )
-    .await;
+    let jwt_verification_result =
+        validate_tenant_request(&state.jwt_validation_client, &headers, &id).await;
 
     #[cfg(not(feature = "cloud"))]
     let jwt_verification_result = validate_tenant_request(&state.jwt_validation_client, &headers);
@@ -77,6 +72,12 @@ pub async fn handler(
     if !body.value_changed_ {
         return Err(InvalidMultipartBody);
     }
+
+    // TODO consider using the provider cache here. Remove from cache if invalid.
+    let _fcm = FcmV1Provider::new(
+        serde_json::from_str(&body.credentials).map_err(Error::InvalidServiceAccountKey)?,
+        reqwest::Client::new(),
+    );
 
     // ---- checks
     // TODO

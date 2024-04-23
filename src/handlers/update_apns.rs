@@ -126,7 +126,7 @@ pub async fn handler(
     // JWT verification
     #[cfg(feature = "cloud")]
     let jwt_verification_result =
-        validate_tenant_request(&state.jwt_validation_client, &headers, id.clone()).await;
+        validate_tenant_request(&state.jwt_validation_client, &headers, &id).await;
 
     #[cfg(not(feature = "cloud"))]
     let jwt_verification_result = validate_tenant_request(&state.jwt_validation_client, &headers);

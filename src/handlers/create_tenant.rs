@@ -28,8 +28,7 @@ pub async fn handler(
     Json(body): Json<TenantRegisterBody>,
 ) -> Result<Json<TenantRegisterResponse>, Error> {
     #[cfg(feature = "cloud")]
-    if let Err(e) =
-        validate_tenant_request(&state.jwt_validation_client, &headers, body.id.clone()).await
+    if let Err(e) = validate_tenant_request(&state.jwt_validation_client, &headers, &body.id).await
     {
         error!(
             tenant_id = %body.id,
