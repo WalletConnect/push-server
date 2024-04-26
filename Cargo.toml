@@ -59,7 +59,7 @@ tracing-opentelemetry = "0.18"
 atty = "0.2"
 
 # Push
-a2 = { git = "https://github.com/WalletConnect/a2", rev = "d0236c3", features = ["tracing", "openssl"] }
+a2 = { version = "0.9.0", features = ["tracing", "openssl"] }
 fcm = "0.9"
 
 # Signature validation
