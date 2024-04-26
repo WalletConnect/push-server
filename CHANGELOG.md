@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.38.2 - 2024-04-26
+#### Bug Fixes
+- upgrde to axum 0.7 (#315) - (2a493ca) - Chris Smith
+
+- - -
+
 ## v0.38.1 - 2024-04-22
 #### Bug Fixes
 - separate staging and prod JWT secrets (#318) - (30b172e) - Chris Smith
