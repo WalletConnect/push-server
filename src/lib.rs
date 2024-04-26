@@ -53,6 +53,7 @@ pub mod blob;
 pub mod config;
 pub mod error;
 pub mod handlers;
+pub mod jwt_validation;
 pub mod log;
 pub mod macros;
 pub mod metrics;
@@ -62,7 +63,6 @@ pub mod providers;
 pub mod relay;
 pub mod state;
 pub mod stores;
-pub mod supabase;
 
 const PG_CONNECTION_POOL_SIZE: u32 = 100;
 

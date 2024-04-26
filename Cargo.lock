@@ -149,17 +149,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "async-recursion"
-version = "1.0.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5fd55a5ba1179988837d24ab4c7cc8ed6efdeff578ede0416b4225a5fca35bd0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.37",
-]
-
-[[package]]
 name = "async-stream"
 version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -954,19 +943,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cerberus"
-version = "0.2.0"
-source = "git+https://github.com/WalletConnect/cerberus.git?tag=v0.5.0#bc1033ca9fa9d588d51237016354f69e0dcafafb"
-dependencies = [
- "async-trait",
- "once_cell",
- "regex",
- "reqwest 0.11.20",
- "serde",
- "thiserror",
-]
-
-[[package]]
 name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1384,10 +1360,9 @@ dependencies = [
 
 [[package]]
 name = "echo-server"
-version = "0.37.6"
+version = "0.38.1"
 dependencies = [
  "a2",
- "async-recursion",
  "async-trait",
  "atty",
  "aws-config",
@@ -1397,7 +1372,6 @@ dependencies = [
  "base64 0.21.4",
  "build-info",
  "build-info-build",
- "cerberus",
  "chrono",
  "data-encoding",
  "dotenv",

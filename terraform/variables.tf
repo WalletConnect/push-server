@@ -28,11 +28,6 @@ variable "geoip_db_key" {
   default     = "GeoLite2-City.mmdb"
 }
 
-variable "cloud_api_key" {
-  type      = string
-  sensitive = true
-}
-
 variable "jwt_secret" {
   type      = string
   sensitive = true

@@ -1,6 +1,6 @@
 [package]
 name = "echo-server"
-version = "0.37.6"
+version = "0.38.1"
 edition = "2021"
 authors = [
     "Harry Bairstow <harry@walletconnect.com>"
@@ -88,8 +88,6 @@ is-variant-derive = { path = "crates/is-variant-derive" }
 once_cell = "1.15"
 pnet_datalink = "0.31"
 ipnet = "2.5"
-cerberus = { git = "https://github.com/WalletConnect/cerberus.git", tag = "v0.5.0" }
-async-recursion = "1.0.4"
 tap = "1.0.1"
 wiremock = "0.6.0"
 

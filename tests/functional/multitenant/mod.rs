@@ -9,8 +9,6 @@ mod tenancy;
 #[derive(Serialize)]
 pub struct ClaimsForValidation {
     sub: String,
-    aud: String,
-    role: String,
     exp: usize,
 }
 
