@@ -1,23 +1,17 @@
 use {
     crate::context::EchoServerContext,
     echo_server::handlers::register_client::RegisterBody,
-    relay_rpc::{
-        auth::{
-            ed25519_dalek::Keypair,
-            rand::{rngs::StdRng, SeedableRng},
-        },
-        domain::{ClientId, DecodedClientId},
-    },
+    ed25519_dalek::SigningKey,
+    relay_rpc::domain::{ClientId, DecodedClientId},
     test_context::test_context,
 };
 
 #[test_context(EchoServerContext)]
 #[tokio::test]
 async fn test_registration(ctx: &mut EchoServerContext) {
-    let mut rng = StdRng::from_entropy();
-    let keypair = Keypair::generate(&mut rng);
+    let keypair = SigningKey::generate(&mut rand::thread_rng());
 
-    let random_client_id = DecodedClientId(*keypair.public_key().as_bytes());
+    let random_client_id = DecodedClientId::from_key(&keypair.verifying_key());
     let client_id = ClientId::from(random_client_id);
     let payload = RegisterBody {
         client_id: client_id.clone(),
@@ -74,10 +68,9 @@ async fn test_registration(ctx: &mut EchoServerContext) {
 #[test_context(EchoServerContext)]
 #[tokio::test]
 async fn test_deregistration(ctx: &mut EchoServerContext) {
-    let mut rng = StdRng::from_entropy();
-    let keypair = Keypair::generate(&mut rng);
+    let keypair = SigningKey::generate(&mut rand::thread_rng());
 
-    let random_client_id = DecodedClientId(*keypair.public_key().as_bytes());
+    let random_client_id = DecodedClientId::from_key(&keypair.verifying_key());
     let client_id = ClientId::from(random_client_id);
 
     let jwt = relay_rpc::auth::AuthToken::new(client_id.value().to_string())
