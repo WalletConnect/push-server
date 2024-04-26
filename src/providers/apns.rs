@@ -60,6 +60,7 @@ impl PushProvider for ApnsProvider {
             apns_priority: None,
             apns_topic: Some(&self.topic),
             apns_collapse_id: None,
+            apns_push_type: None,
         };
 
         let result = match body {
