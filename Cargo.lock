@@ -4,8 +4,9 @@ version = 3
 
 [[package]]
 name = "a2"
-version = "0.9.0"
-source = "git+https://github.com/threema-donat/a2.git?branch=add_timeout#b938e2dce24a88b66f3380fab53df2a0aace6452"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f279fc8b1f1a64138f0f4b9cda9be488ae35bc2f8556c7ffe60730f1c07d005a"
 dependencies = [
  "base64 0.21.4",
  "erased-serde",
