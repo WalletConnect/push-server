@@ -105,7 +105,7 @@ impl Clone for FcmProvider {
     }
 
     fn clone_from(&mut self, source: &Self) {
-        self.api_key = source.api_key.clone();
+        self.api_key.clone_from(&source.api_key);
         self.client = fcm::Client::new();
     }
 }

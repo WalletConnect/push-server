@@ -1,7 +1,7 @@
 use {
     super::{LegacyPushMessage, PushMessage, RawPushMessage},
     crate::{blob::DecryptedPayloadBlob, error::Error, providers::PushProvider},
-    a2::{ErrorReason, NotificationBuilder, NotificationOptions},
+    a2::{ClientConfig, ErrorReason, NotificationBuilder, NotificationOptions},
     async_trait::async_trait,
     std::io::Read,
     tracing::{debug, info, instrument, warn},
@@ -24,7 +24,7 @@ impl ApnsProvider {
         R: Read,
     {
         Ok(ApnsProvider {
-            client: a2::Client::certificate(cert, password.as_str(), endpoint)?,
+            client: a2::Client::certificate(cert, password.as_str(), ClientConfig::new(endpoint))?,
             topic,
         })
     }
@@ -40,7 +40,7 @@ impl ApnsProvider {
         R: Read,
     {
         Ok(ApnsProvider {
-            client: a2::Client::token(pkcs8_pem, key_id, team_id, endpoint)?,
+            client: a2::Client::token(pkcs8_pem, key_id, team_id, ClientConfig::new(endpoint))?,
             topic,
         })
     }

@@ -5,8 +5,7 @@ version = 3
 [[package]]
 name = "a2"
 version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9113bcfcb2f288f0619d47d84f712ddad87b4d0a79245b2d61ffe13960fb8ac8"
+source = "git+https://github.com/threema-donat/a2.git?branch=add_timeout#b938e2dce24a88b66f3380fab53df2a0aace6452"
 dependencies = [
  "base64 0.21.4",
  "erased-serde",
@@ -16,11 +15,13 @@ dependencies = [
  "hyper-rustls 0.26.0",
  "hyper-util",
  "openssl",
+ "parking_lot 0.12.1",
  "rustls 0.22.4",
  "rustls-pemfile 2.1.1",
  "serde",
  "serde_json",
  "thiserror",
+ "tokio",
  "tracing",
 ]
 
