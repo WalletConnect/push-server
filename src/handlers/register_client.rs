@@ -78,9 +78,9 @@ pub async fn handler(
         return Err(EmptyField("token".to_string()));
     }
 
-    let mut client_id = body.client_id.to_string();
-
-    client_id = client_id
+    let client_id = body
+        .client_id
+        .as_ref()
         .trim_start_matches(DECENTRALIZED_IDENTIFIER_PREFIX)
         .to_owned();
 

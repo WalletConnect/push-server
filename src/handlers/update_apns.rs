@@ -6,6 +6,7 @@ use {
         state::AppState,
         stores::tenant::{TenantApnsUpdateAuth, TenantApnsUpdateParams},
     },
+    a2::ClientConfig,
     axum::{
         extract::{Multipart, Path, State},
         http::HeaderMap,
@@ -220,7 +221,7 @@ pub async fn handler(
                 match a2::Client::certificate(
                     &mut std::io::Cursor::new(decoded),
                     &apns_certificate_password,
-                    a2::Endpoint::Sandbox,
+                    ClientConfig::new(a2::Endpoint::Sandbox),
                 ) {
                     Ok(_) => Ok(()),
                     Err(e) => {
@@ -240,7 +241,7 @@ pub async fn handler(
                     &mut std::io::Cursor::new(decoded),
                     apns_key_id,
                     apns_team_id,
-                    a2::Endpoint::Sandbox,
+                    ClientConfig::new(a2::Endpoint::Sandbox),
                 ) {
                     Ok(_) => Ok(()),
                     Err(e) => {
