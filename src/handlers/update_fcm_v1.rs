@@ -13,7 +13,7 @@ use {
     },
     serde::Serialize,
     std::sync::Arc,
-    tracing::{error, instrument, debug},
+    tracing::{debug, error, instrument},
 };
 
 pub struct FcmV1UpdateBody {
