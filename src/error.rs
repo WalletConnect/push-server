@@ -38,7 +38,7 @@ pub enum Error {
     Fcm(#[from] fcm::FcmError),
 
     #[error(transparent)]
-    FcmV1(#[from] fcm_v1::Error),
+    FcmV1(#[from] fcm_v1::SendError),
 
     #[error("FCM Responded with an error")]
     FcmResponse(fcm::ErrorReason),
@@ -53,7 +53,7 @@ pub enum Error {
     Database(#[from] sqlx::Error),
 
     #[error(transparent)]
-    Hex(#[from] hex::FromHexError),
+    Hex(hex::FromHexError),
 
     #[error(transparent)]
     Ed25519(#[from] ed25519_dalek::ed25519::Error),
@@ -71,7 +71,10 @@ pub enum Error {
     DecryptedNotificationParse(serde_json::Error),
 
     #[error("Invalid ServiceServiceAccount key: {0}")]
-    InvalidServiceAccountKey(serde_json::Error),
+    FcmV1InvalidServiceAccountKey(serde_json::Error),
+
+    #[error("Internal: Invalid ServiceServiceAccount key: {0}")]
+    InternalFcmV1InvalidServiceAccountKey(serde_json::Error),
 
     #[error("Failed to perform internal serialization: {0}")]
     InternalSerializationError(serde_json::Error),
@@ -184,6 +187,9 @@ pub enum Error {
     #[error("Invalid FCM API key")]
     BadFcmApiKey,
 
+    #[error("Invalid FCM v1 credentials")]
+    BadFcmV1Credentials,
+
     #[error("Invalid APNs creds")]
     BadApnsCredentials,
 
@@ -251,6 +257,30 @@ impl IntoResponse for Error {
                 ErrorField {
                     field: "api_key".to_string(),
                     description: "The provided API Key was not valid".to_string(),
+                    location: ErrorLocation::Body,
+                }
+            ]),
+            Error::FcmV1InvalidServiceAccountKey(e) => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
+                ResponseError {
+                    name: "fcm_v1_invalid_service_account_key".to_string(),
+                    message: format!("The provided Service Account Key was not valid: {e}"),
+                }
+            ], vec![
+                ErrorField {
+                    field: "fcm_v1_credentials".to_string(),
+                    description: "FCM V1 credentials".to_string(),
+                    location: ErrorLocation::Body,
+                }
+            ]),
+            Error::BadFcmV1Credentials => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
+                ResponseError {
+                    name: "bad_fcm_v1_credentials".to_string(),
+                    message: "The provided credentials were not valid".to_string(),
+                }
+            ], vec![
+                ErrorField {
+                    field: "fcm_v1_credentials".to_string(),
+                    description: "FCM V1 credentials".to_string(),
                     location: ErrorLocation::Body,
                 }
             ]),

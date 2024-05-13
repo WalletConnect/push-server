@@ -13,7 +13,7 @@ use {
     },
     serde::Serialize,
     std::sync::Arc,
-    tracing::{error, instrument},
+    tracing::{error, instrument, debug},
 };
 
 pub struct FcmV1UpdateBody {
@@ -73,24 +73,14 @@ pub async fn handler(
     }
 
     // Client will validate the key on startup
-    let _fcm = fcm_v1::Client::from_key(
-        serde_json::from_str(&body.credentials).map_err(Error::InvalidServiceAccountKey)?,
-    );
-
-    // ---- checks
-    // TODO
-    // let fcm_credentials = body.credentials.clone();
-    // let mut test_message_builder = fcm_v1::Message::new(&fcm_credentials, "wc-notification-test");
-    // test_message_builder.dry_run(true);
-    // let test_message = test_message_builder.finalize();
-    // let test_notification = fcm::Client::new().send(test_message).await;
-    // match test_notification {
-    //     Err(e) => match e {
-    //         FcmError::Unauthorized => Err(BadFcmApiKey),
-    //         _ => Ok(()),
-    //     },
-    //     Ok(_) => Ok(()),
-    // }?;
+    fcm_v1::Client::from_key(
+        serde_json::from_str(&body.credentials).map_err(Error::FcmV1InvalidServiceAccountKey)?,
+    )
+    .await
+    .map_err(|e| {
+        debug!("Failed credential validation: {e}");
+        Error::BadFcmV1Credentials
+    })?;
 
     // ---- handler
     let update_body = TenantFcmV1UpdateParams {

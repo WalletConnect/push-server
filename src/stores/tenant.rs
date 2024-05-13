@@ -256,11 +256,20 @@ impl Tenant {
                     if let Some(provider) = provider_cache.get(&fcm_v1_credentials).await {
                         return Ok(provider);
                     }
-                    let fcm = FcmV1(FcmV1Provider::new(
-                        serde_json::from_str(&fcm_v1_credentials)
-                            .map_err(Error::InvalidServiceAccountKey)?,
-                        http_client,
-                    ));
+                    #[allow(clippy::match_single_binding)]
+                    let fcm = FcmV1(
+                        FcmV1Provider::new(
+                            serde_json::from_str(&fcm_v1_credentials)
+                                .map_err(Error::InternalFcmV1InvalidServiceAccountKey)?,
+                            http_client,
+                        )
+                        .await
+                        .map_err(|e| match e {
+                            // TODO check specific error
+                            // ServiceAccountError::Unauthorized => Error::BadFcmV1Credentials,
+                            _ => Error::BadFcmV1Credentials,
+                        })?,
+                    );
                     provider_cache
                         .insert(fcm_v1_credentials.clone(), fcm.clone())
                         .await;

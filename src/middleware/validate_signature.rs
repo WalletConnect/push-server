@@ -84,7 +84,7 @@ pub async fn signature_is_valid(
 ) -> Result<bool, crate::error::Error> {
     let sig_body = format!("{}.{}.{}", timestamp, body.len(), body);
 
-    let sig_bytes = hex::decode(signature)?;
+    let sig_bytes = hex::decode(signature).map_err(crate::error::Error::Hex)?;
     let sig = Signature::try_from(sig_bytes.as_slice())?;
 
     Ok(public_key.verify_strict(sig_body.as_bytes(), &sig).is_ok())

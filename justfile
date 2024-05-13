@@ -10,7 +10,10 @@ test:
   RUST_BACKTRACE=1 cargo test --all-targets -- {{test}}
 
 test-all:
-  RUST_BACKTRACE=1 cargo test --all-features --all-targets -- {{test}}
+  RUST_BACKTRACE=1 cargo test --all-targets --features=multitenant,analytics,geoblock,functional_tests,fcmv1_tests -- {{test}}
+
+test-all-providers:
+  RUST_BACKTRACE=1 cargo test --all-targets --features=multitenant,analytics,geoblock,functional_tests,apns_tests,fcm_tests,fcmv1_tests -- {{test}}
 
 clippy:
   #!/bin/bash

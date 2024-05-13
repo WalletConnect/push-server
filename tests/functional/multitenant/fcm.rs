@@ -1,22 +1,20 @@
 use {
-    crate::{context::EchoServerContext, functional::multitenant::ClaimsForValidation},
+    crate::{context::EchoServerContext, functional::multitenant::generate_random_tenant_id},
     echo_server::handlers::create_tenant::TenantRegisterBody,
-    jsonwebtoken::{encode, EncodingKey, Header},
-    random_string::generate,
-    std::{env, time::SystemTime},
+    std::env,
     test_context::test_context,
 };
 
 #[test_context(EchoServerContext)]
 #[tokio::test]
 async fn tenant_update_fcm_valid(ctx: &mut EchoServerContext) {
-    let (tenant_id, jwt_token) = generate_random_tenant_id();
+    let (tenant_id, jwt_token) = generate_random_tenant_id(&ctx.config.jwt_secret);
 
     // Register tenant
     let client = reqwest::Client::new();
     let register_response = client
         .post(format!("http://{}/tenants", ctx.server.public_addr))
-        .bearer_auth(jwt_token)
+        .bearer_auth(&jwt_token)
         .json(&TenantRegisterBody {
             id: tenant_id.clone(),
         })
@@ -32,9 +30,9 @@ async fn tenant_update_fcm_valid(ctx: &mut EchoServerContext) {
     let response_fcm_update = client
         .post(format!(
             "http://{}/tenants/{}/fcm",
-            ctx.server.public_addr, &random_tenant_id
+            ctx.server.public_addr, tenant_id
         ))
-        .bearer_auth(jwt_token)
+        .bearer_auth(&jwt_token)
         .multipart(form)
         .send()
         .await
@@ -45,13 +43,13 @@ async fn tenant_update_fcm_valid(ctx: &mut EchoServerContext) {
 #[test_context(EchoServerContext)]
 #[tokio::test]
 async fn tenant_update_fcm_bad(ctx: &mut EchoServerContext) {
-    let (tenant_id, jwt_token) = generate_random_tenant_id();
+    let (tenant_id, jwt_token) = generate_random_tenant_id(&ctx.config.jwt_secret);
 
     // Register tenant
     let client = reqwest::Client::new();
     client
         .post(format!("http://{}/tenants", ctx.server.public_addr))
-        .bearer_auth(jwt_token)
+        .bearer_auth(&jwt_token)
         .json(&TenantRegisterBody {
             id: tenant_id.clone(),
         })
@@ -65,9 +63,9 @@ async fn tenant_update_fcm_bad(ctx: &mut EchoServerContext) {
     let response = client
         .post(format!(
             "http://{}/tenants/{}/fcm",
-            ctx.server.public_addr, &random_tenant_id
+            ctx.server.public_addr, tenant_id
         ))
-        .bearer_auth(jwt_token)
+        .bearer_auth(&jwt_token)
         .multipart(form)
         .send()
         .await

@@ -41,7 +41,10 @@ impl TestContext for ConfigContext {
             log_level_otel: "info,echo-server=trace".into(),
             disable_header: true,
             validate_signatures: false,
-            relay_public_key: env::var("RELAY_PUBLIC_KEY").unwrap_or("none".to_string()),
+            // TODO setting this to avoid hex parsing errors; I don't think it's used
+            relay_public_key: env::var("RELAY_PUBLIC_KEY").unwrap_or(
+                "ff469faa970df23c23a6542765ce8dba2a907538522833b2327a153e365d138e".to_string(),
+            ),
             database_url: env::var("DATABASE_URL")
                 .expect("DATABASE_URL environment variable is not set"),
             tenant_database_url: env::var("TENANT_DATABASE_URL")

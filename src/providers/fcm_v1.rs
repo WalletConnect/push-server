@@ -4,7 +4,7 @@ use {
     async_trait::async_trait,
     fcm_v1::{
         gauth::serv_account::ServiceAccountKey, AndroidConfig, AndroidMessagePriority,
-        AndroidNotification, Client, Error as FcmError, ErrorReason, Message, Notification,
+        AndroidNotification, Client, ClientBuildError, ErrorReason, Message, Notification,
         Response, Target, WebpushConfig,
     },
     tracing::{debug, instrument},
@@ -16,12 +16,15 @@ pub struct FcmV1Provider {
 }
 
 impl FcmV1Provider {
-    pub fn new(credentials: ServiceAccountKey, http_client: reqwest::Client) -> Self {
-        Self {
-            client: Client::builder()
-                .http_client(http_client)
-                .build(credentials),
-        }
+    pub async fn new(
+        credentials: ServiceAccountKey,
+        http_client: reqwest::Client,
+    ) -> Result<Self, ClientBuildError> {
+        let client = Client::builder()
+            .http_client(http_client)
+            .build(credentials)
+            .await?;
+        Ok(Self { client })
     }
 }
 
@@ -166,6 +169,7 @@ impl PushProvider for FcmV1Provider {
             }
         };
 
+        #[allow(clippy::match_single_binding)]
         match result {
             Ok(val) => {
                 let Response { error, .. } = val;
@@ -188,7 +192,7 @@ impl PushProvider for FcmV1Provider {
                 }
             }
             Err(e) => match e {
-                FcmError::Unauthorized => Err(Error::BadFcmApiKey),
+                // SendError::Unauthorized => Err(Error::BadFcmV1Credentials),
                 e => Err(Error::FcmV1(e)),
             },
         }

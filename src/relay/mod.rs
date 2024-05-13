@@ -18,7 +18,7 @@ impl RelayClient {
     }
 
     fn string_to_verifying_key(string_key: &str) -> crate::error::Result<VerifyingKey> {
-        let key_bytes = hex::decode(string_key)?;
+        let key_bytes = hex::decode(string_key).map_err(crate::error::Error::Hex)?;
         Ok(VerifyingKey::from_bytes(
             <&[u8; 32]>::try_from(key_bytes.as_slice()).unwrap(),
         )?)
