@@ -10,22 +10,20 @@ use {
 use {
     crate::{log::prelude::*, state::TenantStoreArc},
     axum::{
+        extract::Request,
         routing::{delete, get, post},
         Router,
     },
     axum_client_ip::SecureClientIpSource,
     config::Config,
-    hyper::{
-        http::{Method, Request},
-        Body,
-    },
+    hyper::http::Method,
     opentelemetry::{sdk::Resource, KeyValue},
     sqlx::{
         postgres::{PgConnectOptions, PgPoolOptions},
         ConnectOptions,
     },
-    std::{net::SocketAddr, str::FromStr, sync::Arc, time::Duration},
-    tokio::{select, sync::broadcast},
+    std::{future::IntoFuture, net::SocketAddr, str::FromStr, sync::Arc, time::Duration},
+    tokio::{net::TcpListener, select, sync::broadcast},
     tower::ServiceBuilder,
     tower_http::{
         catch_panic::CatchPanicLayer,
@@ -127,7 +125,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             if let Some(ip) = state.public_ip {
                 let analytics =
                     analytics::initialize(&state.config, s3_client, ip, geoip_resolver.clone())
-                        .await?;
+                        .await;
                 state.analytics = Some(analytics);
             }
         }
@@ -184,7 +182,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         .set_x_request_id(MakeRequestUuid)
         .layer(
             TraceLayer::new_for_http()
-            .make_span_with(|request: &Request<Body>| {
+            .make_span_with(|request: &Request| {
                 let request_id = match request.headers().get("x-request-id") {
                     Some(value) => value.to_str().unwrap_or_default().to_string(),
                     None => {
@@ -316,12 +314,13 @@ providers: [{}]
         debug!("Online and listening at http://0.0.0.0:{}", port.clone())
     }
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    let private_addr = SocketAddr::from(([0, 0, 0, 0], private_port));
+    let listener = TcpListener::bind(SocketAddr::from(([0, 0, 0, 0], port))).await?;
+    let private_listener =
+        TcpListener::bind(SocketAddr::from(([0, 0, 0, 0], private_port))).await?;
 
     select! {
-        _ = axum::Server::bind(&addr).serve(app.into_make_service_with_connect_info::<SocketAddr>()) => info!("Server terminating"),
-        _ = axum::Server::bind(&private_addr).serve(private_app.into_make_service()) => info!("Internal Server terminating"),
+        _ = axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).into_future() => info!("Server terminating"),
+        _ = axum::serve(private_listener, private_app.into_make_service()).into_future() => info!("Internal Server terminating"),
         _ = shutdown.recv() => info!("Shutdown signal received, killing servers"),
     }
 
@@ -354,7 +353,10 @@ async fn get_geoip_resolver(config: &Config, s3_client: &S3Client) -> Option<Arc
 #[cfg(any(feature = "analytics", feature = "geoblock"))]
 async fn get_s3_client(config: &Config) -> S3Client {
     let region_provider = RegionProviderChain::first_try(Region::new("eu-central-1"));
-    let shared_config = aws_config::from_env().region(region_provider).load().await;
+    let shared_config = aws_config::defaults(aws_config::BehaviorVersion::latest())
+        .region(region_provider)
+        .load()
+        .await;
 
     let aws_config = match &config.s3_endpoint {
         Some(s3_endpoint) => {
