@@ -1484,6 +1484,7 @@ dependencies = [
 [[package]]
 name = "fcm"
 version = "0.10.0"
+source = "git+https://github.com/WalletConnect/fcm-rust.git?branch=feat/key-not-from-file#8bc9c381a5d72a0c43f13e676283f14f8def83c8"
 dependencies = [
  "chrono",
  "erased-serde 0.4.4",
@@ -1687,6 +1688,7 @@ dependencies = [
 [[package]]
 name = "gauth"
 version = "0.9.0"
+source = "git+https://github.com/WalletConnect/gauth-rs.git?branch=feat/key-not-from-file#10c114c4e01318a1f2d3ca969a677e8d59b9b6ae"
 dependencies = [
  "anyhow",
  "base64 0.21.7",

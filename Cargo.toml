@@ -108,8 +108,8 @@ ed25519-dalek = { version = "2.0.0-rc.2", features = ["rand_core"] }
 [build-dependencies]
 build-info-build = "0.0"
 
-[patch.'https://github.com/WalletConnect/fcm-rust.git']
-fcm = { path = "../fcm-rust" }
+# [patch.'https://github.com/WalletConnect/fcm-rust.git']
+# fcm = { path = "../fcm-rust" }
 
-[patch.'https://github.com/WalletConnect/gauth-rs.git']
-gauth = { path = "../gauth-rs" }
+# [patch.'https://github.com/WalletConnect/gauth-rs.git']
+# gauth = { path = "../gauth-rs" }
