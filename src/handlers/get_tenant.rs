@@ -1,7 +1,11 @@
 use {
     crate::{
-        error::Error, handlers::validate_tenant_request, log::prelude::*, providers::{ProviderKind, PROVIDER_FCM_V1},
-        state::AppState, stores::tenant::ApnsType,
+        error::Error,
+        handlers::validate_tenant_request,
+        log::prelude::*,
+        providers::{ProviderKind, PROVIDER_FCM_V1},
+        state::AppState,
+        stores::tenant::ApnsType,
     },
     axum::{
         extract::{Path, State},

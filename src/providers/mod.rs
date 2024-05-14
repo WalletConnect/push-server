@@ -81,12 +81,12 @@ pub trait PushProvider {
     async fn send_notification(&self, token: String, body: PushMessage) -> error::Result<()>;
 }
 
-const PROVIDER_APNS: &str = "apns";
-const PROVIDER_APNS_SANDBOX: &str = "apns-sandbox";
-const PROVIDER_FCM: &str = "fcm";
+pub const PROVIDER_APNS: &str = "apns";
+pub const PROVIDER_APNS_SANDBOX: &str = "apns-sandbox";
+pub const PROVIDER_FCM: &str = "fcm";
 pub const PROVIDER_FCM_V1: &str = "fcm_v1";
 #[cfg(any(debug_assertions, test))]
-const PROVIDER_NOOP: &str = "noop";
+pub const PROVIDER_NOOP: &str = "noop";
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, sqlx::Type)]
 #[sqlx(type_name = "provider")]
