@@ -34,13 +34,13 @@ pub async fn handler(
     headers: HeaderMap,
     mut form_body: Multipart,
 ) -> Result<Json<UpdateTenantFcmV1Response>, Error> {
-    // -- check if tenant is real
-    let _existing_tenant = state.tenant_store.get_tenant(&id).await?;
-
     // JWT token verification
     #[cfg(feature = "cloud")]
     let jwt_verification_result =
         validate_tenant_request(&state.jwt_validation_client, &headers, &id).await;
+
+    // -- check if tenant is real
+    let _existing_tenant = state.tenant_store.get_tenant(&id).await?;
 
     #[cfg(not(feature = "cloud"))]
     let jwt_verification_result = validate_tenant_request(&state.jwt_validation_client, &headers);
