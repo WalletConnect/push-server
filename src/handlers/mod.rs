@@ -193,6 +193,7 @@ pub fn validate_tenant_request(
     headers: &HeaderMap,
 ) -> Result<bool> {
     if let Some(token_data) = headers.get(AUTHORIZATION) {
+        // TODO Clients should always use `Bearer`, migrate them (if not already) and remove this optionality
         if jwt_validation_client
             .is_valid_token(token_data.to_str()?.to_string().replace("Bearer ", ""))
             .is_ok()
