@@ -6,6 +6,8 @@ Generated randomly and used by Cloud app to sign JWTs.
 
 ## `ECHO_TEST_FCM_V1_CREDENTIALS`
 
+From 1Password: `Firebase Push Server Tests Service Account`
+
 FCM v1 service account credentials for test cases.
 
 Setup:
