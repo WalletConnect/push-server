@@ -84,6 +84,7 @@ pub trait PushProvider {
 const PROVIDER_APNS: &str = "apns";
 const PROVIDER_APNS_SANDBOX: &str = "apns-sandbox";
 const PROVIDER_FCM: &str = "fcm";
+pub const PROVIDER_FCM_V1: &str = "fcm_v1";
 #[cfg(any(debug_assertions, test))]
 const PROVIDER_NOOP: &str = "noop";
 
@@ -94,6 +95,7 @@ pub enum ProviderKind {
     Apns,
     ApnsSandbox,
     Fcm,
+    // Intentionally no FcmV1 variant because ProviderKind is also used to determine token type (of which FCM and FCM V1 are the same)
     #[cfg(any(debug_assertions, test))]
     Noop,
 }

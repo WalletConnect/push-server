@@ -9,6 +9,7 @@ build = "build.rs"
 resolver = "2"
 
 [features]
+# default = ["full"]
 full = ["functional_tests", "multitenant", "analytics", "geoblock", "cloud", "apns_tests", "fcm_tests", "fcmv1_tests"]
 # Used to enable functional tests
 functional_tests = []

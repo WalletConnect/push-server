@@ -1,6 +1,6 @@
 use {
     crate::{
-        error::Error, handlers::validate_tenant_request, log::prelude::*, providers::ProviderKind,
+        error::Error, handlers::validate_tenant_request, log::prelude::*, providers::{ProviderKind, PROVIDER_FCM_V1},
         state::AppState, stores::tenant::ApnsType,
     },
     axum::{
@@ -13,14 +13,14 @@ use {
     tracing::instrument,
 };
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GetTenantResponse {
-    url: String,
-    enabled_providers: Vec<String>,
-    apns_topic: Option<String>,
-    apns_type: Option<ApnsType>,
-    suspended: bool,
-    suspended_reason: Option<String>,
+    pub url: String,
+    pub enabled_providers: Vec<String>,
+    pub apns_topic: Option<String>,
+    pub apns_type: Option<ApnsType>,
+    pub suspended: bool,
+    pub suspended_reason: Option<String>,
 }
 
 #[instrument(skip_all, name = "get_tenant_handler")]
@@ -55,8 +55,9 @@ pub async fn handler(
             .providers()
             .iter()
             .map(Into::into)
+            // Special case on fcm_v1 for credentials because providers() is also used for token management (of which FCM and FCM V1 tokens are the same)
             .chain(if tenant.fcm_v1_credentials.is_some() {
-                vec!["fcm_v1".to_string()]
+                vec![PROVIDER_FCM_V1.to_string()]
             } else {
                 vec![]
             })
