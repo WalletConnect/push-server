@@ -3,10 +3,12 @@ use {
     crate::{blob::DecryptedPayloadBlob, error::Error, providers::PushProvider},
     async_trait::async_trait,
     fcm_v1::{
-        gauth::serv_account::ServiceAccountKey, AndroidConfig, AndroidMessagePriority,
-        AndroidNotification, Client, ClientBuildError, ErrorReason, Message, Notification,
-        Response, Target, WebpushConfig,
+        gauth::serv_account::ServiceAccountKey, AndroidConfig, AndroidMessagePriority, ApnsConfig,
+        Client, ClientBuildError, ErrorReason, Message, Notification, Response, Target,
     },
+    serde::Serialize,
+    serde_json::json,
+    std::sync::Arc,
     tracing::{debug, instrument},
 };
 
@@ -40,64 +42,75 @@ impl PushProvider for FcmV1Provider {
             PushMessage::RawPushMessage(message) => {
                 // Sending `always_raw` encrypted message
                 debug!("Sending raw encrypted message");
+                #[derive(Serialize)]
+                pub struct FcmV1RawPushMessage {
+                    pub topic: Arc<str>,
+                    pub tag: String,
+                    pub message: Arc<str>,
+                }
                 let message = Message {
                     data: Some(
-                        serde_json::to_value(message).map_err(Error::InternalSerializationError)?,
+                        serde_json::to_value(FcmV1RawPushMessage {
+                            // All keys must be strings
+                            topic: message.topic.clone(),
+                            tag: message.tag.to_string(),
+                            message: message.message.clone(),
+                        })
+                        .map_err(Error::InternalSerializationError)?,
                     ),
                     notification: None,
                     target: Target::Token(token),
                     android: Some(AndroidConfig {
                         priority: Some(AndroidMessagePriority::High),
-                        collapse_key: None,
-                        ttl: None,
-                        restricted_package_name: None,
-                        data: None,
-                        notification: None,
-                        fcm_options: None,
-                        direct_boot_ok: None,
+                        ..Default::default()
                     }),
-                    // TODO
-                    webpush: Some(WebpushConfig {
-                        headers: None,
-                        data: None,
-                        notification: None,
-                        fcm_options: None,
+                    webpush: None,
+                    apns: Some(ApnsConfig {
+                        payload: Some(json!({
+                            "aps": {
+                                "content-available": 1,
+                            }
+                        })),
+                        ..Default::default()
                     }),
-                    // TODO do we need to set this for iOS React Native? We are missing content_available equivalent
-                    apns: None,
                     fcm_options: None,
                 };
                 self.client.send(message).await
             }
             PushMessage::LegacyPushMessage(LegacyPushMessage { id: _, payload }) => {
+                #[derive(Serialize)]
+                pub struct FcmV1MessagePayload {
+                    pub topic: Arc<str>,
+                    pub flags: String,
+                    pub blob: Arc<str>,
+                }
+                let data = serde_json::to_value(FcmV1MessagePayload {
+                    // All keys must be strings
+                    topic: payload.topic.clone(),
+                    flags: payload.flags.to_string(),
+                    blob: payload.blob.clone(),
+                })
+                .map_err(Error::InternalSerializationError)?;
+
                 if payload.is_encrypted() {
                     debug!("Sending legacy `is_encrypted` message");
                     let message = Message {
-                        data: Some(
-                            serde_json::to_value(payload)
-                                .map_err(Error::InternalSerializationError)?,
-                        ),
+                        data: Some(data),
                         notification: None,
                         target: Target::Token(token),
                         android: Some(AndroidConfig {
                             priority: Some(AndroidMessagePriority::High),
-                            collapse_key: None,
-                            ttl: None,
-                            restricted_package_name: None,
-                            data: None,
-                            notification: None,
-                            fcm_options: None,
-                            direct_boot_ok: None,
+                            ..Default::default()
                         }),
-                        // TODO
-                        webpush: Some(WebpushConfig {
-                            headers: None,
-                            data: None,
-                            notification: None,
-                            fcm_options: None,
+                        webpush: None,
+                        apns: Some(ApnsConfig {
+                            payload: Some(json!({
+                                "aps": {
+                                    "content-available": 1,
+                                }
+                            })),
+                            ..Default::default()
                         }),
-                        // TODO do we need to set this for iOS React Native? We are missing content_available equivalent
-                        apns: None,
                         fcm_options: None,
                     };
                     self.client.send(message).await
@@ -106,61 +119,15 @@ impl PushProvider for FcmV1Provider {
                     let blob = DecryptedPayloadBlob::from_base64_encoded(&payload.blob)?;
 
                     let message = Message {
-                        data: Some(
-                            serde_json::to_value(payload.to_owned())
-                                .map_err(Error::InternalSerializationError)?,
-                        ),
+                        data: Some(data),
                         notification: Some(Notification {
                             title: Some(blob.title.clone()),
                             body: Some(blob.body.clone()),
-                            image: None,
+                            ..Default::default()
                         }),
                         target: Target::Token(token),
-                        android: Some(AndroidConfig {
-                            priority: Some(AndroidMessagePriority::High),
-                            collapse_key: None,
-                            ttl: None,
-                            restricted_package_name: None,
-                            data: None,
-                            notification: Some(AndroidNotification {
-                                notification_priority: None,
-                                // TODO do we need to override this of already set in `notification` above?
-                                title: Some(blob.title),
-                                body: Some(blob.body),
-                                icon: None,
-                                color: None,
-                                sound: None,
-                                tag: None,
-                                click_action: None,
-                                body_loc_key: None,
-                                body_loc_args: None,
-                                title_loc_key: None,
-                                title_loc_args: None,
-                                channel_id: None,
-                                ticker: None,
-                                sticky: None,
-                                event_time: None,
-                                local_only: None,
-                                default_sound: None,
-                                default_vibrate_timings: None,
-                                default_light_settings: None,
-                                vibrate_timings: None,
-                                visibility: None,
-                                notification_count: None,
-                                light_settings: None,
-                                image: None,
-                            }),
-                            fcm_options: None,
-                            direct_boot_ok: None,
-                        }),
-                        // TODO
-                        webpush: Some(WebpushConfig {
-                            headers: None,
-                            data: None,
-                            notification: None,
-                            fcm_options: None,
-                        }),
-                        // TODO do we need to set this for iOS React Native? We are missing content_available equivalent
+                        android: None,
+                        webpush: None,
                         apns: None,
                         fcm_options: None,
                     };
