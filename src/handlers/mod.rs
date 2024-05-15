@@ -1,7 +1,7 @@
 use {
     crate::{
         error::{Error::InvalidAuthentication, Result},
-        jwt_validation::JwtValidationClient,
+        jwt_validation::{Claims, JwtValidationClient},
     },
     axum::{
         http::{header::AUTHORIZATION, HeaderMap},
@@ -9,6 +9,7 @@ use {
         Json,
     },
     hyper::StatusCode,
+    jsonwebtoken::TokenData,
     relay_rpc::{
         domain::ClientId,
         jwt::{JwtBasicClaims, VerifyableClaims},
@@ -155,33 +156,35 @@ impl Default for Response {
     }
 }
 
+fn validate_jwt(
+    jwt_validation_client: &JwtValidationClient,
+    headers: &HeaderMap,
+) -> Result<TokenData<Claims>> {
+    if let Some(token_data) = headers.get(AUTHORIZATION) {
+        // TODO Clients should always use `Bearer`, migrate them (if not already) and remove this optionality
+        // TODO Specific not-bearer token error
+        let jwt = token_data.to_str()?.to_string().replace("Bearer ", "");
+        jwt_validation_client
+            .is_valid_token(jwt)
+            .map_err(|_| InvalidAuthentication)
+    } else {
+        // TODO specific missing Authorization header error
+        Err(InvalidAuthentication)
+    }
+}
+
 #[cfg(feature = "cloud")]
 #[instrument(skip_all, fields(project_id = %project_id))]
 pub async fn validate_tenant_request(
     jwt_validation_client: &JwtValidationClient,
     headers: &HeaderMap,
     project_id: &str,
-) -> Result<bool> {
-    if let Some(token_value) = headers.get(AUTHORIZATION) {
-        Ok(match jwt_validation_client
-            .is_valid_token(token_value.to_str()?.to_string().replace("Bearer ", ""))
-        {
-            Ok(token_data) => {
-                #[cfg(feature = "cloud")]
-                let valid_token = token_data.claims.sub == project_id;
-
-                #[cfg(not(feature = "cloud"))]
-                let valid_token = true;
-
-                if !valid_token {
-                    Err(InvalidAuthentication)
-                } else {
-                    Ok(true)
-                }
-            }
-            Err(_) => Err(InvalidAuthentication),
-        }?)
+) -> Result<()> {
+    let token_data = validate_jwt(jwt_validation_client, headers)?;
+    if token_data.claims.sub == project_id {
+        Ok(())
     } else {
+        // TODO specific wrong `sub` error
         Err(InvalidAuthentication)
     }
 }
@@ -191,18 +194,6 @@ pub async fn validate_tenant_request(
 pub fn validate_tenant_request(
     jwt_validation_client: &JwtValidationClient,
     headers: &HeaderMap,
-) -> Result<bool> {
-    if let Some(token_data) = headers.get(AUTHORIZATION) {
-        // TODO Clients should always use `Bearer`, migrate them (if not already) and remove this optionality
-        if jwt_validation_client
-            .is_valid_token(token_data.to_str()?.to_string().replace("Bearer ", ""))
-            .is_ok()
-        {
-            Ok(true)
-        } else {
-            Err(InvalidAuthentication)
-        }
-    } else {
-        Err(InvalidAuthentication)
-    }
+) -> Result<()> {
+    validate_jwt(jwt_validation_client, headers).map(|_| ())
 }
