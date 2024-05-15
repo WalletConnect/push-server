@@ -2,6 +2,15 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.39.0 - 2024-05-15
+#### Features
+- FCM v1 (#316) - (2c2f09a) - Chris Smith
+#### Miscellaneous Chores
+- bump a2 (#320) - (4701eb7) - Chris Smith
+- bump a2 (#319) - (09512dd) - Chris Smith
+
+- - -
+
 ## v0.38.2 - 2024-04-26
 #### Bug Fixes
 - upgrde to axum 0.7 (#315) - (2a493ca) - Chris Smith
