@@ -9,7 +9,7 @@ build = "build.rs"
 resolver = "2"
 
 [features]
-full = ["functional_tests", "multitenant", "analytics", "geoblock", "cloud"]
+full = ["functional_tests", "multitenant", "analytics", "geoblock", "cloud", "apns_tests", "fcm_tests", "fcmv1_tests"]
 # Used to enable functional tests
 functional_tests = []
 # Multi-tenancy mode
@@ -20,6 +20,9 @@ analytics = []
 geoblock = []
 # Enable cloud app validations
 cloud = []
+apns_tests = []
+fcm_tests = []
+fcmv1_tests = []
 
 [dependencies]
 wc = { git = "https://github.com/WalletConnect/utils-rs.git", tag = "v0.11.1", features = ["full"] }
@@ -61,6 +64,8 @@ atty = "0.2"
 # Push
 a2 = { version = "0.10.0", features = ["tracing", "openssl"] }
 fcm = "0.9"
+# fcm_v1 = { git = "https://github.com/rj76/fcm-rust.git", package = "fcm" }
+fcm_v1 = { git = "https://github.com/WalletConnect/fcm-rust.git", package = "fcm", branch = "feat/key-not-from-file", default-features = false, features = ["native-tls"] } # TODO use above version once released
 
 # Signature validation
 ed25519-dalek = "2.1.1"
@@ -77,7 +82,7 @@ parquet = { git = "https://github.com/WalletConnect/arrow-rs.git", rev = "99a1cc
 parquet_derive = { git = "https://github.com/WalletConnect/arrow-rs.git", rev = "99a1cc3" }
 
 # Misc
-reqwest = { version = "0.12.2", features = ["multipart", "json"] }
+reqwest = { version = "0.12.4", features = ["multipart", "json"] }
 async-trait = "0.1"
 thiserror = "1.0"
 hex = "0.4"
@@ -90,6 +95,7 @@ pnet_datalink = "0.31"
 ipnet = "2.5"
 tap = "1.0.1"
 wiremock = "0.6.0"
+moka = { version = "0.12", features = ["future"] }
 
 [dev-dependencies]
 serial_test = "1.0"
@@ -101,3 +107,9 @@ ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
 
 [build-dependencies]
 build-info-build = "0.0"
+
+# [patch.'https://github.com/WalletConnect/fcm-rust.git']
+# fcm = { path = "../fcm-rust" }
+
+# [patch.'https://github.com/WalletConnect/gauth-rs.git']
+# gauth = { path = "../gauth-rs" }

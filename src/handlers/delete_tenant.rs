@@ -26,7 +26,7 @@ pub async fn handler(
 ) -> Result<Json<DeleteTenantResponse>, Error> {
     #[cfg(feature = "cloud")]
     let verification_res =
-        validate_tenant_request(&state.jwt_validation_client, &headers, id.clone()).await;
+        validate_tenant_request(&state.jwt_validation_client, &headers, &id).await;
 
     #[cfg(not(feature = "cloud"))]
     let verification_res = validate_tenant_request(&state.jwt_validation_client, &headers);

@@ -50,7 +50,7 @@ impl ApnsProvider {
 impl PushProvider for ApnsProvider {
     #[instrument(name = "send_apns_notification")]
     async fn send_notification(
-        &mut self,
+        &self,
         token: String,
         body: PushMessage,
     ) -> crate::error::Result<()> {

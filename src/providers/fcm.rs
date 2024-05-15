@@ -25,7 +25,7 @@ impl FcmProvider {
 impl PushProvider for FcmProvider {
     #[instrument(name = "send_fcm_notification")]
     async fn send_notification(
-        &mut self,
+        &self,
         token: String,
         body: PushMessage,
     ) -> crate::error::Result<()> {
@@ -35,7 +35,9 @@ impl PushProvider for FcmProvider {
             PushMessage::RawPushMessage(message) => {
                 // Sending `always_raw` encrypted message
                 debug!("Sending raw encrypted message");
-                message_builder.data(&message)?;
+                message_builder
+                    .data(&message)
+                    .map_err(Error::InternalSerializationError)?;
                 set_message_priority_high(&mut message_builder);
                 let fcm_message = message_builder.finalize();
                 self.client.send(fcm_message).await
@@ -43,7 +45,9 @@ impl PushProvider for FcmProvider {
             PushMessage::LegacyPushMessage(LegacyPushMessage { id: _, payload }) => {
                 if payload.is_encrypted() {
                     debug!("Sending legacy `is_encrypted` message");
-                    message_builder.data(&payload)?;
+                    message_builder
+                        .data(&payload)
+                        .map_err(Error::InternalSerializationError)?;
                     set_message_priority_high(&mut message_builder);
                     let fcm_message = message_builder.finalize();
                     self.client.send(fcm_message).await
@@ -57,7 +61,9 @@ impl PushProvider for FcmProvider {
                     let notification = notification_builder.finalize();
 
                     message_builder.notification(notification);
-                    message_builder.data(&payload.to_owned())?;
+                    message_builder
+                        .data(&payload.to_owned())
+                        .map_err(Error::InternalSerializationError)?;
                     let fcm_message = message_builder.finalize();
                     self.client.send(fcm_message).await
                 }

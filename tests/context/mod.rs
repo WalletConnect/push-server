@@ -41,7 +41,11 @@ impl TestContext for ConfigContext {
             log_level_otel: "info,echo-server=trace".into(),
             disable_header: true,
             validate_signatures: false,
-            relay_public_key: env::var("RELAY_PUBLIC_KEY").unwrap_or("none".to_string()),
+            relay_public_key: env::var("RELAY_PUBLIC_KEY").unwrap_or(
+                // Default relay public key if env not set
+                // TODO I don't think this is used in the tests, so this should be refactored/removed
+                "ff469faa970df23c23a6542765ce8dba2a907538522833b2327a153e365d138e".to_string(),
+            ),
             database_url: env::var("DATABASE_URL")
                 .expect("DATABASE_URL environment variable is not set"),
             tenant_database_url: env::var("TENANT_DATABASE_URL")
@@ -66,6 +70,8 @@ impl TestContext for ConfigContext {
             apns_topic: None,
             #[cfg(not(feature = "multitenant"))]
             fcm_api_key: None,
+            #[cfg(not(feature = "multitenant"))]
+            fcm_v1_credentials: None,
             #[cfg(any(feature = "analytics", feature = "geoblock"))]
             s3_endpoint: None,
             #[cfg(any(feature = "analytics", feature = "geoblock"))]

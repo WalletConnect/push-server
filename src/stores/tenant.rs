@@ -4,19 +4,22 @@ use {
     crate::{
         error::{
             self,
-            Error::{InvalidTenantId, ProviderNotAvailable},
+            Error::{self, InvalidTenantId, ProviderNotAvailable},
             Result,
         },
         providers::{
             apns::ApnsProvider,
             fcm::FcmProvider,
-            Provider::{self, Apns, Fcm},
+            fcm_v1::FcmV1Provider,
+            Provider::{self, Apns, Fcm, FcmV1},
             ProviderKind,
         },
     },
     async_trait::async_trait,
     base64::Engine as _,
     chrono::{DateTime, Utc},
+    moka::future::Cache,
+    reqwest::Client,
     serde::{Deserialize, Serialize},
     sqlx::{Executor, PgPool},
     tracing::{debug, instrument},
@@ -82,6 +85,7 @@ pub struct Tenant {
     pub id: String,
 
     pub fcm_api_key: Option<String>,
+    pub fcm_v1_credentials: Option<String>,
 
     pub apns_type: Option<ApnsType>,
     pub apns_topic: Option<String>,
@@ -113,6 +117,11 @@ pub struct TenantFcmUpdateParams {
     pub fcm_api_key: String,
 }
 
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub struct TenantFcmV1UpdateParams {
+    pub fcm_v1_credentials: String,
+}
+
 #[derive(Deserialize, Clone, Debug)]
 pub enum TenantApnsUpdateAuth {
     Certificate {
@@ -140,7 +149,7 @@ impl Tenant {
             supported.push(ProviderKind::ApnsSandbox);
         }
 
-        if self.fcm_api_key.is_some() {
+        if self.fcm_api_key.is_some() || self.fcm_v1_credentials.is_some() {
             supported.push(ProviderKind::Fcm);
         }
 
@@ -179,7 +188,12 @@ impl Tenant {
     }
 
     #[instrument(skip_all, fields(tenant_id = %self.id, provider = %provider.as_str()))]
-    pub fn provider(&self, provider: &ProviderKind) -> Result<Provider> {
+    pub async fn provider(
+        &self,
+        provider: &ProviderKind,
+        http_client: Client,
+        provider_cache: &Cache<String, Provider>,
+    ) -> Result<Provider> {
         if !self.providers().contains(provider) {
             return Err(ProviderNotAvailable(provider.into()));
         }
@@ -236,13 +250,39 @@ impl Tenant {
                     None => Err(ProviderNotAvailable(provider.into())),
                 }
             }
-            ProviderKind::Fcm => match self.fcm_api_key.clone() {
-                Some(api_key) => {
-                    debug!("fcm provider is matched");
-                    let fcm = FcmProvider::new(api_key);
-                    Ok(Fcm(fcm))
+            ProviderKind::Fcm => match self.fcm_v1_credentials.clone() {
+                Some(fcm_v1_credentials) => {
+                    debug!("fcm v1 provider is matched");
+                    if let Some(provider) = provider_cache.get(&fcm_v1_credentials).await {
+                        return Ok(provider);
+                    }
+                    #[allow(clippy::match_single_binding)]
+                    let fcm = FcmV1(
+                        FcmV1Provider::new(
+                            serde_json::from_str(&fcm_v1_credentials)
+                                .map_err(Error::InternalFcmV1InvalidServiceAccountKey)?,
+                            http_client,
+                        )
+                        .await
+                        .map_err(|e| match e {
+                            // TODO check specific error
+                            // ServiceAccountError::Unauthorized => Error::BadFcmV1Credentials,
+                            _ => Error::BadFcmV1Credentials,
+                        })?,
+                    );
+                    provider_cache
+                        .insert(fcm_v1_credentials.clone(), fcm.clone())
+                        .await;
+                    Ok(fcm)
                 }
-                None => Err(ProviderNotAvailable(provider.into())),
+                None => match self.fcm_api_key.clone() {
+                    Some(api_key) => {
+                        debug!("fcm provider is matched");
+                        let fcm = FcmProvider::new(api_key);
+                        Ok(Fcm(fcm))
+                    }
+                    None => Err(ProviderNotAvailable(provider.into())),
+                },
             },
             #[cfg(any(debug_assertions, test))]
             ProviderKind::Noop => {
@@ -259,6 +299,11 @@ pub trait TenantStore {
     async fn delete_tenant(&self, id: &str) -> Result<()>;
     async fn create_tenant(&self, params: TenantUpdateParams) -> Result<Tenant>;
     async fn update_tenant_fcm(&self, id: &str, params: TenantFcmUpdateParams) -> Result<Tenant>;
+    async fn update_tenant_fcm_v1(
+        &self,
+        id: &str,
+        params: TenantFcmV1UpdateParams,
+    ) -> Result<Tenant>;
     async fn update_tenant_apns(&self, id: &str, params: TenantApnsUpdateParams) -> Result<Tenant>;
     async fn update_tenant_apns_auth(
         &self,
@@ -322,6 +367,24 @@ impl TenantStore for PgPool {
         )
         .bind(id)
         .bind(params.fcm_api_key)
+        .fetch_one(self)
+        .await?;
+
+        Ok(res)
+    }
+
+    #[instrument(skip(self))]
+    async fn update_tenant_fcm_v1(
+        &self,
+        id: &str,
+        params: TenantFcmV1UpdateParams,
+    ) -> Result<Tenant> {
+        let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(
+            "UPDATE public.tenants SET fcm_v1_credentials = $2, updated_at = NOW() WHERE id = $1 \
+             RETURNING *;",
+        )
+        .bind(id)
+        .bind(params.fcm_v1_credentials)
         .fetch_one(self)
         .await?;
 
@@ -419,6 +482,7 @@ impl DefaultTenantStore {
         Ok(DefaultTenantStore(Tenant {
             id: DEFAULT_TENANT_ID.to_string(),
             fcm_api_key: config.fcm_api_key.clone(),
+            fcm_v1_credentials: config.fcm_v1_credentials.clone(),
             apns_type: config.apns_type,
             apns_topic: config.apns_topic.clone(),
             apns_certificate: config.apns_certificate.clone(),
@@ -450,6 +514,14 @@ impl TenantStore for DefaultTenantStore {
     }
 
     async fn update_tenant_fcm(&self, _id: &str, _params: TenantFcmUpdateParams) -> Result<Tenant> {
+        panic!("Shouldn't have run in single tenant mode")
+    }
+
+    async fn update_tenant_fcm_v1(
+        &self,
+        _id: &str,
+        _params: TenantFcmV1UpdateParams,
+    ) -> Result<Tenant> {
         panic!("Shouldn't have run in single tenant mode")
     }
 

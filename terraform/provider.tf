@@ -12,9 +12,9 @@ provider "aws" {
   }
 }
 
-# Expects GRAFANA_AUTH env variable to be set
 provider "grafana" {
-  url = "https://${var.grafana_endpoint}"
+  url  = "https://${var.grafana_endpoint}"
+  auth = var.grafana_auth
 }
 
 provider "random" {}

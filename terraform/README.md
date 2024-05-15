@@ -94,6 +94,7 @@ No outputs.
   |------|-------------|------|---------|:--------:|
       | <a name="input_azs"></a> [azs](#input\_azs) | n/a |  <pre lang="json">list(string)</pre> |  <pre lang="json">[<br>  "eu-central-1a",<br>  "eu-central-1b",<br>  "eu-central-1c"<br>]</pre> |  no |
       | <a name="input_geoip_db_key"></a> [geoip\_db\_key](#input\_geoip\_db\_key) | The key to the GeoIP database |  <pre lang="json">string</pre> |  <pre lang="json">"GeoLite2-City.mmdb"</pre> |  no |
+      | <a name="input_grafana_auth"></a> [grafana\_auth](#input\_grafana\_auth) | n/a |  <pre lang="json">string</pre> |  <pre lang="json">n/a</pre> |  yes |
       | <a name="input_grafana_endpoint"></a> [grafana\_endpoint](#input\_grafana\_endpoint) | n/a |  <pre lang="json">string</pre> |  <pre lang="json">n/a</pre> |  yes |
       | <a name="input_image_version"></a> [image\_version](#input\_image\_version) | n/a |  <pre lang="json">string</pre> |  <pre lang="json">""</pre> |  no |
       | <a name="input_jwt_secret"></a> [jwt\_secret](#input\_jwt\_secret) | n/a |  <pre lang="json">string</pre> |  <pre lang="json">n/a</pre> |  yes |

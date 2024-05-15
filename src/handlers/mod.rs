@@ -37,6 +37,8 @@ pub mod health;
 pub mod update_apns;
 #[cfg(feature = "multitenant")]
 pub mod update_fcm;
+#[cfg(feature = "multitenant")]
+pub mod update_fcm_v1;
 
 pub const DECENTRALIZED_IDENTIFIER_PREFIX: &str = "did:key:";
 
@@ -158,7 +160,7 @@ impl Default for Response {
 pub async fn validate_tenant_request(
     jwt_validation_client: &JwtValidationClient,
     headers: &HeaderMap,
-    project_id: String,
+    project_id: &str,
 ) -> Result<bool> {
     if let Some(token_value) = headers.get(AUTHORIZATION) {
         Ok(match jwt_validation_client
@@ -191,6 +193,7 @@ pub fn validate_tenant_request(
     headers: &HeaderMap,
 ) -> Result<bool> {
     if let Some(token_data) = headers.get(AUTHORIZATION) {
+        // TODO Clients should always use `Bearer`, migrate them (if not already) and remove this optionality
         if jwt_validation_client
             .is_valid_token(token_data.to_str()?.to_string().replace("Bearer ", ""))
             .is_ok()

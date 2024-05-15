@@ -364,8 +364,13 @@ pub async fn handler_internal(
         return Err((Error::TenantSuspended, analytics.clone()));
     }
 
-    let mut provider = tenant
-        .provider(&client.push_type)
+    let provider = tenant
+        .provider(
+            &client.push_type,
+            state.http_client.clone(),
+            &state.provider_cache,
+        )
+        .await
         .tap_err(|e| warn!("error fetching provider: {e:?}"))
         .map_err(|e| (e, analytics.clone()))?;
     debug!(
@@ -463,6 +468,7 @@ pub async fn handler_internal(
     // Provider specific metrics
     match provider {
         Provider::Fcm(_) => increment_counter!(state.metrics, sent_fcm_notifications),
+        Provider::FcmV1(_) => increment_counter!(state.metrics, sent_fcm_v1_notifications),
         Provider::Apns(_) => increment_counter!(state.metrics, sent_apns_notifications),
         #[cfg(any(debug_assertions, test))]
         Provider::Noop(_) => {}

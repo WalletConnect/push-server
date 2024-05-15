@@ -75,7 +75,7 @@ jobs:
             rustc: stable
           - name: "Clippy all features"
             cmd: clippy
-            args: --all-features --tests -- -D warnings
+            args: --all-features --all-targets -- -D warnings
             cache: {}
             rustc: stable
           - name: "Formatting"
@@ -85,7 +85,7 @@ jobs:
             rustc: nightly
           - name: "Unit Tests"
             cmd: test
-            args: --features multitenant,analytics,geoblock,functional_tests
+            args: --features multitenant,analytics,geoblock,functional_tests,apns_tests,fcm_tests,fcmv1_tests
             cache: { sharedKey: "tests" }
             rustc: stable
           - name: "Single-tenant functional tests"
@@ -170,6 +170,7 @@ jobs:
           args: ${{ matrix.cargo.args }}
         env:
           ECHO_TEST_FCM_KEY: ${{ secrets.ECHO_TEST_FCM_KEY }}
+          ECHO_TEST_FCM_V1_CREDENTIALS: ${{ secrets.ECHO_TEST_FCM_V1_CREDENTIALS }}
           ECHO_TEST_APNS_P8_KEY_ID: ${{ secrets.ECHO_TEST_APNS_P8_KEY_ID }}
           ECHO_TEST_APNS_P8_TEAM_ID: ${{ secrets.ECHO_TEST_APNS_P8_TEAM_ID }}
           ECHO_TEST_APNS_P8_PEM: ${{ secrets.ECHO_TEST_APNS_P8_PEM }}

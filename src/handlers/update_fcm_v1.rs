@@ -1,47 +1,46 @@
 use {
     crate::{
-        error::{
-            Error,
-            Error::{BadFcmApiKey, InvalidMultipartBody},
-        },
+        error::{Error, Error::InvalidMultipartBody},
         handlers::validate_tenant_request,
         increment_counter,
         state::AppState,
-        stores::tenant::TenantFcmUpdateParams,
+        stores::tenant::TenantFcmV1UpdateParams,
     },
     axum::{
         extract::{Multipart, Path, State},
         http::HeaderMap,
         Json,
     },
-    fcm::FcmError,
     serde::Serialize,
     std::sync::Arc,
-    tracing::{error, instrument},
+    tracing::{debug, error, instrument},
 };
 
-pub struct FcmUpdateBody {
-    api_key: String,
+pub struct FcmV1UpdateBody {
+    credentials: String,
     /// Used to ensure that at least one value has changed
     value_changed_: bool,
 }
 
 #[derive(Serialize)]
-pub struct UpdateTenantFcmResponse {
+pub struct UpdateTenantFcmV1Response {
     success: bool,
 }
 
-#[instrument(skip_all, name = "update_fcm_handler")]
+#[instrument(skip_all, name = "update_fcm_v1_handler")]
 pub async fn handler(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
     headers: HeaderMap,
     mut form_body: Multipart,
-) -> Result<Json<UpdateTenantFcmResponse>, Error> {
+) -> Result<Json<UpdateTenantFcmV1Response>, Error> {
     // JWT token verification
     #[cfg(feature = "cloud")]
     let jwt_verification_result =
         validate_tenant_request(&state.jwt_validation_client, &headers, &id).await;
+
+    // -- check if tenant is real
+    let _existing_tenant = state.tenant_store.get_tenant(&id).await?;
 
     #[cfg(not(feature = "cloud"))]
     let jwt_verification_result = validate_tenant_request(&state.jwt_validation_client, &headers);
@@ -55,20 +54,17 @@ pub async fn handler(
         return Err(e);
     }
 
-    // -- check if tenant is real
-    let _existing_tenant = state.tenant_store.get_tenant(&id).await?;
-
     // ---- retrieve body from form
-    let mut body = FcmUpdateBody {
-        api_key: Default::default(),
+    let mut body = FcmV1UpdateBody {
+        credentials: Default::default(),
         value_changed_: false,
     };
     while let Some(field) = form_body.next_field().await? {
         let name = field.name().unwrap_or("unknown").to_string();
         let data = field.text().await?;
 
-        if name.to_lowercase().as_str() == "api_key" {
-            body.api_key = data;
+        if name.to_lowercase().as_str() == "credentials" {
+            body.credentials = data;
             body.value_changed_ = true;
         };
     }
@@ -76,28 +72,24 @@ pub async fn handler(
         return Err(InvalidMultipartBody);
     }
 
-    // ---- checks
-    let fcm_api_key = body.api_key.clone();
-    let mut test_message_builder = fcm::MessageBuilder::new(&fcm_api_key, "wc-notification-test");
-    test_message_builder.dry_run(true);
-    let test_message = test_message_builder.finalize();
-    let test_notification = fcm::Client::new().send(test_message).await;
-    match test_notification {
-        Err(e) => match e {
-            FcmError::Unauthorized => Err(BadFcmApiKey),
-            _ => Ok(()),
-        },
-        Ok(_) => Ok(()),
-    }?;
+    // Client will validate the key on startup
+    fcm_v1::Client::from_key(
+        serde_json::from_str(&body.credentials).map_err(Error::FcmV1InvalidServiceAccountKey)?,
+    )
+    .await
+    .map_err(|e| {
+        debug!("Failed credential validation: {e}");
+        Error::BadFcmV1Credentials
+    })?;
 
     // ---- handler
-    let update_body = TenantFcmUpdateParams {
-        fcm_api_key: body.api_key,
+    let update_body = TenantFcmV1UpdateParams {
+        fcm_v1_credentials: body.credentials,
     };
 
     let new_tenant = state
         .tenant_store
-        .update_tenant_fcm(&id, update_body)
+        .update_tenant_fcm_v1(&id, update_body)
         .await?;
 
     if new_tenant.suspended {
@@ -106,7 +98,7 @@ pub async fn handler(
         state.tenant_store.unsuspend_tenant(&new_tenant.id).await?;
     }
 
-    increment_counter!(state.metrics, tenant_fcm_updates);
+    increment_counter!(state.metrics, tenant_fcm_v1_updates);
 
-    Ok(Json(UpdateTenantFcmResponse { success: true }))
+    Ok(Json(UpdateTenantFcmV1Response { success: true }))
 }

@@ -1,0 +1,16 @@
+version: '3.9'
+services:
+
+  postgres:
+    image: postgres
+    environment:
+      - POSTGRES_PASSWORD=root
+    ports:
+      - "5432:5432"
+
+  postgres-tenant:
+    image: postgres
+    environment:
+      - POSTGRES_PASSWORD=root
+    ports:
+      - "5433:5432"

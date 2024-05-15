@@ -19,6 +19,7 @@ pub struct Metrics {
 
     pub received_notifications: Counter<u64>,
     pub sent_fcm_notifications: Counter<u64>,
+    pub sent_fcm_v1_notifications: Counter<u64>,
     pub sent_apns_notifications: Counter<u64>,
 
     pub registered_clients: UpDownCounter<i64>,
@@ -26,6 +27,7 @@ pub struct Metrics {
 
     pub tenant_apns_updates: Counter<u64>,
     pub tenant_fcm_updates: Counter<u64>,
+    pub tenant_fcm_v1_updates: Counter<u64>,
 
     pub tenant_suspensions: Counter<u64>,
     pub client_suspensions: Counter<u64>,
@@ -71,6 +73,11 @@ impl Metrics {
             .with_description("The number of notifications sent to FCM")
             .init();
 
+        let sent_fcm_v1_notification_counter = meter
+            .u64_counter("sent_fcm_v1_notifications")
+            .with_description("The number of notifications sent to FCM")
+            .init();
+
         let sent_apns_notification_counter = meter
             .u64_counter("sent_apns_notifications")
             .with_description("The number of notifications sent to APNS")
@@ -83,6 +90,11 @@ impl Metrics {
 
         let tenant_fcm_updates_counter = meter
             .u64_counter("tenant_fcm_updates")
+            .with_description("The number of times tenants have updated their FCM")
+            .init();
+
+        let tenant_fcm_v1_updates_counter = meter
+            .u64_counter("tenant_fcm_v1_updates")
             .with_description("The number of times tenants have updated their FCM")
             .init();
 
@@ -101,10 +113,12 @@ impl Metrics {
             registered_clients: clients_counter,
             received_notifications: received_notification_counter,
             sent_fcm_notifications: sent_fcm_notification_counter,
+            sent_fcm_v1_notifications: sent_fcm_v1_notification_counter,
             sent_apns_notifications: sent_apns_notification_counter,
             registered_tenants: tenants_counter,
             tenant_apns_updates: tenant_apns_updates_counter,
             tenant_fcm_updates: tenant_fcm_updates_counter,
+            tenant_fcm_v1_updates: tenant_fcm_v1_updates_counter,
             tenant_suspensions: tenant_suspensions_counter,
             client_suspensions: client_suspensions_counter,
         })

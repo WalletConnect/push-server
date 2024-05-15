@@ -217,6 +217,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
                 get(handlers::get_tenant::handler).delete(handlers::delete_tenant::handler),
             )
             .route("/:id/fcm", post(handlers::update_fcm::handler))
+            .route("/:id/fcm_v1", post(handlers::update_fcm_v1::handler))
             .route("/:id/apns", post(handlers::update_apns::handler))
             .layer(
                 global_middleware.clone().layer(

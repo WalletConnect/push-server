@@ -37,8 +37,14 @@ pub enum Error {
     #[error(transparent)]
     Fcm(#[from] fcm::FcmError),
 
+    #[error(transparent)]
+    FcmV1(#[from] fcm_v1::SendError),
+
     #[error("FCM Responded with an error")]
     FcmResponse(fcm::ErrorReason),
+
+    #[error("FCM v1 Responded with an error")]
+    FcmV1Response(fcm_v1::ErrorReason),
 
     #[error(transparent)]
     Io(#[from] std::io::Error),
@@ -47,7 +53,7 @@ pub enum Error {
     Database(#[from] sqlx::Error),
 
     #[error(transparent)]
-    Hex(#[from] hex::FromHexError),
+    Hex(hex::FromHexError),
 
     #[error(transparent)]
     Ed25519(#[from] ed25519_dalek::ed25519::Error),
@@ -58,8 +64,20 @@ pub enum Error {
     #[error(transparent)]
     Base64Decode(#[from] base64::DecodeError),
 
-    #[error(transparent)]
-    Json(#[from] serde_json::Error),
+    #[error("Failed to decode legacy decrypted message: {0}")]
+    DecryptedNotificationDecode(base64::DecodeError),
+
+    #[error("Failed to parse legacy decrypted message as JSON: {0}")]
+    DecryptedNotificationParse(serde_json::Error),
+
+    #[error("Invalid ServiceServiceAccount key: {0}")]
+    FcmV1InvalidServiceAccountKey(serde_json::Error),
+
+    #[error("Internal: Invalid ServiceServiceAccount key: {0}")]
+    InternalFcmV1InvalidServiceAccountKey(serde_json::Error),
+
+    #[error("Failed to perform internal serialization: {0}")]
+    InternalSerializationError(serde_json::Error),
 
     #[error(transparent)]
     Store(#[from] StoreError),
@@ -166,6 +184,9 @@ pub enum Error {
     #[error("Invalid FCM API key")]
     BadFcmApiKey,
 
+    #[error("Invalid FCM v1 credentials")]
+    BadFcmV1Credentials,
+
     #[error("Invalid APNs creds")]
     BadApnsCredentials,
 
@@ -233,6 +254,30 @@ impl IntoResponse for Error {
                 ErrorField {
                     field: "api_key".to_string(),
                     description: "The provided API Key was not valid".to_string(),
+                    location: ErrorLocation::Body,
+                }
+            ]),
+            Error::FcmV1InvalidServiceAccountKey(e) => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
+                ResponseError {
+                    name: "fcm_v1_invalid_service_account_key".to_string(),
+                    message: format!("The provided Service Account Key was not valid: {e}"),
+                }
+            ], vec![
+                ErrorField {
+                    field: "fcm_v1_credentials".to_string(),
+                    description: "FCM V1 credentials".to_string(),
+                    location: ErrorLocation::Body,
+                }
+            ]),
+            Error::BadFcmV1Credentials => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
+                ResponseError {
+                    name: "bad_fcm_v1_credentials".to_string(),
+                    message: "The provided credentials were not valid".to_string(),
+                }
+            ], vec![
+                ErrorField {
+                    field: "fcm_v1_credentials".to_string(),
+                    description: "FCM V1 credentials".to_string(),
                     location: ErrorLocation::Body,
                 }
             ]),
@@ -422,10 +467,16 @@ impl IntoResponse for Error {
                     message: "failed to perform io task, this should not have occurred, please report at: https://github.com/walletconnect/echo-server".to_string(),
                 },
             ], vec![]),
-            Error::Json(_) => crate::handlers::Response::new_failure(StatusCode::BAD_REQUEST, vec![
+            Error::DecryptedNotificationDecode(_) => crate::handlers::Response::new_failure(StatusCode::ACCEPTED, vec![
                 ResponseError {
                     name: "json".to_string(),
-                    message: "received invalid json payload, please ensure all fields that contain json are valid".to_string(),
+                    message: "Decrypted notification does not decode as base64".to_string(),
+                },
+            ], vec![]),
+            Error::DecryptedNotificationParse(_) => crate::handlers::Response::new_failure(StatusCode::ACCEPTED, vec![
+                ResponseError {
+                    name: "json".to_string(),
+                    message: "Decrypted notification does not parse as JSON".to_string(),
                 },
             ], vec![]),
             Error::ToStr(_) => crate::handlers::Response::new_failure(StatusCode::INTERNAL_SERVER_ERROR, vec![

@@ -1,12 +1,10 @@
-# Echo Server
-Push server for the WalletConnect v2 Protocol
-
-> **Note** This is only available for WalletConnect v2 and is a breaking change from the Push supported in v1.
+# Push Server
+Push server for the WalletConnect V2 Protocol
 
 ## Notification Providers
 This list contains both supported and potentially planned providers
 - [x] FCM (API Key)
-- [ ] FCM (Google Services)
+- [x] FCM V1 (Google Service Accounts)
 - [x] APNS (Certificate Based)
 - [x] APNS (Token Based)
 - [ ] Web Push
@@ -30,7 +28,7 @@ You also have to register the device with the instance of Echo Server once when 
 generated. By sending a POST request to `<INSTANCE_URL>/clients` as per the [spec](./spec/spec.md).
 
 ## Multi-tenancy
-Echo Server supports multi-tenancy. To enable multi-tenancy you need to specify a `TENANT_DATABASE_URL` which will then disable 
+Echo Server supports multi-tenancy. To enable multi-tenancy you need to specify a `TENANT_DATABASE_URL` which will then disable
 the single-tenant endpoints in favour of endpoints with a `/:tenant_id` prefix e.g. `/:tenant_id/client/:id`
 
 > **Warning**
@@ -39,12 +37,8 @@ the single-tenant endpoints in favour of endpoints with a `/:tenant_id` prefix e
 ## Running locally
 
 ```
-# Run a postgres db for functional tests
-# This will be removed in future revisions
-# such that you can run functional tests without
-# any prerequisites
-docker run -p 5432:5432 --name some-postgres2 -e POSTGRES_HOST_AUTH_METHOD=trust -d postgres
-cargo test
+docker compose -f docker-compose.storage.yml up -d
+just test-all
 ```
 
 ## Running tests locally
@@ -71,7 +65,7 @@ If you wish to integrate Push functionality into your Wallet (only available on 
 
 ## Contributing
 To get started with contributing to Echo Server, look at the [open issues](https://github.com/WalletConnect/echo-server/issues?q=is:issue+is:open+label:%22help+wanted%22).
-New contributors can also look at the [issues labeled with "good first issue"](https://github.com/WalletConnect/echo-server/issues?q=is:issue+is:open+label:%22good+first+issue%22) 
+New contributors can also look at the [issues labeled with "good first issue"](https://github.com/WalletConnect/echo-server/issues?q=is:issue+is:open+label:%22good+first+issue%22)
 as they should be suitable to people who are looking at the project for the first time.
 
 ## License
