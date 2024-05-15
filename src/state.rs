@@ -2,6 +2,7 @@ use {
     crate::{
         config::Config,
         metrics::Metrics,
+        middleware::rate_limit,
         networking,
         providers::Provider,
         relay::RelayClient,
@@ -10,6 +11,7 @@ use {
     build_info::BuildInfo,
     moka::future::Cache,
     std::{net::IpAddr, sync::Arc},
+    tokio::time::Duration,
     wc::geoip::{block::middleware::GeoBlockLayer, MaxMindResolver},
 };
 
@@ -55,6 +57,7 @@ pub struct AppState {
     pub uptime: std::time::Instant,
     pub http_client: reqwest::Client,
     pub provider_cache: Cache<String, Provider>,
+    pub rate_limit: rate_limit::RateLimiter,
 }
 
 build_info::build_info!(fn build_info);
@@ -101,6 +104,10 @@ pub fn new_state(
         uptime: std::time::Instant::now(),
         http_client: reqwest::Client::new(),
         provider_cache: Cache::new(100),
+        rate_limit: rate_limit::RateLimiter::new(
+            rate_limit::MAX_REQUESTS_PER_SEC,
+            Duration::from_secs(1),
+        ),
     })
 }
 
