@@ -38,6 +38,32 @@ impl PushProvider for FcmV1Provider {
         token: String,
         body: PushMessage,
     ) -> crate::error::Result<()> {
+        fn make_message(
+            token: String,
+            notification: Option<Notification>,
+            data: serde_json::Value,
+        ) -> Message {
+            Message {
+                data: Some(data),
+                notification,
+                target: Target::Token(token),
+                android: Some(AndroidConfig {
+                    priority: Some(AndroidMessagePriority::High),
+                    ..Default::default()
+                }),
+                webpush: None,
+                apns: Some(ApnsConfig {
+                    payload: Some(json!({
+                        "aps": {
+                            "content-available": 1,
+                        }
+                    })),
+                    ..Default::default()
+                }),
+                fcm_options: None,
+            }
+        }
+
         let result = match body {
             PushMessage::RawPushMessage(message) => {
                 // Sending `always_raw` encrypted message
@@ -48,33 +74,14 @@ impl PushProvider for FcmV1Provider {
                     pub tag: String,
                     pub message: Arc<str>,
                 }
-                let message = Message {
-                    data: Some(
-                        serde_json::to_value(FcmV1RawPushMessage {
-                            // All keys must be strings
-                            topic: message.topic.clone(),
-                            tag: message.tag.to_string(),
-                            message: message.message.clone(),
-                        })
-                        .map_err(Error::InternalSerializationError)?,
-                    ),
-                    notification: None,
-                    target: Target::Token(token),
-                    android: Some(AndroidConfig {
-                        priority: Some(AndroidMessagePriority::High),
-                        ..Default::default()
-                    }),
-                    webpush: None,
-                    apns: Some(ApnsConfig {
-                        payload: Some(json!({
-                            "aps": {
-                                "content-available": 1,
-                            }
-                        })),
-                        ..Default::default()
-                    }),
-                    fcm_options: None,
-                };
+                let data = serde_json::to_value(FcmV1RawPushMessage {
+                    // All keys must be strings
+                    topic: message.topic,
+                    tag: message.tag.to_string(),
+                    message: message.message,
+                })
+                .map_err(Error::InternalSerializationError)?;
+                let message = make_message(token, None, data);
                 self.client.send(message).await
             }
             PushMessage::LegacyPushMessage(LegacyPushMessage { id: _, payload }) => {
@@ -94,43 +101,18 @@ impl PushProvider for FcmV1Provider {
 
                 if payload.is_encrypted() {
                     debug!("Sending legacy `is_encrypted` message");
-                    let message = Message {
-                        data: Some(data),
-                        notification: None,
-                        target: Target::Token(token),
-                        android: Some(AndroidConfig {
-                            priority: Some(AndroidMessagePriority::High),
-                            ..Default::default()
-                        }),
-                        webpush: None,
-                        apns: Some(ApnsConfig {
-                            payload: Some(json!({
-                                "aps": {
-                                    "content-available": 1,
-                                }
-                            })),
-                            ..Default::default()
-                        }),
-                        fcm_options: None,
-                    };
+                    let message = make_message(token, None, data);
                     self.client.send(message).await
                 } else {
                     debug!("Sending plain message");
                     let blob = DecryptedPayloadBlob::from_base64_encoded(&payload.blob)?;
 
-                    let message = Message {
-                        data: Some(data),
-                        notification: Some(Notification {
-                            title: Some(blob.title.clone()),
-                            body: Some(blob.body.clone()),
-                            ..Default::default()
-                        }),
-                        target: Target::Token(token),
-                        android: None,
-                        webpush: None,
-                        apns: None,
-                        fcm_options: None,
+                    let notification = Notification {
+                        title: Some(blob.title),
+                        body: Some(blob.body),
+                        ..Default::default()
                     };
+                    let message = make_message(token, Some(notification), data);
                     self.client.send(message).await
                 }
             }
