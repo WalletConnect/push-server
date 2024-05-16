@@ -30,6 +30,10 @@ pub mod single_tenant_wrappers;
 #[cfg(feature = "multitenant")]
 pub mod create_tenant;
 #[cfg(feature = "multitenant")]
+pub mod delete_apns;
+#[cfg(feature = "multitenant")]
+pub mod delete_fcm;
+#[cfg(feature = "multitenant")]
 pub mod delete_fcm_v1;
 #[cfg(feature = "multitenant")]
 pub mod delete_tenant;
