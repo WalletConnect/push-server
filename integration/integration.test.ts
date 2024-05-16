@@ -69,4 +69,37 @@ describe('Echo Server', () => {
       expect(status).toBe(200)
     })
   })
+  describe('Middlewares', () => {
+    const httpClient = axios.create({
+      validateStatus: (_status) => true,
+    })
+
+    // Simulate flood of requests and check for rate-limited responses
+    it('Rate limiting', async () => {
+      const url = `${BASE_URL}/health`
+      const requests_to_send = 100;
+      const promises = [];
+      for (let i = 0; i < requests_to_send; i++) {
+        promises.push(
+          httpClient.get(url)
+        );
+      }
+      const results = await Promise.allSettled(promises);
+      
+      let ok_statuses_counter = 0;
+      let rate_limited_statuses_counter = 0;
+      results.forEach((result) => {
+        if (result.status === 'fulfilled' && result.value.status === 429) {
+          rate_limited_statuses_counter++;
+        }else if (result.status === 'fulfilled' && result.value.status === 200) {
+          ok_statuses_counter++;
+        }
+      });
+
+      console.log(`➜ Rate limited statuses: ${rate_limited_statuses_counter} out of ${requests_to_send} total requests.`);
+      // Check if there are any successful and rate limited statuses
+      expect(ok_statuses_counter).toBeGreaterThan(0);
+      expect(rate_limited_statuses_counter).toBeGreaterThan(0);
+    })
+  })
 })
