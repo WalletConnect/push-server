@@ -173,7 +173,7 @@ async fn tenant_delete(ctx: &mut EchoServerContext) {
     assert!(response.status().is_success());
     let response = response.json::<GetTenantResponse>().await.unwrap();
     println!("response: {response:?}");
-    assert!(response
+    assert!(!response
         .enabled_providers
         .contains(&PROVIDER_FCM_V1.to_owned()));
 }
