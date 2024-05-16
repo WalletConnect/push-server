@@ -146,7 +146,7 @@ async fn tenant_delete(ctx: &mut EchoServerContext) {
         .enabled_providers
         .contains(&PROVIDER_FCM_V1.to_owned()));
 
-    let response_fcm_update = client
+    let response_fcm_delete = client
         .delete(format!(
             "http://{}/tenants/{}/fcm_v1",
             ctx.server.public_addr, tenant_id
@@ -155,7 +155,10 @@ async fn tenant_delete(ctx: &mut EchoServerContext) {
         .send()
         .await
         .expect("Call failed");
-    assert_eq!(response_fcm_update.status(), reqwest::StatusCode::OK);
+    assert_eq!(
+        response_fcm_delete.status(),
+        reqwest::StatusCode::NO_CONTENT
+    );
 
     // Get tenant
     let response = client

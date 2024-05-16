@@ -183,7 +183,7 @@ async fn tenant_delete(ctx: &mut EchoServerContext) {
         .enabled_providers
         .contains(&PROVIDER_APNS.to_owned()));
 
-    let apns_update_result = client
+    let apns_delete_result = client
         .delete(format!(
             "http://{}/tenants/{}/apns",
             ctx.server.public_addr, tenant_id
@@ -192,7 +192,7 @@ async fn tenant_delete(ctx: &mut EchoServerContext) {
         .send()
         .await
         .expect("Failed to call update tenant endpoint");
-    assert_eq!(apns_update_result.status(), reqwest::StatusCode::OK);
+    assert_eq!(apns_delete_result.status(), reqwest::StatusCode::NO_CONTENT);
 
     // Get tenant
     let response = client
