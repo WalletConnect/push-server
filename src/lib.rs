@@ -17,6 +17,7 @@ use {
     axum_client_ip::SecureClientIpSource,
     config::Config,
     hyper::http::Method,
+    middleware::rate_limit::rate_limit_middleware,
     opentelemetry::{sdk::Resource, KeyValue},
     sqlx::{
         postgres::{PgConnectOptions, PgPoolOptions},
@@ -256,7 +257,10 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         } else {
             app
         };
-
+        let app = app.route_layer(axum::middleware::from_fn_with_state(
+            state_arc.clone(),
+            rate_limit_middleware,
+        ));
         app.with_state(state_arc.clone())
     };
 
@@ -281,7 +285,10 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
     } else {
         app
     };
-
+    let app = app.route_layer(axum::middleware::from_fn_with_state(
+        state_arc.clone(),
+        rate_limit_middleware,
+    ));
     let app = app.with_state(state_arc.clone());
 
     let private_app = Router::new()
