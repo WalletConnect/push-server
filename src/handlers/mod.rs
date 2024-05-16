@@ -30,6 +30,8 @@ pub mod single_tenant_wrappers;
 #[cfg(feature = "multitenant")]
 pub mod create_tenant;
 #[cfg(feature = "multitenant")]
+pub mod delete_fcm_v1;
+#[cfg(feature = "multitenant")]
 pub mod delete_tenant;
 #[cfg(feature = "multitenant")]
 pub mod get_tenant;
