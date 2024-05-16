@@ -577,11 +577,19 @@ impl TenantStore for DefaultTenantStore {
         panic!("Shouldn't have run in single tenant mode")
     }
 
+    async fn update_tenant_delete_fcm(&self, _id: &str) -> Result<Tenant> {
+        panic!("Shouldn't have run in single tenant mode")
+    }
+
     async fn update_tenant_fcm_v1(
         &self,
         _id: &str,
         _params: TenantFcmV1UpdateParams,
     ) -> Result<Tenant> {
+        panic!("Shouldn't have run in single tenant mode")
+    }
+
+    async fn update_tenant_delete_fcm_v1(&self, _id: &str) -> Result<Tenant> {
         panic!("Shouldn't have run in single tenant mode")
     }
 
@@ -598,6 +606,10 @@ impl TenantStore for DefaultTenantStore {
         _id: &str,
         _params: TenantApnsUpdateAuth,
     ) -> Result<Tenant> {
+        panic!("Shouldn't have run in single tenant mode")
+    }
+
+    async fn update_tenant_delete_apns(&self, _id: &str) -> Result<Tenant> {
         panic!("Shouldn't have run in single tenant mode")
     }
 
