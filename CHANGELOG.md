@@ -2,6 +2,16 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.40.0 - 2024-05-16
+#### Bug Fixes
+- push payloads (#326) - (1abce43) - Chris Smith
+#### Features
+- per-IP rate limiting (#327) - (70e3002) - Max Kalashnikoff
+#### Miscellaneous Chores
+- refactor validate JWT (#325) - (c31b519) - Chris Smith
+
+- - -
+
 ## v0.39.0 - 2024-05-15
 #### Features
 - FCM v1 (#316) - (2c2f09a) - Chris Smith
