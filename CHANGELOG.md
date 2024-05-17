@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.40.1 - 2024-05-16
+#### Bug Fixes
+- applying rate limiting middleware to all except push endpoints (#328) - (532a9bc) - Max Kalashnikoff
+
+- - -
+
 ## v0.40.0 - 2024-05-16
 #### Bug Fixes
 - push payloads (#326) - (1abce43) - Chris Smith

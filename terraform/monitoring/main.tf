@@ -150,71 +150,6 @@ resource "grafana_dashboard" "at_a_glance" {
         "type" : "stat"
       },
       {
-        "datasource" : {
-          "type" : "prometheus",
-          "uid" : grafana_data_source.prometheus.uid
-        },
-        "fieldConfig" : {
-          "defaults" : {
-            "color" : {
-              "mode" : "thresholds"
-            },
-            "mappings" : [],
-            "thresholds" : {
-              "mode" : "absolute",
-              "steps" : [
-                {
-                  "color" : "green",
-                  "value" : null
-                },
-                {
-                  "color" : "red",
-                  "value" : 80
-                }
-              ]
-            }
-          },
-          "overrides" : []
-        },
-        "gridPos" : {
-          "h" : 8,
-          "w" : 10,
-          "x" : 11,
-          "y" : 0
-        },
-        "id" : 16,
-        "options" : {
-          "colorMode" : "value",
-          "graphMode" : "area",
-          "justifyMode" : "auto",
-          "orientation" : "auto",
-          "reduceOptions" : {
-            "calcs" : [
-              "lastNotNull"
-            ],
-            "fields" : "",
-            "values" : false
-          },
-          "textMode" : "auto"
-        },
-        "pluginVersion" : "8.4.7",
-        "targets" : [
-          {
-            "datasource" : {
-              "type" : "prometheus",
-              "uid" : grafana_data_source.prometheus.uid
-            },
-            "exemplar" : true,
-            "expr" : "sum(rate(registered_clients{}[1h]))",
-            "interval" : "",
-            "legendFormat" : "",
-            "refId" : "A"
-          }
-        ],
-        "title" : "Client Registrations per Hour",
-        "type" : "stat"
-      },
-      {
         "gridPos" : {
           "h" : 1,
           "w" : 24,
@@ -417,13 +352,13 @@ resource "grafana_dashboard" "at_a_glance" {
               "uid" : grafana_data_source.prometheus.uid
             },
             "exemplar" : true,
-            "expr" : "sum(increase(registered_clients{}[1h]))",
+            "expr" : "sum(rate(registered_clients{}[$__rate_interval]))",
             "interval" : "",
             "legendFormat" : "",
             "refId" : "Clients"
           }
         ],
-        "title" : "Registered Clients past 1h",
+        "title" : "Client registration rate",
         "type" : "timeseries"
       },
       {

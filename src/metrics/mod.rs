@@ -1,7 +1,7 @@
 use {
     crate::error::{Error, Result},
     opentelemetry::{
-        metrics::{Counter, UpDownCounter},
+        metrics::Counter,
         sdk::{
             self,
             export::metrics::aggregation,
@@ -22,8 +22,8 @@ pub struct Metrics {
     pub sent_fcm_v1_notifications: Counter<u64>,
     pub sent_apns_notifications: Counter<u64>,
 
-    pub registered_clients: UpDownCounter<i64>,
-    pub registered_tenants: UpDownCounter<i64>,
+    pub registered_clients: Counter<u64>,
+    pub registered_tenants: Counter<u64>,
 
     pub tenant_apns_updates: Counter<u64>,
     pub tenant_fcm_updates: Counter<u64>,
@@ -54,12 +54,12 @@ impl Metrics {
         let meter = opentelemetry::global::meter("echo-server");
 
         let clients_counter = meter
-            .i64_up_down_counter("registered_clients")
+            .u64_counter("registered_clients")
             .with_description("The number of currently registered clients")
             .init();
 
         let tenants_counter = meter
-            .i64_up_down_counter("registered_tenants")
+            .u64_counter("registered_tenants")
             .with_description("The number of currently registered tenants")
             .init();
 
