@@ -1,8 +1,5 @@
 use {
-    crate::{
-        decrement_counter, error::Error, handlers::validate_tenant_request, log::prelude::*,
-        state::AppState,
-    },
+    crate::{error::Error, handlers::validate_tenant_request, log::prelude::*, state::AppState},
     axum::{
         extract::{Path, State},
         http::HeaderMap,
@@ -41,8 +38,6 @@ pub async fn handler(
     }
 
     state.tenant_store.delete_tenant(&id).await?;
-
-    decrement_counter!(state.metrics, registered_tenants);
 
     debug!(
         tenant_id = %id,
