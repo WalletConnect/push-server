@@ -236,7 +236,8 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
                         .allow_origin(AllowOrigin::any())
                         .allow_headers([hyper::http::header::CONTENT_TYPE, hyper::http::header::AUTHORIZATION]),
                 ),
-            );
+            )
+            .layer(axum::middleware::from_fn_with_state(state_arc.clone(), rate_limit_middleware));
 
         Router::new()
             .route("/health", get(handlers::health::handler).layer(
