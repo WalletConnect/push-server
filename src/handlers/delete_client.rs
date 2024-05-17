@@ -1,6 +1,5 @@
 use {
     crate::{
-        decrement_counter,
         error::{Error::InvalidAuthentication, Result},
         handlers::{authenticate_client, Response, DECENTRALIZED_IDENTIFIER_PREFIX},
         log::prelude::*,
@@ -62,8 +61,6 @@ pub async fn handler(
         client_id = %client_to_be_deleted,
         "deleted client"
     );
-
-    decrement_counter!(state.metrics, registered_clients);
 
     Ok(Response::default())
 }
