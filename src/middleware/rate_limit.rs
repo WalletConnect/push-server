@@ -11,8 +11,6 @@ use std::{net::IpAddr, sync::Arc};
 use tokio::time::Duration;
 use tracing::error;
 
-pub const MAX_REQUESTS_PER_SEC: u32 = 10;
-
 #[derive(Clone)]
 pub struct RateLimiter {
     cache: Arc<Cache<IpAddr, u32>>,

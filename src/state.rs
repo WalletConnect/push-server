@@ -105,8 +105,8 @@ pub fn new_state(
         http_client: reqwest::Client::new(),
         provider_cache: Cache::new(100),
         rate_limit: rate_limit::RateLimiter::new(
-            rate_limit::MAX_REQUESTS_PER_SEC,
-            Duration::from_secs(1),
+            10,
+            Duration::from_secs(60),
         ),
     })
 }
