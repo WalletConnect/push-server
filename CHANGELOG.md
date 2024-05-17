@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.40.2 - 2024-05-17
+#### Bug Fixes
+- client registrations chart (#332) - (a74ad70) - Chris Smith
+- rate limit 10 req/min (#331) - (1c3a860) - Chris Smith
+
+- - -
+
 ## v0.40.1 - 2024-05-16
 #### Bug Fixes
 - applying rate limiting middleware to all except push endpoints (#328) - (532a9bc) - Max Kalashnikoff
