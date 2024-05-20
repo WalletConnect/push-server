@@ -1,1 +1,1 @@
-notification_channels = ["NNOynGwVz"]
+notification_channels = [{ uid : "NNOynGwVz" }]
