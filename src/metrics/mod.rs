@@ -1,22 +1,7 @@
-use {
-    crate::error::{Error, Result},
-    opentelemetry::{
-        metrics::Counter,
-        sdk::{
-            self,
-            export::metrics::aggregation,
-            metrics::{processors, selectors},
-            Resource,
-        },
-    },
-    opentelemetry_prometheus::PrometheusExporter,
-    prometheus_core::TextEncoder,
-};
+use wc::metrics::{otel::metrics::Counter, ServiceMetrics};
 
 #[derive(Clone)]
 pub struct Metrics {
-    pub prometheus_exporter: PrometheusExporter,
-
     pub received_notifications: Counter<u64>,
     pub sent_fcm_notifications: Counter<u64>,
     pub sent_fcm_v1_notifications: Counter<u64>,
@@ -33,25 +18,16 @@ pub struct Metrics {
     pub client_suspensions: Counter<u64>,
 }
 
+impl Default for Metrics {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Metrics {
-    pub fn new(resource: Resource) -> Result<Self> {
-        let controller = sdk::metrics::controllers::basic(
-            processors::factory(
-                selectors::simple::histogram(vec![]),
-                aggregation::cumulative_temporality_selector(),
-            )
-            .with_memory(true),
-        )
-        .with_resource(resource)
-        .build();
-
-        let prometheus_exporter = opentelemetry_prometheus::exporter(controller).init();
-
-        let meter = prometheus_exporter.meter_provider().unwrap();
-
-        opentelemetry::global::set_meter_provider(meter);
-
-        let meter = opentelemetry::global::meter("echo-server");
+    pub fn new() -> Self {
+        ServiceMetrics::init_with_name("echo-server");
+        let meter = ServiceMetrics::meter();
 
         let clients_counter = meter
             .u64_counter("registered_clients")
@@ -108,8 +84,7 @@ impl Metrics {
             .with_description("The number of clients that have been suspended")
             .init();
 
-        Ok(Metrics {
-            prometheus_exporter,
+        Metrics {
             registered_clients: clients_counter,
             received_notifications: received_notification_counter,
             sent_fcm_notifications: sent_fcm_notification_counter,
@@ -121,13 +96,6 @@ impl Metrics {
             tenant_fcm_v1_updates: tenant_fcm_v1_updates_counter,
             tenant_suspensions: tenant_suspensions_counter,
             client_suspensions: client_suspensions_counter,
-        })
-    }
-
-    pub fn export(&self) -> Result<String> {
-        let data = self.prometheus_exporter.registry().gather();
-        TextEncoder::new()
-            .encode_to_string(&data)
-            .map_err(Error::Prometheus)
+        }
     }
 }

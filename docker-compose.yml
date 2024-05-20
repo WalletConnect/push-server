@@ -1,10 +1,5 @@
 version: '3.9'
 services:
-  jaeger:
-    image: jaegertracing/opentelemetry-all-in-one:latest
-    ports:
-      - "3001:16686"
-
   postgres:
       image: postgres
       environment:
@@ -21,10 +16,5 @@ services:
       environment:
         - PORT=3000
         - LOG_LEVEL=info,echo-server=info
-        - LOG_LEVEL_OTEL=info,echo-server=trace
         - DATABASE_URL=postgres://postgres:root@postgres:5432/postgres
-        - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
         - TELEMETRY_PROMETHEUS_PORT=3002
-        - OTEL_SERVICE_NAME=echo-server
-        - OTEL_RESOURCE_ATTRIBUTES=environment=dev,region=local,version=0.11.5
-        - OTEL_TRACES_SAMPLER=always_on

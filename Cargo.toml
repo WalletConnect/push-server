@@ -48,12 +48,6 @@ envy = "0.4"
 # Build-time info
 build-info = "0.0"
 
-# Metrics & Traces
-prometheus-core = { package = "prometheus", version = "0.13" }
-opentelemetry = { version = "0.18", features = ["metrics", "rt-tokio"] }
-opentelemetry-prometheus = "0.11"
-opentelemetry-otlp = "0.11"
-
 # Logging
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "parking_lot"] }

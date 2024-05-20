@@ -16,15 +16,6 @@ pub enum Error {
     #[error(transparent)]
     Envy(#[from] envy::Error),
 
-    #[error(transparent)]
-    Trace(#[from] opentelemetry::trace::TraceError),
-
-    #[error(transparent)]
-    Metrics(#[from] opentelemetry::metrics::MetricsError),
-
-    #[error(transparent)]
-    Prometheus(#[from] prometheus_core::Error),
-
     #[error("Bad device token error: {0}")]
     BadDeviceToken(String),
 

@@ -18,7 +18,6 @@ use {
     config::Config,
     hyper::http::Method,
     middleware::rate_limit::rate_limit_middleware,
-    opentelemetry::{sdk::Resource, KeyValue},
     sqlx::{
         postgres::{PgConnectOptions, PgPoolOptions},
         ConnectOptions,
@@ -156,13 +155,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
         .join(", ");
 
     if state.config.telemetry_prometheus_port.is_some() {
-        state.set_metrics(metrics::Metrics::new(Resource::new(vec![
-            KeyValue::new("service_name", "echo-server"),
-            KeyValue::new(
-                "service_version",
-                state.build_info.crate_info.version.clone().to_string(),
-            ),
-        ]))?);
+        state.set_metrics(metrics::Metrics::new());
     }
 
     let port = state.config.port;
@@ -240,9 +233,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
             .layer(axum::middleware::from_fn_with_state(state_arc.clone(), rate_limit_middleware));
 
         Router::new()
-            .route("/health", get(handlers::health::handler).layer(
-                axum::middleware::from_fn_with_state(state_arc.clone(), rate_limit_middleware),
-            ))
+            .route("/health", get(handlers::health::handler))
             .nest("/tenants", tenancy_routes.layer(
                 axum::middleware::from_fn_with_state(state_arc.clone(), rate_limit_middleware),
             ))
@@ -268,9 +259,7 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
 
     #[cfg(not(feature = "multitenant"))]
     let app = Router::new()
-        .route("/health", get(handlers::health::handler).layer(
-            axum::middleware::from_fn_with_state(state_arc.clone(), rate_limit_middleware),
-        ))
+        .route("/health", get(handlers::health::handler))
         .route(
             "/clients",
             post(handlers::single_tenant_wrappers::register_handler).layer(
