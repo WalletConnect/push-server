@@ -1,4 +1,13 @@
-use wc::metrics::{otel::metrics::Counter, ServiceMetrics};
+use {
+    std::time::Instant,
+    wc::metrics::{
+        otel::{
+            metrics::{Counter, Histogram},
+            KeyValue,
+        },
+        ServiceMetrics,
+    },
+};
 
 #[derive(Clone)]
 pub struct Metrics {
@@ -16,6 +25,9 @@ pub struct Metrics {
 
     pub tenant_suspensions: Counter<u64>,
     pub client_suspensions: Counter<u64>,
+
+    postgres_queries: Counter<u64>,
+    postgres_query_latency: Histogram<u64>,
 }
 
 impl Default for Metrics {
@@ -84,6 +96,16 @@ impl Metrics {
             .with_description("The number of clients that have been suspended")
             .init();
 
+        let postgres_queries: Counter<u64> = meter
+            .u64_counter("postgres_queries")
+            .with_description("The number of Postgres queries executed")
+            .init();
+
+        let postgres_query_latency: Histogram<u64> = meter
+            .u64_histogram("postgres_query_latency")
+            .with_description("The latency Postgres queries")
+            .init();
+
         Metrics {
             registered_clients: clients_counter,
             received_notifications: received_notification_counter,
@@ -96,6 +118,17 @@ impl Metrics {
             tenant_fcm_v1_updates: tenant_fcm_v1_updates_counter,
             tenant_suspensions: tenant_suspensions_counter,
             client_suspensions: client_suspensions_counter,
+            postgres_queries,
+            postgres_query_latency,
         }
+    }
+
+    pub fn postgres_query(&self, query_name: &'static str, start: Instant) {
+        let elapsed = start.elapsed();
+
+        let attributes = [KeyValue::new("name", query_name)];
+        self.postgres_queries.add(1, &attributes);
+        self.postgres_query_latency
+            .record(elapsed.as_millis() as u64, &attributes);
     }
 }

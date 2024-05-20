@@ -41,3 +41,12 @@ variable "relay_public_key" {
   type      = string
   sensitive = true
 }
+
+#-------------------------------------------------------------------------------
+# Alerting / Monitoring
+
+variable "notification_channels" {
+  description = "The notification channels to send alerts to"
+  type        = list(any)
+  default     = []
+}

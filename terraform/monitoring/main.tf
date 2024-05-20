@@ -2,13 +2,7 @@ locals {
   # Turns the arn into the format expected by
   # the Grafana provider e.g.
   # net/prod-relay-load-balancer/e9a51c46020a0f85
-  load_balancer                 = join("/", slice(split("/", var.load_balancer_arn), 1, 4))
-  opsgenie_notification_channel = "NNOynGwVz"
-  notifications = (
-    var.environment == "prod" ?
-    [{ uid = local.opsgenie_notification_channel }] :
-    []
-  )
+  load_balancer = join("/", slice(split("/", var.load_balancer_arn), 1, 4))
 }
 
 resource "grafana_data_source" "prometheus" {
@@ -34,7 +28,29 @@ resource "grafana_data_source" "cloudwatch" {
   })
 }
 
+data "jsonnet_file" "dashboard" {
+  source = "${path.module}/dashboard.jsonnet"
+
+  ext_str = {
+    dashboard_title = "Push Server - ${title(var.environment)}"
+    dashboard_uid   = "push-${var.environment}"
+
+    prometheus_uid = grafana_data_source.prometheus.uid
+    cloudwatch_uid = grafana_data_source.cloudwatch.uid
+
+    environment   = var.environment
+    notifications = jsonencode(var.notification_channels)
+  }
+}
+
 resource "grafana_dashboard" "at_a_glance" {
+  overwrite   = true
+  message     = "Updated by Terraform"
+  config_json = data.jsonnet_file.dashboard.rendered
+}
+
+
+resource "grafana_dashboard" "at_a_glance_old" {
   overwrite = true
   message   = "Updated by Terraform"
   config_json = jsonencode({
@@ -352,7 +368,7 @@ resource "grafana_dashboard" "at_a_glance" {
               "uid" : grafana_data_source.prometheus.uid
             },
             "exemplar" : true,
-            "expr" : "sum(rate(registered_clients{}[$__rate_interval]))",
+            "expr" : "sum(rate(registered_clients_total{}[$__rate_interval]))",
             "interval" : "",
             "legendFormat" : "",
             "refId" : "Clients"
@@ -533,7 +549,7 @@ resource "grafana_dashboard" "at_a_glance" {
           "name" : "${var.environment} Echo Server 5XX alert",
           "noDataState" : "no_data",
           "message" : "Echo server - Prod - 5XX error",
-          "notifications" : local.notifications
+          "notifications" : var.notification_channels
         },
         "datasource" : {
           "type" : "cloudwatch",
@@ -804,8 +820,8 @@ resource "grafana_dashboard" "at_a_glance" {
     },
     "timepicker" : {},
     "timezone" : "",
-    "title" : var.app_name,
-    "uid" : var.app_name,
+    "title" : "${var.app_name} - old",
+    "uid" : "${var.app_name}-old",
     "version" : 13,
     "weekStart" : ""
   })
