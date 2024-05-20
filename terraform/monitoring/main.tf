@@ -133,7 +133,7 @@ resource "grafana_dashboard" "at_a_glance_old" {
               "type" : "prometheus",
               "uid" : grafana_data_source.prometheus.uid
             },
-            "expr" : "sum(rate(received_notifications{}[1h]))",
+            "expr" : "sum(rate(received_notifications_total{}[1h]))",
             "legendFormat" : "__auto",
             "refId" : "Received"
           },
@@ -143,7 +143,7 @@ resource "grafana_dashboard" "at_a_glance_old" {
               "uid" : grafana_data_source.prometheus.uid
             },
             "editorMode" : "code",
-            "expr" : "sum(increase(sent_apns_notifications{}[1h]))",
+            "expr" : "sum(increase(sent_apns_notifications_total{}[1h]))",
             "hide" : false,
             "legendFormat" : "__auto",
             "range" : true,
@@ -155,7 +155,7 @@ resource "grafana_dashboard" "at_a_glance_old" {
               "uid" : grafana_data_source.prometheus.uid
             },
             "editorMode" : "code",
-            "expr" : "sum(increase(sent_fcm_notifications{}[1h]))",
+            "expr" : "sum(increase(sent_fcm_notifications_total{}[1h]))",
             "hide" : false,
             "legendFormat" : "__auto",
             "range" : true,
@@ -278,7 +278,7 @@ resource "grafana_dashboard" "at_a_glance_old" {
               "uid" : grafana_data_source.prometheus.uid
             },
             "exemplar" : true,
-            "expr" : "sum(increase(received_notifications{}[1h]))",
+            "expr" : "sum(increase(received_notifications_total{}[1h]))",
             "format" : "time_series",
             "interval" : "",
             "legendFormat" : "",

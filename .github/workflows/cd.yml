@@ -159,7 +159,6 @@ jobs:
           TF_VAR_jwt_secret: ${{ secrets.PROD_JWT_SECRET }}
           TF_VAR_image_version: ${{ inputs.image_tag }}
           TF_VAR_relay_public_key: ${{ secrets.RELAY_PUBLIC_KEY }}
-          TF_VAR_notification_channels: NNOynGwVz
         with:
           environment: "prod"
 
