@@ -234,6 +234,9 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
 
         Router::new()
             .route("/health", get(handlers::health::handler))
+            .route("/rate_limit_test", get(handlers::rate_limit_test::handler).layer(
+                axum::middleware::from_fn_with_state(state_arc.clone(), rate_limit_middleware),
+            ))
             .nest("/tenants", tenancy_routes.layer(
                 axum::middleware::from_fn_with_state(state_arc.clone(), rate_limit_middleware),
             ))
@@ -260,6 +263,9 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
     #[cfg(not(feature = "multitenant"))]
     let app = Router::new()
         .route("/health", get(handlers::health::handler))
+        .route("/rate_limit_test", get(handlers::rate_limit_test::handler).layer(
+            axum::middleware::from_fn_with_state(state_arc.clone(), rate_limit_middleware),
+        ))
         .route(
             "/clients",
             post(handlers::single_tenant_wrappers::register_handler).layer(
