@@ -121,6 +121,99 @@ async fn tenant_enabled_providers(ctx: &mut EchoServerContext) {
 
 #[test_context(EchoServerContext)]
 #[tokio::test]
+async fn tenant_delete(ctx: &mut EchoServerContext) {
+    let (tenant_id, jwt_token) = generate_random_tenant_id(&ctx.config.jwt_secret);
+
+    // Register new tenant
+    let client = reqwest::Client::new();
+    let create_tenant_result = client
+        .post(format!("http://{}/tenants", ctx.server.public_addr))
+        .bearer_auth(&jwt_token)
+        .json(&TenantRegisterBody {
+            id: tenant_id.clone(),
+        })
+        .send()
+        .await
+        .expect("Failed to create a new tenant");
+    assert_eq!(create_tenant_result.status(), reqwest::StatusCode::OK);
+
+    // Send valid APNS p8 Key
+    let form = reqwest::multipart::Form::new()
+        .text("apns_type", "token")
+        .text("apns_topic", "app.test")
+        .text("apns_key_id", env::var("ECHO_TEST_APNS_P8_KEY_ID").unwrap())
+        .text(
+            "apns_team_id",
+            env::var("ECHO_TEST_APNS_P8_TEAM_ID").unwrap(),
+        )
+        .part(
+            "apns_pkcs8_pem",
+            reqwest::multipart::Part::text(env::var("ECHO_TEST_APNS_P8_PEM").unwrap())
+                .file_name("apns.p8")
+                .mime_str("text/plain")
+                .expect("Error on passing multipart stream to the form request"),
+        );
+
+    let apns_update_result = client
+        .post(format!(
+            "http://{}/tenants/{}/apns",
+            ctx.server.public_addr, tenant_id
+        ))
+        .bearer_auth(&jwt_token)
+        .multipart(form)
+        .send()
+        .await
+        .expect("Failed to call update tenant endpoint");
+    assert_eq!(apns_update_result.status(), reqwest::StatusCode::OK);
+
+    // Get tenant
+    let response = client
+        .get(format!(
+            "http://{}/tenants/{}",
+            ctx.server.public_addr, tenant_id
+        ))
+        .bearer_auth(&jwt_token)
+        .send()
+        .await
+        .expect("Call failed");
+    assert!(response.status().is_success());
+    let response = response.json::<GetTenantResponse>().await.unwrap();
+    println!("response: {response:?}");
+    assert!(response
+        .enabled_providers
+        .contains(&PROVIDER_APNS.to_owned()));
+
+    let apns_delete_result = client
+        .delete(format!(
+            "http://{}/tenants/{}/apns",
+            ctx.server.public_addr, tenant_id
+        ))
+        .bearer_auth(&jwt_token)
+        .send()
+        .await
+        .expect("Failed to call update tenant endpoint");
+    assert_eq!(apns_delete_result.status(), reqwest::StatusCode::NO_CONTENT);
+
+    // Get tenant
+    let response = client
+        .get(format!(
+            "http://{}/tenants/{}",
+            ctx.server.public_addr, tenant_id
+        ))
+        .bearer_auth(&jwt_token)
+        .send()
+        .await
+        .expect("Call failed");
+    assert!(response.status().is_success());
+    let response = response.json::<GetTenantResponse>().await.unwrap();
+    println!("response: {response:?}");
+    assert!(!response
+        .enabled_providers
+        .contains(&PROVIDER_APNS.to_owned()));
+}
+
+#[test_context(EchoServerContext)]
+#[tokio::test]
 async fn tenant_update_apns_bad_token(ctx: &mut EchoServerContext) {
     let (tenant_id, jwt_token) = generate_random_tenant_id(&ctx.config.jwt_secret);
 

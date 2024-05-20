@@ -299,17 +299,20 @@ pub trait TenantStore {
     async fn delete_tenant(&self, id: &str) -> Result<()>;
     async fn create_tenant(&self, params: TenantUpdateParams) -> Result<Tenant>;
     async fn update_tenant_fcm(&self, id: &str, params: TenantFcmUpdateParams) -> Result<Tenant>;
+    async fn update_tenant_delete_fcm(&self, id: &str) -> Result<Tenant>;
     async fn update_tenant_fcm_v1(
         &self,
         id: &str,
         params: TenantFcmV1UpdateParams,
     ) -> Result<Tenant>;
+    async fn update_tenant_delete_fcm_v1(&self, id: &str) -> Result<Tenant>;
     async fn update_tenant_apns(&self, id: &str, params: TenantApnsUpdateParams) -> Result<Tenant>;
     async fn update_tenant_apns_auth(
         &self,
         id: &str,
         params: TenantApnsUpdateAuth,
     ) -> Result<Tenant>;
+    async fn update_tenant_delete_apns(&self, id: &str) -> Result<Tenant>;
     async fn suspend_tenant(&self, id: &str, reason: &str) -> Result<()>;
     async fn unsuspend_tenant(&self, id: &str) -> Result<()>;
 }
@@ -374,6 +377,23 @@ impl TenantStore for PgPool {
     }
 
     #[instrument(skip(self))]
+    async fn update_tenant_delete_fcm(&self, id: &str) -> Result<Tenant> {
+        let query = "
+            UPDATE public.tenants
+            SET updated_at = NOW(),
+                fcm_api_key = NULL
+            WHERE id = $1
+            RETURNING *
+        ";
+        let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(query)
+            .bind(id)
+            .fetch_one(self)
+            .await?;
+
+        Ok(res)
+    }
+
+    #[instrument(skip(self))]
     async fn update_tenant_fcm_v1(
         &self,
         id: &str,
@@ -387,6 +407,23 @@ impl TenantStore for PgPool {
         .bind(params.fcm_v1_credentials)
         .fetch_one(self)
         .await?;
+
+        Ok(res)
+    }
+
+    #[instrument(skip(self))]
+    async fn update_tenant_delete_fcm_v1(&self, id: &str) -> Result<Tenant> {
+        let query = "
+            UPDATE public.tenants
+            SET updated_at = NOW(),
+                fcm_v1_credentials = NULL
+            WHERE id = $1
+            RETURNING *
+        ";
+        let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(query)
+            .bind(id)
+            .fetch_one(self)
+            .await?;
 
         Ok(res)
     }
@@ -439,6 +476,29 @@ impl TenantStore for PgPool {
         }
         .fetch_one(self)
         .await?;
+
+        Ok(res)
+    }
+
+    #[instrument(skip(self))]
+    async fn update_tenant_delete_apns(&self, id: &str) -> Result<Tenant> {
+        let query = "
+            UPDATE public.tenants
+            SET updated_at = NOW(),
+                apns_topic = NULL,
+                apns_type = NULL,
+                apns_certificate = NULL,
+                apns_certificate_password = NULL,
+                apns_pkcs8_pem = NULL,
+                apns_team_id = NULL,
+                apns_key_id = NULL
+            WHERE id = $1
+            RETURNING *
+        ";
+        let res = sqlx::query_as::<sqlx::postgres::Postgres, Tenant>(query)
+            .bind(id)
+            .fetch_one(self)
+            .await?;
 
         Ok(res)
     }
@@ -517,11 +577,19 @@ impl TenantStore for DefaultTenantStore {
         panic!("Shouldn't have run in single tenant mode")
     }
 
+    async fn update_tenant_delete_fcm(&self, _id: &str) -> Result<Tenant> {
+        panic!("Shouldn't have run in single tenant mode")
+    }
+
     async fn update_tenant_fcm_v1(
         &self,
         _id: &str,
         _params: TenantFcmV1UpdateParams,
     ) -> Result<Tenant> {
+        panic!("Shouldn't have run in single tenant mode")
+    }
+
+    async fn update_tenant_delete_fcm_v1(&self, _id: &str) -> Result<Tenant> {
         panic!("Shouldn't have run in single tenant mode")
     }
 
@@ -538,6 +606,10 @@ impl TenantStore for DefaultTenantStore {
         _id: &str,
         _params: TenantApnsUpdateAuth,
     ) -> Result<Tenant> {
+        panic!("Shouldn't have run in single tenant mode")
+    }
+
+    async fn update_tenant_delete_apns(&self, _id: &str) -> Result<Tenant> {
         panic!("Shouldn't have run in single tenant mode")
     }
 

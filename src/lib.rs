@@ -218,8 +218,11 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
                 get(handlers::get_tenant::handler).delete(handlers::delete_tenant::handler),
             )
             .route("/:id/fcm", post(handlers::update_fcm::handler))
+            .route("/:id/fcm", delete(handlers::delete_fcm::handler))
             .route("/:id/fcm_v1", post(handlers::update_fcm_v1::handler))
+            .route("/:id/fcm_v1", delete(handlers::delete_fcm_v1::handler))
             .route("/:id/apns", post(handlers::update_apns::handler))
+            .route("/:id/apns", delete(handlers::delete_apns::handler))
             .layer(
                 global_middleware.clone().layer(
                     CorsLayer::new()
@@ -233,7 +236,8 @@ pub async fn bootstap(mut shutdown: broadcast::Receiver<()>, config: Config) -> 
                         .allow_origin(AllowOrigin::any())
                         .allow_headers([hyper::http::header::CONTENT_TYPE, hyper::http::header::AUTHORIZATION]),
                 ),
-            );
+            )
+            .layer(axum::middleware::from_fn_with_state(state_arc.clone(), rate_limit_middleware));
 
         Router::new()
             .route("/health", get(handlers::health::handler).layer(
