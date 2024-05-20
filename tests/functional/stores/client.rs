@@ -24,6 +24,7 @@ async fn client_creation(ctx: &mut StoreContext) {
                 token,
                 always_raw: false,
             },
+            None,
         )
         .await
         .unwrap();
@@ -46,6 +47,7 @@ async fn client_creation_fcm(ctx: &mut StoreContext) {
                 token,
                 always_raw: false,
             },
+            None,
         )
         .await
         .unwrap();
@@ -68,6 +70,7 @@ async fn client_creation_apns(ctx: &mut StoreContext) {
                 token,
                 always_raw: false,
             },
+            None,
         )
         .await
         .unwrap();
@@ -92,6 +95,7 @@ async fn client_upsert_token(ctx: &mut StoreContext) {
                 token: token.clone(),
                 always_raw: false,
             },
+            None,
         )
         .await
         .unwrap();
@@ -133,6 +137,7 @@ async fn client_upsert_token(ctx: &mut StoreContext) {
                 token: updated_token.clone(),
                 always_raw: true,
             },
+            None,
         )
         .await
         .unwrap();
@@ -164,6 +169,7 @@ async fn client_upsert_id(ctx: &mut StoreContext) {
                 token: token.clone(),
                 always_raw: false,
             },
+            None,
         )
         .await
         .unwrap();
@@ -205,6 +211,7 @@ async fn client_upsert_id(ctx: &mut StoreContext) {
                 token: token.clone(),
                 always_raw: false,
             },
+            None,
         )
         .await
         .unwrap();
@@ -239,6 +246,7 @@ async fn client_create_same_id_and_token(ctx: &mut StoreContext) {
                 token: token.clone(),
                 always_raw: false,
             },
+            None,
         )
         .await
         .unwrap();
@@ -280,6 +288,7 @@ async fn client_create_same_id_and_token(ctx: &mut StoreContext) {
                 token: token.clone(),
                 always_raw: false,
             },
+            None,
         )
         .await
         .unwrap();
@@ -310,6 +319,7 @@ async fn client_deletion(ctx: &mut StoreContext) {
                 token,
                 always_raw: false,
             },
+            None,
         )
         .await
         .unwrap();
@@ -332,6 +342,7 @@ async fn client_fetch(ctx: &mut StoreContext) {
                 token: token.clone(),
                 always_raw: false,
             },
+            None,
         )
         .await
         .unwrap();

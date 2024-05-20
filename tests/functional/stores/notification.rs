@@ -24,6 +24,7 @@ pub async fn create_client(client_store: &ClientStoreArc) -> String {
                 token,
                 always_raw: false,
             },
+            None,
         )
         .await
         .expect("failed to create client for notification test");

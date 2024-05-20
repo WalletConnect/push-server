@@ -96,6 +96,7 @@ pub async fn handler(
                 token: body.token,
                 always_raw,
             },
+            state.metrics.as_ref(),
         )
         .await?;
 

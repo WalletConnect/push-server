@@ -1,10 +1,12 @@
 use {
     crate::{
+        metrics::Metrics,
         providers::ProviderKind,
         stores::{self, StoreError::NotFound},
     },
     async_trait::async_trait,
     sqlx::Executor,
+    std::time::Instant,
     tracing::{debug, instrument},
 };
 
@@ -19,15 +21,27 @@ pub struct Client {
 
 #[async_trait]
 pub trait ClientStore {
-    async fn create_client(&self, tenant_id: &str, id: &str, client: Client) -> stores::Result<()>;
+    async fn create_client(
+        &self,
+        tenant_id: &str,
+        id: &str,
+        client: Client,
+        metrics: Option<&Metrics>,
+    ) -> stores::Result<()>;
     async fn get_client(&self, tenant_id: &str, id: &str) -> stores::Result<Client>;
     async fn delete_client(&self, tenant_id: &str, id: &str) -> stores::Result<()>;
 }
 
 #[async_trait]
 impl ClientStore for sqlx::PgPool {
-    #[instrument(skip(self, client))]
-    async fn create_client(&self, tenant_id: &str, id: &str, client: Client) -> stores::Result<()> {
+    #[instrument(skip(self, client, metrics))]
+    async fn create_client(
+        &self,
+        tenant_id: &str,
+        id: &str,
+        client: Client,
+        metrics: Option<&Metrics>,
+    ) -> stores::Result<()> {
         debug!(
             "ClientStore::create_client tenant_id={tenant_id} id={id} token={} with locking",
             client.token
@@ -37,6 +51,7 @@ impl ClientStore for sqlx::PgPool {
 
         // Statement for locking based on the client id to prevent an issue #230
         // and locking based on the token to prevent an issue #292
+        let start = Instant::now();
         sqlx::query(
             "SELECT
                 pg_advisory_xact_lock(abs(hashtext($1::text))),
@@ -46,13 +61,21 @@ impl ClientStore for sqlx::PgPool {
         .bind(client.token.clone())
         .execute(&mut transaction)
         .await?;
+        if let Some(metrics) = metrics {
+            metrics.postgres_query("create_client_pg_advisory_xact_lock", start);
+        }
 
+        let start = Instant::now();
         sqlx::query("DELETE FROM public.clients WHERE id = $1 OR device_token = $2")
             .bind(id)
             .bind(client.token.clone())
             .execute(&mut transaction)
             .await?;
+        if let Some(metrics) = metrics {
+            metrics.postgres_query("create_client_delete", start);
+        }
 
+        let start = Instant::now();
         let mut insert_query = sqlx::QueryBuilder::new(
             "INSERT INTO public.clients (id, tenant_id, push_type, device_token, always_raw)",
         );
@@ -73,7 +96,15 @@ impl ClientStore for sqlx::PgPool {
             },
         );
         insert_query.build().execute(&mut transaction).await?;
+        if let Some(metrics) = metrics {
+            metrics.postgres_query("create_client_insert", start);
+        }
+
+        let start = Instant::now();
         transaction.commit().await?;
+        if let Some(metrics) = metrics {
+            metrics.postgres_query("create_client_commit", start);
+        }
 
         Ok(())
     }
