@@ -3,12 +3,6 @@ locals {
   # the Grafana provider e.g.
   # net/prod-relay-load-balancer/e9a51c46020a0f85
   load_balancer                 = join("/", slice(split("/", var.load_balancer_arn), 1, 4))
-  opsgenie_notification_channel = "NNOynGwVz"
-  notifications = (
-    var.environment == "prod" ?
-    [{ uid = local.opsgenie_notification_channel }] :
-    []
-  )
 }
 
 resource "grafana_data_source" "prometheus" {
@@ -34,7 +28,29 @@ resource "grafana_data_source" "cloudwatch" {
   })
 }
 
+data "jsonnet_file" "dashboard" {
+  source = "${path.module}/dashboard.jsonnet"
+
+  ext_str = {
+    dashboard_title = "Push Server - ${title(module.this.stage)}"
+    dashboard_uid   = "push-${module.this.stage}"
+
+    prometheus_uid = grafana_data_source.prometheus.uid
+    cloudwatch_uid = grafana_data_source.cloudwatch.uid
+
+    environment   = module.this.stage
+    notifications = jsonencode(var.notification_channels)
+  }
+}
+
 resource "grafana_dashboard" "at_a_glance" {
+  overwrite   = true
+  message     = "Updated by Terraform"
+  config_json = data.jsonnet_file.dashboard.rendered
+}
+
+
+resource "grafana_dashboard" "at_a_glance_old" {
   overwrite = true
   message   = "Updated by Terraform"
   config_json = jsonencode({
@@ -533,7 +549,7 @@ resource "grafana_dashboard" "at_a_glance" {
           "name" : "${var.environment} Echo Server 5XX alert",
           "noDataState" : "no_data",
           "message" : "Echo server - Prod - 5XX error",
-          "notifications" : local.notifications
+          "notifications" : var.notification_channels
         },
         "datasource" : {
           "type" : "cloudwatch",
@@ -804,8 +820,8 @@ resource "grafana_dashboard" "at_a_glance" {
     },
     "timepicker" : {},
     "timezone" : "",
-    "title" : var.app_name,
-    "uid" : var.app_name,
+    "title" : "${var.app_name} - old",
+    "uid" : "${var.app_name}-old",
     "version" : 13,
     "weekStart" : ""
   })

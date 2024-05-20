@@ -13,3 +13,8 @@ variable "prometheus_workspace_id" {
 variable "load_balancer_arn" {
   type = string
 }
+
+variable "notification_channels" {
+  description = "The notification channels to send alerts to"
+  type        = list(any)
+}

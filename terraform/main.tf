@@ -191,6 +191,7 @@ module "monitoring" {
   prometheus_workspace_id = aws_prometheus_workspace.prometheus.id
   load_balancer_arn       = module.ecs.load_balancer_arn
   environment             = local.environment
+  notification_channels   = var.notification_channels
 }
 
 data "aws_ecr_repository" "repository" {
