@@ -7,7 +7,6 @@ use {
     },
     axum::response::{IntoResponse, Response},
     hyper::StatusCode,
-    wc::metrics::otel::{metrics::MetricsError, trace::TraceError},
 };
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -16,12 +15,6 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     #[error(transparent)]
     Envy(#[from] envy::Error),
-
-    #[error(transparent)]
-    Trace(#[from] TraceError),
-
-    #[error(transparent)]
-    Metrics(#[from] MetricsError),
 
     #[error("Bad device token error: {0}")]
     BadDeviceToken(String),
