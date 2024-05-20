@@ -110,6 +110,9 @@ jobs:
       # Checkout code
       - name: "Git checkout"
         uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          token: ${{ secrets.RELEASE_PAT }}
 
       # Install sccache
       - name: "Install sccache"
