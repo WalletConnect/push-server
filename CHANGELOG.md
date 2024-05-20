@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.41.1 - 2024-05-20
+#### Bug Fixes
+- validate step (#336) - (845eede) - Chris Smith
+
+- - -
+
 ## v0.41.0 - 2024-05-20
 #### Bug Fixes
 - upgrade otel (#334) - (7086406) - Chris Smith
