@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.41.2 - 2024-05-20
+#### Bug Fixes
+- Postgres query metrics (#335) - (4d687a7) - Chris Smith
+
+- - -
+
 ## v0.41.1 - 2024-05-20
 #### Bug Fixes
 - validate step (#336) - (845eede) - Chris Smith
