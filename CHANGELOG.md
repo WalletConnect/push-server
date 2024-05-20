@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.41.0 - 2024-05-20
+#### Bug Fixes
+- upgrade otel (#334) - (7086406) - Chris Smith
+#### Features
+- delete provider (#329) - (66b31e2) - Chris Smith
+
+- - -
+
 ## v0.40.2 - 2024-05-17
 #### Bug Fixes
 - client registrations chart (#332) - (a74ad70) - Chris Smith
