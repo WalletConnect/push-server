@@ -368,7 +368,7 @@ resource "grafana_dashboard" "at_a_glance_old" {
               "uid" : grafana_data_source.prometheus.uid
             },
             "exemplar" : true,
-            "expr" : "sum(rate(registered_clients{}[$__rate_interval]))",
+            "expr" : "sum(rate(registered_clients_total{}[$__rate_interval]))",
             "interval" : "",
             "legendFormat" : "",
             "refId" : "Clients"
