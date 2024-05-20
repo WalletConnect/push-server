@@ -2,7 +2,7 @@ locals {
   # Turns the arn into the format expected by
   # the Grafana provider e.g.
   # net/prod-relay-load-balancer/e9a51c46020a0f85
-  load_balancer                 = join("/", slice(split("/", var.load_balancer_arn), 1, 4))
+  load_balancer = join("/", slice(split("/", var.load_balancer_arn), 1, 4))
 }
 
 resource "grafana_data_source" "prometheus" {
