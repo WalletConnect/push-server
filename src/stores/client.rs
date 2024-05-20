@@ -47,63 +47,91 @@ impl ClientStore for sqlx::PgPool {
             client.token
         );
 
-        let mut transaction = self.begin().await?;
-
-        // Statement for locking based on the client id to prevent an issue #230
-        // and locking based on the token to prevent an issue #292
-        let start = Instant::now();
-        sqlx::query(
-            "SELECT
-                pg_advisory_xact_lock(abs(hashtext($1::text))),
-                pg_advisory_xact_lock(abs(hashtext($2::text)))",
-        )
-        .bind(id)
-        .bind(client.token.clone())
-        .execute(&mut transaction)
-        .await?;
-        if let Some(metrics) = metrics {
-            metrics.postgres_query("create_client_pg_advisory_xact_lock", start);
+        #[derive(Debug, Clone, PartialEq, Eq, sqlx::FromRow)]
+        pub struct ClientSelect {
+            pub id: String,
+            pub device_token: String,
         }
 
+        let query = "
+            SELECT *
+            FROM public.clients
+            WHERE id = $1
+                  OR device_token = $2
+            FOR UPDATE
+        ";
         let start = Instant::now();
-        sqlx::query("DELETE FROM public.clients WHERE id = $1 OR device_token = $2")
+        let res = sqlx::query_as::<sqlx::postgres::Postgres, ClientSelect>(query)
             .bind(id)
             .bind(client.token.clone())
-            .execute(&mut transaction)
-            .await?;
+            .fetch_one(self)
+            .await;
         if let Some(metrics) = metrics {
             metrics.postgres_query("create_client_delete", start);
         }
 
-        let start = Instant::now();
-        let mut insert_query = sqlx::QueryBuilder::new(
-            "INSERT INTO public.clients (id, tenant_id, push_type, device_token, always_raw)",
-        );
-        insert_query.push_values(
-            vec![(
-                id,
-                tenant_id,
-                client.push_type,
-                client.token,
-                client.always_raw,
-            )],
-            |mut b, client| {
-                b.push_bind(client.0)
-                    .push_bind(client.1)
-                    .push_bind(client.2)
-                    .push_bind(client.3)
-                    .push_bind(client.4);
-            },
-        );
-        insert_query.build().execute(&mut transaction).await?;
-        if let Some(metrics) = metrics {
-            metrics.postgres_query("create_client_insert", start);
-        }
+        let existing_client = match res {
+            Err(sqlx::Error::RowNotFound) => {
+                let start = Instant::now();
+                let mut insert_query = sqlx::QueryBuilder::new(
+                    "INSERT INTO public.clients (id, tenant_id, push_type, device_token, always_raw)",
+                );
+                insert_query.push_values(
+                    vec![(
+                        id,
+                        tenant_id,
+                        client.push_type,
+                        client.token,
+                        client.always_raw,
+                    )],
+                    |mut b, client| {
+                        b.push_bind(client.0)
+                            .push_bind(client.1)
+                            .push_bind(client.2)
+                            .push_bind(client.3)
+                            .push_bind(client.4);
+                    },
+                );
+                insert_query.build().execute(self).await?;
+                if let Some(metrics) = metrics {
+                    metrics.postgres_query("create_client_insert", start);
+                }
+                return Ok(());
+            }
+            Err(e) => return Err(e.into()),
+            Ok(row) => row,
+        };
 
-        let start = Instant::now();
-        transaction.commit().await?;
-        if let Some(metrics) = metrics {
-            metrics.postgres_query("create_client_commit", start);
+        if existing_client.id == id && existing_client.device_token != client.token {
+            let query = "
+                UPDATE public.clients
+                SET device_token = $2
+                WHERE id = $1
+            ";
+            let start = Instant::now();
+            sqlx::query(query)
+                .bind(id)
+                .bind(client.token)
+                .execute(self)
+                .await?;
+            if let Some(metrics) = metrics {
+                metrics.postgres_query("create_client_update_device_token", start);
+            }
+        } else if existing_client.device_token == client.token && existing_client.id != id {
+            let query = "
+                UPDATE public.clients
+                SET id = $2
+                WHERE device_token = $1
+            ";
+            let start = Instant::now();
+            sqlx::query(query)
+                .bind(client.token)
+                .bind(id)
+                .execute(self)
+                .await?;
+            if let Some(metrics) = metrics {
+                metrics.postgres_query("create_client_update_id", start);
+            }
         }
 
         Ok(())
