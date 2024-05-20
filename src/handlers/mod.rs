@@ -40,6 +40,7 @@ pub mod delete_tenant;
 #[cfg(feature = "multitenant")]
 pub mod get_tenant;
 pub mod health;
+pub mod rate_limit_test;
 #[cfg(feature = "multitenant")]
 pub mod update_apns;
 #[cfg(feature = "multitenant")]

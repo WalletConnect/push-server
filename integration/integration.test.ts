@@ -76,7 +76,7 @@ describe('Echo Server', () => {
 
     // Simulate flood of requests and check for rate-limited responses
     it('Rate limiting', async () => {
-      const url = `${BASE_URL}/health`
+      const url = `${BASE_URL}/rate_limit_test`
       const requests_to_send = 100;
       const promises = [];
       for (let i = 0; i < requests_to_send; i++) {
@@ -85,7 +85,7 @@ describe('Echo Server', () => {
         );
       }
       const results = await Promise.allSettled(promises);
-      
+
       let ok_statuses_counter = 0;
       let rate_limited_statuses_counter = 0;
       results.forEach((result) => {
