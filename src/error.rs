@@ -7,6 +7,7 @@ use {
     },
     axum::response::{IntoResponse, Response},
     hyper::StatusCode,
+    wc::metrics::otel::{metrics::MetricsError, trace::TraceError},
 };
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -17,13 +18,10 @@ pub enum Error {
     Envy(#[from] envy::Error),
 
     #[error(transparent)]
-    Trace(#[from] opentelemetry::trace::TraceError),
+    Trace(#[from] TraceError),
 
     #[error(transparent)]
-    Metrics(#[from] opentelemetry::metrics::MetricsError),
-
-    #[error(transparent)]
-    Prometheus(#[from] prometheus_core::Error),
+    Metrics(#[from] MetricsError),
 
     #[error("Bad device token error: {0}")]
     BadDeviceToken(String),
