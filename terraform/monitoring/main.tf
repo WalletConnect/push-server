@@ -32,13 +32,13 @@ data "jsonnet_file" "dashboard" {
   source = "${path.module}/dashboard.jsonnet"
 
   ext_str = {
-    dashboard_title = "Push Server - ${title(module.this.stage)}"
-    dashboard_uid   = "push-${module.this.stage}"
+    dashboard_title = "Push Server - ${title(var.environment)}"
+    dashboard_uid   = "push-${var.environment}"
 
     prometheus_uid = grafana_data_source.prometheus.uid
     cloudwatch_uid = grafana_data_source.cloudwatch.uid
 
-    environment   = module.this.stage
+    environment   = var.environment
     notifications = jsonencode(var.notification_channels)
   }
 }
