@@ -1303,7 +1303,7 @@ dependencies = [
 
 [[package]]
 name = "echo-server"
-version = "0.40.2"
+version = "0.41.0"
 dependencies = [
  "a2",
  "async-trait",
