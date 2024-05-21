@@ -51,6 +51,7 @@ impl ClientStore for sqlx::PgPool {
         pub struct ClientSelect {
             pub id: String,
             pub device_token: String,
+            pub tenant_id: String,
         }
 
         let query = "
@@ -124,6 +125,14 @@ impl ClientStore for sqlx::PgPool {
                 metrics.postgres_query("create_client_update_device_token", start);
             }
         } else if existing_client.device_token == client.token && existing_client.id != id {
+            let mut notification_query_builder =
+                sqlx::QueryBuilder::new("DELETE FROM public.notifications WHERE client_id = ");
+            notification_query_builder.push_bind(existing_client.id);
+            notification_query_builder.push(" and tenant_id = ");
+            notification_query_builder.push_bind(existing_client.tenant_id);
+            let notification_query = notification_query_builder.build();
+            self.execute(notification_query).await?;
+
             let query = "
                 UPDATE public.clients
                 SET id = $2,
@@ -135,6 +144,25 @@ impl ClientStore for sqlx::PgPool {
             let start = Instant::now();
             sqlx::query(query)
                 .bind(client.token)
+                .bind(id)
+                .bind(client.push_type)
+                .bind(client.always_raw)
+                .bind(tenant_id)
+                .execute(self)
+                .await?;
+            if let Some(metrics) = metrics {
+                metrics.postgres_query("create_client_update_id", start);
+            }
+        } else {
+            let query = "
+                UPDATE public.clients
+                SET push_type = $2,
+                    always_raw = $3,
+                    tenant_id = $4
+                WHERE id = $1
+            ";
+            let start = Instant::now();
+            sqlx::query(query)
                 .bind(id)
                 .bind(client.push_type)
                 .bind(client.always_raw)
