@@ -105,13 +105,19 @@ impl ClientStore for sqlx::PgPool {
         if existing_client.id == id && existing_client.device_token != client.token {
             let query = "
                 UPDATE public.clients
-                SET device_token = $2
+                SET device_token = $2,
+                    push_type = $3,
+                    always_raw = $4,
+                    tenant_id = $5
                 WHERE id = $1
             ";
             let start = Instant::now();
             sqlx::query(query)
                 .bind(id)
                 .bind(client.token)
+                .bind(client.push_type)
+                .bind(client.always_raw)
+                .bind(tenant_id)
                 .execute(self)
                 .await?;
             if let Some(metrics) = metrics {
@@ -120,13 +126,19 @@ impl ClientStore for sqlx::PgPool {
         } else if existing_client.device_token == client.token && existing_client.id != id {
             let query = "
                 UPDATE public.clients
-                SET id = $2
+                SET id = $2,
+                    push_type = $3,
+                    always_raw = $4,
+                    tenant_id = $5
                 WHERE device_token = $1
             ";
             let start = Instant::now();
             sqlx::query(query)
                 .bind(client.token)
                 .bind(id)
+                .bind(client.push_type)
+                .bind(client.always_raw)
+                .bind(tenant_id)
                 .execute(self)
                 .await?;
             if let Some(metrics) = metrics {
