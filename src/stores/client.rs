@@ -131,7 +131,11 @@ impl ClientStore for sqlx::PgPool {
             notification_query_builder.push(" and tenant_id = ");
             notification_query_builder.push_bind(existing_client.tenant_id);
             let notification_query = notification_query_builder.build();
+            let start = Instant::now();
             self.execute(notification_query).await?;
+            if let Some(metrics) = metrics {
+                metrics.postgres_query("create_client_delete_notification", start);
+            }
 
             let query = "
                 UPDATE public.clients
