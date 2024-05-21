@@ -2,6 +2,15 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.41.3 - 2024-05-21
+#### Bug Fixes
+- improve create client performance (#337) - (0481f50) - Chris Smith
+- notification_channels syntax - (7c2fb36) - Chris Smith
+- submodule checkout - (81e5f64) - Chris Smith
+- TF var syntax & metric names - (8e125b1) - Chris Smith
+
+- - -
+
 ## v0.41.2 - 2024-05-20
 #### Bug Fixes
 - Postgres query metrics (#335) - (4d687a7) - Chris Smith
