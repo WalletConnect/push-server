@@ -68,20 +68,19 @@ impl ClientStore for sqlx::PgPool {
             FOR UPDATE
         ";
         let start = Instant::now();
-        let res = sqlx::query_as::<sqlx::postgres::Postgres, ClientSelect>(query)
+        let existing_client = sqlx::query_as::<sqlx::postgres::Postgres, ClientSelect>(query)
             .bind(id)
             .bind(client.token.clone())
             .fetch_one(&mut transaction)
-            .await;
+            .await
+            .map(Some)
+            .or_else(|e| match e {
+                sqlx::Error::RowNotFound => Ok(None),
+                e => Err(e),
+            })?;
         if let Some(metrics) = metrics {
             metrics.postgres_query("create_client_delete", start);
         }
-
-        let existing_client = match res {
-            Err(sqlx::Error::RowNotFound) => None,
-            Err(e) => return Err(e.into()),
-            Ok(row) => Some(row),
-        };
 
         if let Some(existing_client) = existing_client {
             if existing_client.id == id && existing_client.device_token != client.token {
