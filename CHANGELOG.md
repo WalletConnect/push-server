@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.41.4 - 2024-05-29
+#### Bug Fixes
+- increasing rate-limiting threshold (#339) - (47fa3b1) - Max Kalashnikoff
+
+- - -
+
 ## v0.41.3 - 2024-05-21
 #### Bug Fixes
 - improve create client performance (#337) - (0481f50) - Chris Smith
