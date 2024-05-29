@@ -104,7 +104,7 @@ pub fn new_state(
         uptime: std::time::Instant::now(),
         http_client: reqwest::Client::new(),
         provider_cache: Cache::new(100),
-        rate_limit: rate_limit::RateLimiter::new(10, Duration::from_secs(60)),
+        rate_limit: rate_limit::RateLimiter::new(100, Duration::from_secs(60)),
     })
 }
 
