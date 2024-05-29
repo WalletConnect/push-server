@@ -77,7 +77,8 @@ describe('Echo Server', () => {
     // Simulate flood of requests and check for rate-limited responses
     it('Rate limiting', async () => {
       const url = `${BASE_URL}/rate_limit_test`
-      const requests_to_send = 100;
+      // x2.5 of the rate limit
+      const requests_to_send = 250;
       const promises = [];
       for (let i = 0; i < requests_to_send; i++) {
         promises.push(
