@@ -59,6 +59,21 @@ impl ClientStore for sqlx::PgPool {
         if let Some(metrics) = metrics {
             metrics.postgres_query("create_client_begin", start);
         }
+        // Lock the records in-case of fast concurrent requests
+        let start = Instant::now();
+        let query = "
+            SELECT
+            pg_advisory_xact_lock(abs(hashtext($1::text))),
+            pg_advisory_xact_lock(abs(hashtext($2::text)))
+        ";
+        sqlx::query(query)
+            .bind(id)
+            .bind(client.token.clone())
+            .execute(&mut transaction)
+            .await?;
+        if let Some(metrics) = metrics {
+            metrics.postgres_query("create_client_pg_advisory_xact_lock", start);
+        }
 
         let query = "
             SELECT *
