@@ -120,6 +120,7 @@ impl PushProvider for FcmV1Provider {
 
         result.map(|_| ()).map_err(|e| match e {
             SendError::Unregistered => Error::BadDeviceToken("Token was unregistered".into()),
+            SendError::Forbidden => Error::BadFcmV1Credentials,
             e => Error::FcmV1(e),
         })
     }

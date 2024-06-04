@@ -1529,7 +1529,7 @@ dependencies = [
 [[package]]
 name = "fcm"
 version = "0.10.0"
-source = "git+https://github.com/WalletConnect/fcm-rust.git?branch=feat/key-not-from-file#b686b84ef5d3cd66825c543cfcd6d952106d1295"
+source = "git+https://github.com/WalletConnect/fcm-rust.git?branch=feat/key-not-from-file#521683cec85f451314396098e440bb4782bd1f4f"
 dependencies = [
  "chrono",
  "erased-serde 0.4.4",
