@@ -79,8 +79,11 @@ impl ClientStore for sqlx::PgPool {
                 e => Err(e),
             })?;
         if let Some(metrics) = metrics {
-            metrics.postgres_query("create_client_delete", start);
+            metrics.postgres_query("create_client_select", start);
         }
+
+        #[cfg(feature = "functional_tests")]
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 
         if let Some(existing_client) = existing_client {
             if existing_client.id == id && existing_client.device_token != client.token {
