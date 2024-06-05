@@ -4,7 +4,7 @@ use {
     async_trait::async_trait,
     fcm_v1::{
         gauth::serv_account::ServiceAccountKey, AndroidConfig, AndroidMessagePriority, ApnsConfig,
-        Client, ClientBuildError, ErrorReason, Message, Notification, Response, Target,
+        Client, ClientBuildError, Message, Notification, SendError, Target,
     },
     serde::Serialize,
     serde_json::json,
@@ -118,32 +118,10 @@ impl PushProvider for FcmV1Provider {
             }
         };
 
-        #[allow(clippy::match_single_binding)]
-        match result {
-            Ok(val) => {
-                let Response { error, .. } = val;
-                if let Some(error) = error {
-                    match error {
-                        ErrorReason::MissingRegistration => Err(Error::BadDeviceToken(
-                            "Missing registration for token".into(),
-                        )),
-                        ErrorReason::InvalidRegistration => {
-                            Err(Error::BadDeviceToken("Invalid token registration".into()))
-                        }
-                        ErrorReason::NotRegistered => {
-                            Err(Error::BadDeviceToken("Token is not registered".into()))
-                        }
-                        ErrorReason::InvalidApnsCredential => Err(Error::BadApnsCredentials),
-                        e => Err(Error::FcmV1Response(e)),
-                    }
-                } else {
-                    Ok(())
-                }
-            }
-            Err(e) => match e {
-                // SendError::Unauthorized => Err(Error::BadFcmV1Credentials),
-                e => Err(Error::FcmV1(e)),
-            },
-        }
+        result.map(|_| ()).map_err(|e| match e {
+            SendError::Unregistered => Error::BadDeviceToken("Token was unregistered".into()),
+            SendError::Forbidden => Error::BadFcmV1Credentials,
+            e => Error::FcmV1(e),
+        })
     }
 }
