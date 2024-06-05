@@ -34,6 +34,41 @@ async fn client_creation(ctx: &mut StoreContext) {
 
 #[test_context(StoreContext)]
 #[tokio::test]
+async fn client_creation_concurrent(ctx: &mut StoreContext) {
+    let id = format!("id-{}", gen_id());
+    let token = format!("token-{}", gen_id());
+    let futures = (0..2).map(|_| {
+        // tokio::task::spawn({
+        let id = id.clone();
+        let token = token.clone();
+        let clients = ctx.clients.clone();
+        async move {
+            clients
+                .create_client(
+                    TENANT_ID,
+                    &id,
+                    Client {
+                        tenant_id: TENANT_ID.to_string(),
+                        push_type: ProviderKind::Noop,
+                        token,
+                        always_raw: false,
+                    },
+                    None,
+                )
+                .await
+        }
+        // })
+    });
+    let results = futures_util::future::join_all(futures).await;
+    for result in results {
+        result.unwrap(); //.unwrap();
+    }
+    // Cleaning up records
+    ctx.clients.delete_client(TENANT_ID, &id).await.unwrap();
+}
+
+#[test_context(StoreContext)]
+#[tokio::test]
 async fn client_creation_fcm(ctx: &mut StoreContext) {
     let id = format!("id-{}", gen_id());
     let token = format!("token-{}", gen_id());
