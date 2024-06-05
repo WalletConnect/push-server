@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.41.5 - 2024-06-05
+#### Bug Fixes
+- handle FCM v1 token unregistration & forbidden & Apns(TopicDisallowed) (#342) - (2f0c70a) - Chris Smith
+- concurrent client registration errors (#341) - (85b9997) - Chris Smith
+
+- - -
+
 ## v0.41.4 - 2024-05-29
 #### Bug Fixes
 - increasing rate-limiting threshold (#339) - (47fa3b1) - Max Kalashnikoff
