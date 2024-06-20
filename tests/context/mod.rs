@@ -1,10 +1,9 @@
+#[cfg(feature = "functional_tests")]
+use echo_server::state::{ClientStoreArc, NotificationStoreArc, TenantStoreArc};
 use {
     self::server::EchoServer,
     async_trait::async_trait,
-    echo_server::{
-        config::Config,
-        state::{ClientStoreArc, NotificationStoreArc, TenantStoreArc},
-    },
+    echo_server::config::Config,
     sqlx::{Pool, Postgres},
     std::{env, sync::Arc},
     test_context::{AsyncTestContext, TestContext},
@@ -19,6 +18,12 @@ pub struct ConfigContext {
 
 pub struct EchoServerContext {
     pub server: EchoServer,
+    #[cfg(all(
+        feature = "multitenant",
+        feature = "apns_tests",
+        feature = "fcm_tests",
+        feature = "fcmv1_tests"
+    ))]
     pub config: Config,
 }
 
@@ -26,8 +31,11 @@ pub struct StoreContext {
     pub pool: Arc<Pool<Postgres>>,
     pub tenant_pool: Arc<Pool<Postgres>>,
 
+    #[cfg(feature = "functional_tests")]
     pub clients: ClientStoreArc,
+    #[cfg(feature = "functional_tests")]
     pub notifications: NotificationStoreArc,
+    #[cfg(feature = "functional_tests")]
     pub tenants: TenantStoreArc,
 }
 
@@ -92,9 +100,16 @@ impl TestContext for ConfigContext {
 #[async_trait]
 impl AsyncTestContext for EchoServerContext {
     async fn setup() -> Self {
-        let config = ConfigContext::setup().config;
-        let server = EchoServer::start(ConfigContext::setup().config).await;
-        Self { server, config }
+        Self {
+            server: EchoServer::start(ConfigContext::setup().config).await,
+            #[cfg(all(
+                feature = "multitenant",
+                feature = "apns_tests",
+                feature = "fcm_tests",
+                feature = "fcmv1_tests"
+            ))]
+            config: ConfigContext::setup().config,
+        }
     }
 
     async fn teardown(mut self) {
@@ -115,8 +130,11 @@ impl AsyncTestContext for StoreContext {
         Self {
             pool: db_arc.clone(),
             tenant_pool: tenant_db_arc.clone(),
+            #[cfg(feature = "functional_tests")]
             clients: db_arc.clone(),
+            #[cfg(feature = "functional_tests")]
             notifications: db_arc.clone(),
+            #[cfg(feature = "functional_tests")]
             tenants: tenant_db_arc.clone(),
         }
     }
