@@ -13,6 +13,7 @@ mod apns;
 mod fcm;
 #[cfg(feature = "fcmv1_tests")]
 mod fcm_v1;
+#[cfg(feature = "multitenant")]
 mod tenancy;
 
 /// Struct to hold claims for JWT validation
