@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.41.6 - 2024-06-21
+#### Bug Fixes
+- **(apns)** proper handling of the wrong CA in APNS certificate (#343) - (fc38254) - Max Kalashnikoff | maksy.eth
+- **(clippy)** fixing updated clippy dead code warnings (#344) - (5d201d8) - Max Kalashnikoff | maksy.eth
+
+- - -
+
 ## v0.41.5 - 2024-06-05
 #### Bug Fixes
 - handle FCM v1 token unregistration & forbidden & Apns(TopicDisallowed) (#342) - (2f0c70a) - Chris Smith
