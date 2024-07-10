@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.41.7 - 2024-07-10
+#### Bug Fixes
+- **(apns)** proper catching of `Unknown CA` error (#345) - (cee0298) - Max Kalashnikoff | maksy.eth
+
+- - -
+
 ## v0.41.6 - 2024-06-21
 #### Bug Fixes
 - **(apns)** proper handling of the wrong CA in APNS certificate (#343) - (fc38254) - Max Kalashnikoff | maksy.eth
