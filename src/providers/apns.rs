@@ -160,9 +160,15 @@ impl PushProvider for ApnsProvider {
                             info!("APNs certificate expired: debug:{dbg}, display: {hyper_error}");
                             Err(Error::ApnsCertificateExpired)
                         }
+                        _ => Err(Error::Apns(e)),
+                    }
+                }
+                a2::Error::ClientError(ref client_error) => {
+                    let dbg = format!("{client_error:?}");
+                    match dbg {
                         dbg if dbg.contains("received fatal alert: UnknownCA") => {
                             info!(
-                                "APNs certificate unknown CA: debug:{dbg}, display: {hyper_error}"
+                                "APNs certificate unknown CA: debug:{dbg}, display: {client_error}"
                             );
                             Err(Error::ApnsCertificateUnknownCA)
                         }
