@@ -168,6 +168,18 @@ pub async fn handler_internal(
         )
     })?;
 
+    // Check request body size shouldn't exceed 4Kb (FCM limitations)
+    if serde_json::to_string(&body)
+        .map_err(|e| (Error::InternalSerializationError(e), None))?
+        .len()
+        > 4096
+    {
+        return Err((
+            Error::PayloadTooLarge("Request body size should not exceed 4Kb".to_string()),
+            None,
+        ));
+    };
+
     let cloned_body = body.clone();
     let push_message = if client.always_raw {
         if let Some(body) = body.raw {
