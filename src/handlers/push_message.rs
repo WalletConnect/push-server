@@ -452,6 +452,23 @@ pub async fn handler_internal(
                     );
                     Err(Error::TenantSuspended)
                 }
+                Error::ApnsInvalidProviderToken => {
+                    let reason = "APNs certificate invalid provider token";
+                    state
+                        .tenant_store
+                        .suspend_tenant(&tenant_id, reason)
+                        .await
+                        .map_err(|e| (e, analytics.clone()))?;
+                    increment_counter!(state.metrics, tenant_suspensions);
+                    warn!(
+                        %tenant_id,
+                        client_id = %client_id,
+                        notification_id = %notification.id,
+                        push_type = client.push_type.as_str(),
+                        "tenant has been suspended due to: {reason}"
+                    );
+                    Err(Error::TenantSuspended)
+                }
                 Error::BadFcmApiKey => {
                     state
                         .tenant_store
