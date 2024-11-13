@@ -146,6 +146,7 @@ impl PushProvider for ApnsProvider {
                         ErrorReason::TopicDisallowed => Err(Error::BadApnsCredentials),
                         // InvalidProviderToken reflecting that APNS certificate must be reissued
                         ErrorReason::InvalidProviderToken => Err(Error::ApnsInvalidProviderToken),
+                        ErrorReason::PayloadTooLarge => Err(Error::PayloadTooLarge),
                         reason => Err(Error::ApnsResponse(reason)),
                     },
                 },

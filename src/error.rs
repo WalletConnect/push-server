@@ -195,6 +195,9 @@ pub enum Error {
 
     #[error("tenant suspended due to invalid configuration")]
     TenantSuspended,
+
+    #[error("Payload is too large")]
+    PayloadTooLarge,
 }
 
 impl IntoResponse for Error {
@@ -590,6 +593,14 @@ impl IntoResponse for Error {
                     message: "Request Accepted, tenant suspended due to invalid configuration".to_string(),
                 },
             ], vec![]),
+            Error::PayloadTooLarge => crate::handlers::Response::new_failure(
+                StatusCode::BAD_REQUEST,
+                vec![ResponseError {
+                    name: "body".to_string(),
+                    message: "Message payload is too large".to_string(),
+                }],
+                vec![],
+            ),
             e => {
                 warn!("Error does not have response clause, {:?}", e);
 
