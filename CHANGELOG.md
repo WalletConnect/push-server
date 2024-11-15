@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.41.8 - 2024-11-15
+#### Bug Fixes
+- **(apns)** adding proper handling of the too large message payload (#348) - (b17db53) - Max Kalashnikoff | maksy.eth
+- **(apns)** proper handling of the invalid provider token response (#347) - (3d241bc) - Max Kalashnikoff | maksy.eth
+
+- - -
+
 ## v0.41.7 - 2024-07-10
 #### Bug Fixes
 - **(apns)** proper catching of `Unknown CA` error (#345) - (cee0298) - Max Kalashnikoff | maksy.eth
