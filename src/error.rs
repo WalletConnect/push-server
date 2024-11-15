@@ -187,6 +187,9 @@ pub enum Error {
     #[error("Unknown CA of APNs certificate")]
     ApnsCertificateUnknownCA,
 
+    #[error("Invalid APNs provider token")]
+    ApnsInvalidProviderToken,
+
     #[error("client deleted due to invalid device token")]
     ClientDeleted,
 

@@ -144,6 +144,8 @@ impl PushProvider for ApnsProvider {
                             "The device token is inactive for the specified topic".to_string(),
                         )),
                         ErrorReason::TopicDisallowed => Err(Error::BadApnsCredentials),
+                        // InvalidProviderToken reflecting that APNS certificate must be reissued
+                        ErrorReason::InvalidProviderToken => Err(Error::ApnsInvalidProviderToken),
                         reason => Err(Error::ApnsResponse(reason)),
                     },
                 },
